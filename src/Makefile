@@ -34,11 +34,12 @@ doc:
 	doxygen $(DOXYFILE)
 	
 
-nms: main.o control.o
+nms: main.o control.o protocol.o
 	$(CXX) $(CXXFLAGS)  $( WX_CXXFLAGS) $(WX_LIBS) -o $@ $^
 
 main.o: main.cpp
 	$(CXX) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ $^
+	
 	
 	
 helloworld_asio: helloworld_asio.cpp

@@ -161,7 +161,6 @@ void MainFrame::OnEnter(wxCommandEvent& event)
 		if ( cmd->id == ControlCommand::ID_INVALID )
 		{
 			app_control->printMessage(L"Invalid command!\n");
-			return;
 		}
 		
 		if ( cmd->id == ControlCommand::ID_EXIT )
@@ -180,9 +179,9 @@ void MainFrame::OnEnter(wxCommandEvent& event)
     }
     else
     {
-	// print only if the string is not empty
-	if ( !input_string.empty() )
-		app_control->printMessage(input_string +L'\n');
+		// print only if the string is not empty
+		if ( !input_string.empty() )
+			app_control->printMessage(input_string +L'\n');
     }
 
 	text_input_box->Clear();
@@ -225,7 +224,8 @@ bool MainApp::ProcessEvent(wxEvent& event)
 bool MainApp::OnInit()
 {    
 	mainFrame = new MainFrame();
-    app_control = new AppControl(mainFrame);
+	protocol = new NMSProtocol();
+    app_control = new AppControl(mainFrame, protocol);
     
 	return true;
 }
@@ -233,6 +233,7 @@ bool MainApp::OnInit()
 int MainApp::OnExit()
 {
     delete app_control;
+    delete protocol;
     
     return wxApp::OnExit();
 }

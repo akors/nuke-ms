@@ -36,6 +36,7 @@
 #include <wx/menu.h>
 
 #include "control.hpp"
+#include "protocol.hpp"
 
 /** Proportions for the window.
 * @ingroup gui
@@ -238,6 +239,10 @@ class MainApp : public wxApp
 
 	/** Application control object*/
 	AppControl* app_control;
+	
+	/** Communication Protocol object */
+	NMSProtocol* protocol;
+	
 
 public:
 

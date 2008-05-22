@@ -33,6 +33,7 @@
 *@ingroup app_ctrl */
 
 
+
 #ifndef CONTROL_HPP_INCLUDED
 #define CONTROL_HPP_INCLUDED
 
@@ -56,8 +57,8 @@ class Controllable
 {
     
 protected:
-    AppControl* const app_control;
-        
+    AppControl* const app_control;   
+    bool app_ctrl_set;
 
 public:
     /** Bind an Application Control Object to this instance.
@@ -73,11 +74,47 @@ public:
 
 	/** Constructor */
     Controllable()
-       : app_control( NULL )
+       : app_control( NULL ), app_ctrl_set(false)
     {}
     
 };
     
+    
+/** Abstract Base class that represents a communication protocol.
+ * @ingroup proto
+ * @ingroup app_ctrl
+ * 
+ * This class provides basic methods for managing connections and sending data.
+ * To interface a protocol class with this application, you have to derive a 
+ * class from this class, and pass a pointer to an object to the Constructor of 
+ * AppControl. The app_control member shall then be set using the 
+ * setAppControlFunction of the base class.
+ * 
+ * @see AppControl
+ */
+ class AbstractProtocol : public Controllable
+ {
+    /** Connect to a remote site.
+     * @param id The string representation of the address of the remote site
+     */
+ 	virtual void connect_to(const std::wstring& id) = 0;
+    
+    /* Send message to connected remote site.
+     * @param msg The message you want to send
+     */
+    virtual void send(const std::wstring& id) = 0;
+    
+    /** Disconnect from the remote site.
+     * 
+     */
+    virtual void disconnect() = 0;
+    
+    
+    virtual bool is_connected() = 0;
+ 	
+    /** AppControl is a friend, because it knows what to do */
+    friend class AppControl;
+ };
 
 
 
@@ -138,6 +175,7 @@ private:
 class AppControl 
 {
     AbstractGui* const gui;
+    AbstractProtocol* const protocol;
     
 private:
     // not assignable, not copyable
@@ -153,10 +191,11 @@ public:
 	* @param _gui The gui object you want to bind to this object.
 	* @see AbstractGui
 	*/  
-	AppControl(AbstractGui* _gui)
-	: gui(_gui)
+	AppControl(AbstractGui* _gui, AbstractProtocol* _protocol)
+	: gui(_gui), protocol(_protocol)
 	{
 		gui->setAppControl(this);
+		protocol->setAppControl(this);
 	}
 	
 	/** Print a message to the screen securely

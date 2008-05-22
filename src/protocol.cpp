@@ -1,4 +1,4 @@
-// control.cpp
+// protocol.cpp
 
 /*
  *   NMS - Nuclear Messaging System
@@ -18,21 +18,28 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "control.hpp"
+#include "protocol.hpp"
 
 
-
-void Controllable::setAppControl(AppControl* _app_control)
+void NMSProtocol::connect_to(const std::wstring& id)
 {
     
-    if ( !app_ctrl_set)
-    {
-        // casting away constness to set the value once and for all
-        *const_cast<AppControl**>(&app_control) = _app_control;
-            app_ctrl_set = true;
-    }
-    else        
-        assert(!app_ctrl_set); // I said only callable ONCE!
-
 }
 
+void NMSProtocol::send(const std::wstring& id)
+{
+    
+}
+
+void NMSProtocol::disconnect()
+{
+}
+
+
+bool NMSProtocol::is_connected()
+{
+    return connected;
+}
+    
+    
+    

@@ -1,4 +1,4 @@
-// control.cpp
+// protocol.hpp
 
 /*
  *   NMS - Nuclear Messaging System
@@ -18,21 +18,50 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
+/** @defgroup proto Communication Protocl */
+
+
+#ifndef PROTOCOL_HPP_
+#define PROTOCOL_HPP_
+
+
+
 #include "control.hpp"
 
-
-
-void Controllable::setAppControl(AppControl* _app_control)
+class NMSProtocol : public AbstractProtocol
 {
+    bool connected;
     
-    if ( !app_ctrl_set)
+ 
+    /** Connect to a remote site.
+     * @param id The string representation of the address of the remote site
+     */
+    virtual void connect_to(const std::wstring& id);
+    
+    /* Send message to connected remote site.
+     * @param msg The message you want to send
+     */
+    virtual void send(const std::wstring& id);
+    
+    /** Disconnect from the remote site.
+     * 
+     */
+    virtual void disconnect();
+    
+    
+    virtual bool is_connected();   
+    
+    
+public:
+
+    NMSProtocol()
+        : connected(true)
     {
-        // casting away constness to set the value once and for all
-        *const_cast<AppControl**>(&app_control) = _app_control;
-            app_ctrl_set = true;
+        
     }
-    else        
-        assert(!app_ctrl_set); // I said only callable ONCE!
+};
 
-}
 
+
+#endif /*PROTOCOL_HPP_*/
