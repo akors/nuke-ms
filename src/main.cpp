@@ -50,29 +50,37 @@ void MainFrame::createMenuBar()
 
 void MainFrame::createTextBoxes()
 {
+    // create vertical sizer
 	wxBoxSizer* vertsizer = new wxBoxSizer(wxVERTICAL);
 
-
+    // create text box for displaying text (read only)
 	text_display_box = new wxTextCtrl(this, wxID_ANY, wxT(""),
 				wxDefaultPosition, scales.displaybox_size, 
 				wxTE_READONLY | wxTE_MULTILINE);
 
+    // create text box for writing text
 	text_input_box = new wxTextCtrl(this, ID_INPUT_BOX, wxT(""),
 				wxDefaultPosition, scales.inputbox_size, 
 				wxTE_PROCESS_ENTER | wxTE_MULTILINE);
 
+    // add the upper textbox to the sizer
 	vertsizer->Add(
-			text_display_box,
-			scales.displaybox_proportion, 
-			wxALL  | wxEXPAND | wxALIGN_CENTER_HORIZONTAL,
-			scales.border_width
+			text_display_box, // the text box we want to add
+			scales.displaybox_proportion,  // the relative size
+			wxALL | // border everywhere
+            wxEXPAND |  // item expands to fill space 
+            wxALIGN_CENTER_HORIZONTAL, 
+			scales.border_width // border size
 			  );
 
+    // add the lower textbox to the sizer
 	vertsizer->Add(
-			text_input_box,
-			scales.inputbox_proportion, 
-			wxALL | wxEXPAND | wxALIGN_CENTER_HORIZONTAL,
-			scales.border_width
+			text_input_box, // the text box we want to add
+			scales.inputbox_proportion,  // the relative size
+			wxALL | // border everywhere
+            wxEXPAND |  // item expands to fill space 
+            wxALIGN_CENTER_HORIZONTAL, 
+			scales.border_width // border size
 			  );
 
 	// assign sizer to window
@@ -140,13 +148,13 @@ invalid_command:
 
 void MainFrame::printMessage(const std::wstring& str)
 {
-    text_display_box->AppendText( str.c_str() );
+    text_display_box->AppendText( (str + L'\n').c_str() );
 }
 
 
 void MainFrame::printMessage(const wxString& str)
 {
-    text_display_box->AppendText( str );
+    text_display_box->AppendText( str + L'\n' );
 }
 
 
@@ -158,7 +166,7 @@ void MainFrame::printMessage(const wxString& str)
 MainFrame::MainFrame()
 	: wxFrame(NULL, -1, wxT("killer app"), wxDefaultPosition, wxSize(600, 500))
 {
-	
+	// softcoding the window sizes
     scales.border_width = 10;
     scales.displaybox_size = wxSize(300, 50);
     scales.inputbox_size = wxSize(300, 50);
@@ -187,14 +195,15 @@ void MainFrame::OnEnter(wxCommandEvent& event)
     const std::wstring& input_string = 
         wxString2wstring(text_input_box->GetValue() ); 
 	
-	
+	// clear input box
 	text_input_box->Clear();
 	
 	// nothing to do if the user entered nothing
 	if ( input_string.empty() )
 	    return;
 	    
-	app_control->printMessage(input_string +L'\n');		
+    // print everything the user typed to the screen
+	app_control->printMessage(input_string);		
 
 	
     
@@ -205,38 +214,41 @@ void MainFrame::OnEnter(wxCommandEvent& event)
 		boost::shared_ptr<ControlCommand> cmd =
 		    MainFrame::parseCommand(input_string) ;
 		
-		if ( cmd->id == ControlCommand::ID_INVALID )
-		{
-			app_control->printMessage(L"Invalid command!\n");
-		}
-		
-		if ( cmd->id == ControlCommand::ID_EXIT )
-		{
-			app_control->close();
-			return;
-		}
-		
-		if ( cmd->id == ControlCommand::ID_DISCONNECT )
-		{
-			app_control->disconnect();
-			return;
-		}
-		
-		if (cmd->id == ControlCommand::ID_PRINT_MSG)
-		{
-			const Command_PrintMessage& cmd_msg =
-				dynamic_cast<const Command_PrintMessage&> (*cmd);
-			
-			app_control->printMessage(cmd_msg.msg);
-		}
-		
-		if ( cmd->id == ControlCommand::ID_CONNECT_TO )
-		{
-		    const Command_ConnectTo& cmd_cnt =
-		        dynamic_cast<const Command_ConnectTo&> (*cmd);
-		        
-	        app_control->connectTo(cmd_cnt.remote_host);
-		}
+        // determine actions depending on the id of the command
+        switch ( cmd->id )
+        {
+
+            case ControlCommand::ID_EXIT:
+    			app_control->close();
+    			break;
+                
+            case ControlCommand::ID_DISCONNECT:
+    			app_control->disconnect();
+    			break;
+                
+            case ControlCommand::ID_PRINT_MSG:
+                {
+        			const Command_PrintMessage& cmd_msg =
+        				dynamic_cast<const Command_PrintMessage&> (*cmd);
+        			
+        			app_control->printMessage(cmd_msg.msg);
+                    break;
+                }
+                
+            case ControlCommand::ID_CONNECT_TO:
+                {
+        		    const Command_ConnectTo& cmd_cnt =
+        		        dynamic_cast<const Command_ConnectTo&> (*cmd);
+        		        
+        	        app_control->connectTo(cmd_cnt.remote_host);
+                    break;
+                }
+                
+            default:
+                app_control->printMessage(L"Invalid command!");
+                break;
+                
+        }
     }
     else // if it's not a command we try to send it
     {
@@ -264,11 +276,10 @@ bool MainApp::ProcessEvent(wxEvent& event)
             )
         {
             wxCommandEvent cmd_evt(wxEVT_COMMAND_ENTER);
-            mainFrame->OnEnter(cmd_evt);
+            main_frame->OnEnter(cmd_evt);
             return true;
         }
-    }
-    
+    }    
 
     // dont stop processing the event in this function
     event.Skip();
@@ -281,15 +292,17 @@ bool MainApp::ProcessEvent(wxEvent& event)
 
 bool MainApp::OnInit()
 {    
-	mainFrame = new MainFrame();
+    // create window, protocol and control objects, and tie them all together
+	main_frame = new MainFrame();
 	protocol = new NMSProtocol();
-    app_control = new AppControl(mainFrame, protocol);
+    app_control = new AppControl(main_frame, protocol);
     
 	return true;
 }
 
 int MainApp::OnExit()
 {
+    // main_frame deleted by wxWidgets
     delete app_control;
     delete protocol;
     

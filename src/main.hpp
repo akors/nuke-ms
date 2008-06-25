@@ -115,7 +115,10 @@ struct Command_PrintMessage : public ControlCommand
 	{ }
 };
 
-
+/** Command to connect to a remote site.
+* @ingroup ctrl_cmd
+*
+*/
 struct Command_ConnectTo : public ControlCommand
 {
     const std::wstring remote_host;
@@ -196,7 +199,7 @@ class MainFrame : public wxFrame, public AbstractGui
 	*/
 	static bool isCommand(const std::wstring& str)
 	{
-    	return (str[0] == L'/');
+    	return ((str.size() != 0) &&(str[0] == L'/'));
 	}
 
 
@@ -246,7 +249,7 @@ public:
 class MainApp : public wxApp
 {
 	/** Main window */
-	MainFrame* mainFrame;
+	MainFrame* main_frame;
 
 	/** Application control object*/
 	AppControl* app_control;

@@ -1,0 +1,47 @@
+
+
+Casts:
+Only C++ style casts shall be used.
+The appropriate cast shall be chosen, for example if you try to cast a value to
+something it actually isn't, use the reinterpret_cast<>. If you are dealing with
+virtual classes and you are in danger of casting the base class to the wrong
+type, use the dynamic_cast<>.
+const_cast<>'s shall not be used at all, see below.
+
+
+
+const- ness:
+Restrict the users of your classes or functions and yourself as far as possible:
+if the current scope does not actually alter a data element, this element should
+be declared const.
+const_cast<>'s are not allowed, except for extraordinary circumstances.
+
+
+
+static- vs dynamic polymorphism
+Limit the use of virtual functions and classes to a minimum. If you need
+polymorphism, most of the time static polymorphism (curiously recurring template
+pattern: http://en.wikipedia.org/wiki/Curiously_Recurring_Template_Pattern) is 
+enough. Real dynamic polymorphism is needed very rarely. (actually only when
+handling user or network input).
+Think twice, before you declare a function as virtual, remember the overhead it
+costs (virtual table, looking up the right function on each call...).
+
+
+Destructors:
+Destructors are your life insurance. Destructors are called when the object goes
+out of scope or when an exception is raised. That means that destructors are 
+actually really critical parts of code.
+Every object should have a proper destructor (note that default destructors are
+often "proper" enough), no matter where or how it is used.
+Write your destructors with great care, allways clean up _every_ resource used 
+in your class. Don't make any assumptions on the state of the object or it's 
+environent, expect it to be invalid, corrupted or whatever. You still have to
+shut down and free all resources as gracefully as possible. Destructors just 
+CAN'T fail. If the time of an object has come, then it's over. 
+Also, NEVER EVER throw an exception from the destructor (watch out for function
+calls that might throw them). 
+
+Error handling:
+
+

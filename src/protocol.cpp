@@ -18,6 +18,7 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <boost/tokenizer.hpp>
 #include "protocol.hpp"
 
 
@@ -30,26 +31,44 @@ void NMSProtocol::connect_to(const std::wstring& id)
         
     // hopefully the string is made up of the hostname and the service name
     // seperated by a colon
-    std::wstring::const_iterator it = id.begin();
     
-    while ( it<id.end() && *++it != ':');
+    // get ourself a tokenizer
+    typedef boost::tokenizer<boost::char_separator<wchar_t>,
+                             std::wstring::const_iterator, std::wstring >
+        tokenizer;        
+    boost::char_separator<wchar_t> colons(L":");
+    tokenizer tokens(id, colons);
+    
+    tokenizer::iterator tok_iter = tokens.begin();
+
+    // bail out, if there were no tokens
+    if ( tok_iter == tokens.end() )
+        throw NMSProtocolError("Invalid remote site identifier.");
         
-    std::string host(id.begin(), it);
-    std::string service(++it, id.end());
-
+    // create host from first token
+    std::string host(tok_iter->begin(), tok_iter->end());
     
-    try {
+    if ( ++tok_iter == tokens.end() )
+        throw NMSProtocolError("Invalid remote site identifier.");
+        
+    // create service from second token
+    std::string service(tok_iter->begin(), tok_iter->end());
     
-    ba_tcp::resolver resolver(io_service);
-    ba_tcp::resolver::query query(host, service);
-    ba_tcp::resolver::iterator iterator = resolver.resolve(query);
     
-    socket.connect(*iterator);
-    
-
-                                                  
-    } catch(const boost::system::system_error& e) {
-        throw NMSProtocolError("Connecting to " + host + " failed:" + e.what());
+    try 
+    {   
+        ba_tcp::resolver resolver(io_service); // get a resolver
+        ba_tcp::resolver::query query(host, service); // create a query
+        // resolve the query
+        ba_tcp::resolver::iterator iterator = resolver.resolve(query); 
+        
+        socket.connect(*iterator); // connect to the first found host
+    } 
+    catch(const boost::system::system_error& e) 
+    {
+        boost::system::error_code ignored;
+        socket.close(ignored);
+        throw NMSProtocolError(e.what());
     }
     
 }
@@ -62,7 +81,8 @@ void NMSProtocol::send(const std::wstring& msg)
 
 void NMSProtocol::disconnect()
 {
-    socket.close();
+    // close the socket, don't care for errors
+    try { socket.close(); } catch(...) {}
 }
 
 

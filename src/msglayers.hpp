@@ -4,7 +4,6 @@
 
 
 #include <stdexcept>
-
 #include <algorithm> // for min
 
 #include "bytes.hpp"
@@ -36,6 +35,7 @@ struct MessageLayerError : public std::runtime_error
 private:
 	std::string message;
 };
+
 
 template <typename DerivedT>
 class BasicMessageLayer
@@ -72,12 +72,12 @@ public:
 	
 	bytes_sequence serialize() const
 	{ 
-		size_t size = std::min(static_cast<size_t>(data.size() + header_length), 
-				static_cast<size_t>(std::numeric_limits<uint2b_t>::max()));			
-	
+        // the serialized size is the size of the date plus the header length,
+        // but at most as many bytes as a uint2b_t can describe
+		size_t size = std::min<size_t>(data.size() + header_length, 
+                                        std::numeric_limits<uint2b_t>::max());	
 		
-	
-		// create empty sequence with the appropriate size
+        // create empty sequence with the appropriate size
 		bytes_sequence serialized(size);
 		
 		// first byte is the Layer Identifier

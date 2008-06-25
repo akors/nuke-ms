@@ -18,8 +18,8 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "control.hpp"
 
+#include "control.hpp"
 
 
 void Controllable::setAppControl(AppControl* _app_control)
@@ -32,7 +32,8 @@ void Controllable::setAppControl(AppControl* _app_control)
             app_ctrl_set = true;
     }
     else        
-        assert(!app_ctrl_set); // I said only callable ONCE!
+        // I said only callable ONCE!
+        throw std::logic_error("Function is allowed to be called only once.");
 
 }
 

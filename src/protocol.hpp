@@ -45,9 +45,7 @@ public:
     {}
     
     virtual const char* what() throw()
-    {
-        return std::runtime_error::what();
-    }
+    { return std::runtime_error::what(); }
 
     virtual ~NMSProtocolError() throw()
     { }
@@ -74,8 +72,7 @@ class NMSProtocol : public AbstractProtocol
     /** Disconnect from the remote site.
      * 
      */
-    virtual void disconnect();
-    
+    virtual void disconnect();    
     
     virtual bool is_connected();   
     

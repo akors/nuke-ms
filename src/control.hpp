@@ -37,7 +37,7 @@
 #ifndef CONTROL_HPP_INCLUDED
 #define CONTROL_HPP_INCLUDED
 
-#include <cassert>
+#include <stdexcept>
 #include <string>
 
 #include <boost/shared_ptr.hpp>
@@ -201,14 +201,14 @@ public:
 	void connectTo(const std::wstring& id)
 	{	    
 	    try { 
-	        protocol->connect_to(id);	    
+	        protocol->connect_to(id);
+	        this->printMessage(L"Connected to " + id);
 	    } 
 	    catch (const std::exception& e)
 	    {
 	        std::string errmsg(e.what());	        
-    	    gui->printMessage(L"Failed to connect to " + id + L": " 
-    	                      + std::wstring(errmsg.begin(), errmsg.end()) 
-    	                      + L'\n' );
+    	    this->printMessage(L"Failed to connect to " + id + L": " 
+    	                      + std::wstring(errmsg.begin(), errmsg.end()) );
 	    }
 	}
 	
@@ -220,15 +220,15 @@ public:
 	    catch (const std::exception& e)
 	    {
 	        std::string errmsg(e.what());	        
-    	    gui->printMessage(L"Failed to send message: " 
-    	                        + std::wstring(errmsg.begin(), errmsg.end()) 
-    	                        + L'\n' );
+    	    this->printMessage(L"Failed to send message: " 
+    	                        + std::wstring(errmsg.begin(), errmsg.end()));
 	    }
 	}
 	
 	void disconnect()
 	{
 	    protocol->disconnect();
+	    this->printMessage(L"Disconnected");
 	}
 	
 	/** Print a message to the screen securely
