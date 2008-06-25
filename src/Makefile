@@ -35,7 +35,7 @@ doc:
 	
 
 nms: main.o control.o protocol.o
-	$(CXX) $(CXXFLAGS)  $( WX_CXXFLAGS) $(WX_LIBS) -o $@ $^
+	$(CXX) $(CXXFLAGS) -L$(BOOST_LIB_DIR) -l$(B_LIB_SYSTEM) $( WX_CXXFLAGS) $(WX_LIBS) -o $@ $^ 
 
 main.o: main.cpp
 	$(CXX) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ $^
@@ -43,11 +43,11 @@ main.o: main.cpp
 	
 	
 helloworld_asio: helloworld_asio.cpp
-	$(CXX) $(CXXFLAGS) -L$(BOOST_LIB_DIR) -l$(B_LIB_SYSTEM) -l$(B_LIB_THREADS) -o $@ $^ 
+	$(CXX) $(CXXFLAGS) -L$(BOOST_LIB_DIR)  -o $@ $^ -l$(B_LIB_SYSTEM) -l$(B_LIB_THREADS)
 
 
 clean:
-	rm -f nms *.o
+	rm -f nms *.o *~
 
 doc_clean:
 	rm -r ../doc/html

@@ -102,7 +102,7 @@ public:
     /* Send message to connected remote site.
      * @param msg The message you want to send
      */
-    virtual void send(const std::wstring& id) = 0;
+    virtual void send(const std::wstring& msg) = 0;
     
     /** Disconnect from the remote site.
      * 
@@ -196,6 +196,39 @@ public:
 	{
 		gui->setAppControl(this);
 		protocol->setAppControl(this);
+	}
+	
+	void connectTo(const std::wstring& id)
+	{	    
+	    try { 
+	        protocol->connect_to(id);	    
+	    } 
+	    catch (const std::exception& e)
+	    {
+	        std::string errmsg(e.what());	        
+    	    gui->printMessage(L"Failed to connect to " + id + L": " 
+    	                      + std::wstring(errmsg.begin(), errmsg.end()) 
+    	                      + L'\n' );
+	    }
+	}
+	
+	void sendMessage(const std::wstring& msg)
+	{
+	    try {
+    	    protocol->send(msg);
+	    } 
+	    catch (const std::exception& e)
+	    {
+	        std::string errmsg(e.what());	        
+    	    gui->printMessage(L"Failed to send message: " 
+    	                        + std::wstring(errmsg.begin(), errmsg.end()) 
+    	                        + L'\n' );
+	    }
+	}
+	
+	void disconnect()
+	{
+	    protocol->disconnect();
 	}
 	
 	/** Print a message to the screen securely

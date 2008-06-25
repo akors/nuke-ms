@@ -23,22 +23,52 @@
 
 void NMSProtocol::connect_to(const std::wstring& id)
 {
+
+    if (socket.is_open())
+        throw NMSProtocolError("Allready connected.");   
+    
+        
+    // hopefully the string is made up of the hostname and the service name
+    // seperated by a colon
+    std::wstring::const_iterator it = id.begin();
+    
+    while ( it<id.end() && *++it != ':');
+        
+    std::string host(id.begin(), it);
+    std::string service(++it, id.end());
+
+    
+    try {
+    
+    ba_tcp::resolver resolver(io_service);
+    ba_tcp::resolver::query query(host, service);
+    ba_tcp::resolver::iterator iterator = resolver.resolve(query);
+    
+    socket.connect(*iterator);
+    
+
+                                                  
+    } catch(const boost::system::system_error& e) {
+        throw NMSProtocolError("Connecting to " + host + " failed:" + e.what());
+    }
     
 }
 
-void NMSProtocol::send(const std::wstring& id)
+void NMSProtocol::send(const std::wstring& msg)
 {
-    
+    socket.send(boost::asio::buffer(reinterpret_cast<const void*>(msg.c_str()), 
+            msg.length() * sizeof(std::wstring::value_type)));
 }
 
 void NMSProtocol::disconnect()
 {
+    socket.close();
 }
 
 
 bool NMSProtocol::is_connected()
 {
-    return connected;
+    return socket.is_open();
 }
     
     

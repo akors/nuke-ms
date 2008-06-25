@@ -21,6 +21,7 @@
 
 #include "main.hpp"
 #include <wx/aboutdlg.h>
+#include <boost/tokenizer.hpp>
 
 
 
@@ -88,14 +89,50 @@ void MainFrame::createTextBoxes()
 boost::shared_ptr<ControlCommand> 
 MainFrame::parseCommand(const std::wstring& str)
 {
-	if  ( !str.compare( L"/exit" ) )
+    // get ourself a tokenizer
+    typedef boost::tokenizer<boost::char_separator<wchar_t>,
+                             std::wstring::const_iterator, std::wstring >
+        tokenizer;        
+    boost::char_separator<wchar_t> whitespace(L" \t\r\n");
+    tokenizer tokens(str, whitespace);
+    
+    tokenizer::iterator tok_iter = tokens.begin();
+
+    // bail out, if there were no tokens
+    if ( tok_iter == tokens.end() )
+        goto invalid_command;
+
+
+	if  ( !tok_iter->compare( L"/exit" ) )	
 		return boost::shared_ptr<ControlCommand>
 			(new ControlCommand(ControlCommand::ID_EXIT));
+			
+    if  ( !tok_iter->compare( L"/disconnect" ) )	
+		return boost::shared_ptr<ControlCommand>
+			(new ControlCommand(ControlCommand::ID_DISCONNECT));
+			
 	
-	if ( !str.compare( L"/print") )
+	else if ( !tok_iter->compare( L"/print") )
+	{
+	    if (++tok_iter == tokens.end() )
+            goto invalid_command;
+	        
 		return boost::shared_ptr<ControlCommand> 
-			(new Command_PrintMessage(L"Hallo!"));
+			(new Command_PrintMessage(*tok_iter));
+	}
+			
+	else if ( !tok_iter->compare( L"/connect") )	
+	{	    
+	    if (++tok_iter == tokens.end() )
+            goto invalid_command;
+            
+		return boost::shared_ptr<ControlCommand> 
+			(new Command_ConnectTo(*tok_iter));		
+	}
 	
+	// if comparison failed, the command is invalid		
+			
+invalid_command:
 	return boost::shared_ptr<ControlCommand> 
 			(new ControlCommand(ControlCommand::ID_INVALID));
 }
@@ -150,6 +187,16 @@ void MainFrame::OnEnter(wxCommandEvent& event)
     const std::wstring& input_string = 
         wxString2wstring(text_input_box->GetValue() ); 
 	
+	
+	text_input_box->Clear();
+	
+	// nothing to do if the user entered nothing
+	if ( input_string.empty() )
+	    return;
+	    
+	app_control->printMessage(input_string +L'\n');		
+
+	
     
     // check if this is a command
     if ( MainFrame::isCommand(input_string) )
@@ -169,6 +216,12 @@ void MainFrame::OnEnter(wxCommandEvent& event)
 			return;
 		}
 		
+		if ( cmd->id == ControlCommand::ID_DISCONNECT )
+		{
+			app_control->disconnect();
+			return;
+		}
+		
 		if (cmd->id == ControlCommand::ID_PRINT_MSG)
 		{
 			const Command_PrintMessage& cmd_msg =
@@ -176,15 +229,20 @@ void MainFrame::OnEnter(wxCommandEvent& event)
 			
 			app_control->printMessage(cmd_msg.msg);
 		}
+		
+		if ( cmd->id == ControlCommand::ID_CONNECT_TO )
+		{
+		    const Command_ConnectTo& cmd_cnt =
+		        dynamic_cast<const Command_ConnectTo&> (*cmd);
+		        
+	        app_control->connectTo(cmd_cnt.remote_host);
+		}
     }
-    else
+    else // if it's not a command we try to send it
     {
-		// print only if the string is not empty
-		if ( !input_string.empty() )
-			app_control->printMessage(input_string +L'\n');
+        app_control->sendMessage(input_string);        
     }
 
-	text_input_box->Clear();
 }
 
 

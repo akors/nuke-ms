@@ -77,6 +77,8 @@ struct ControlCommand
 		ID_INVALID = 0, /**< Invalid Command */
 		ID_EXIT, /**< user asked to exit */
 		ID_PRINT_MSG, /**< print a message */	
+		ID_CONNECT_TO, /**< connect to a remote site */
+		ID_DISCONNECT, /**< disconnect from a remote site */
 	
 	
 		/** Number of command identifiers.
@@ -114,6 +116,16 @@ struct Command_PrintMessage : public ControlCommand
 };
 
 
+struct Command_ConnectTo : public ControlCommand
+{
+    const std::wstring remote_host;
+    
+	Command_ConnectTo(const std::wstring& str)
+		: remote_host(str), ControlCommand(ID_CONNECT_TO)
+	{ }
+};
+
+
 
 
 
@@ -133,7 +145,6 @@ class MainFrame : public wxFrame, public AbstractGui
 	*/
 	enum {
     	ID_INPUT_BOX = wxID_HIGHEST+1
-
 	};
 
 

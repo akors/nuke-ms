@@ -25,13 +25,40 @@
 #ifndef PROTOCOL_HPP_
 #define PROTOCOL_HPP_
 
+#include <stdexcept>
 
+#include <boost/asio.hpp>
 
 #include "control.hpp"
 
+
+class NMSProtocolError : public std::runtime_error
+{
+    std::string msg;
+public:
+    NMSProtocolError() throw()
+        : std::runtime_error("Unknown Communication Protocol Error")
+    { }
+    
+    NMSProtocolError(const std::string& str) throw()
+        : std::runtime_error(str)
+    {}
+    
+    virtual const char* what() throw()
+    {
+        return std::runtime_error::what();
+    }
+
+    virtual ~NMSProtocolError() throw()
+    { }
+};
+
 class NMSProtocol : public AbstractProtocol
 {
-    bool connected;
+    typedef boost::asio::ip::tcp ba_tcp;
+
+    boost::asio::io_service io_service;
+    ba_tcp::socket socket;
     
  
     /** Connect to a remote site.
@@ -42,7 +69,7 @@ class NMSProtocol : public AbstractProtocol
     /* Send message to connected remote site.
      * @param msg The message you want to send
      */
-    virtual void send(const std::wstring& id);
+    virtual void send(const std::wstring& msg);
     
     /** Disconnect from the remote site.
      * 
@@ -56,10 +83,10 @@ class NMSProtocol : public AbstractProtocol
 public:
 
     NMSProtocol()
-        : connected(true)
-    {
-        
-    }
+        : io_service(), socket(io_service)
+    { }
+    
+    
 };
 
 
