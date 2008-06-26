@@ -22,6 +22,8 @@
 #include "main.hpp"
 #include <wx/aboutdlg.h>
 #include <boost/tokenizer.hpp>
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
 
 
 
@@ -163,8 +165,10 @@ void MainFrame::printMessage(const wxString& str)
 ////////////////////////////// MainFrame Public ///////////////////////////////
 
 
-MainFrame::MainFrame()
-	: wxFrame(NULL, -1, wxT("killer app"), wxDefaultPosition, wxSize(600, 500))
+MainFrame::MainFrame
+        (boost::function1<void, const ControlCommand&> _commandCallback)
+	: wxFrame(NULL, -1, wxT("killer app"), wxDefaultPosition, wxSize(600, 500)),
+	commandCallback(_commandCallback)
 {
 	// softcoding the window sizes
     scales.border_width = 10;
@@ -203,7 +207,7 @@ void MainFrame::OnEnter(wxCommandEvent& event)
 	    return;
 	    
     // print everything the user typed to the screen
-	app_control->printMessage(input_string);		
+	commandCallback(Command_PrintMessage(input_string));		
 
 	
     
@@ -212,47 +216,13 @@ void MainFrame::OnEnter(wxCommandEvent& event)
     {
 		// create a shared pointer from the output
 		boost::shared_ptr<ControlCommand> cmd =
-		    MainFrame::parseCommand(input_string) ;
+		    MainFrame::parseCommand(input_string);
 		
-        // determine actions depending on the id of the command
-        switch ( cmd->id )
-        {
-
-            case ControlCommand::ID_EXIT:
-    			app_control->close();
-    			break;
-                
-            case ControlCommand::ID_DISCONNECT:
-    			app_control->disconnect();
-    			break;
-                
-            case ControlCommand::ID_PRINT_MSG:
-                {
-        			const Command_PrintMessage& cmd_msg =
-        				dynamic_cast<const Command_PrintMessage&> (*cmd);
-        			
-        			app_control->printMessage(cmd_msg.msg);
-                    break;
-                }
-                
-            case ControlCommand::ID_CONNECT_TO:
-                {
-        		    const Command_ConnectTo& cmd_cnt =
-        		        dynamic_cast<const Command_ConnectTo&> (*cmd);
-        		        
-        	        app_control->connectTo(cmd_cnt.remote_host);
-                    break;
-                }
-                
-            default:
-                app_control->printMessage(L"Invalid command!");
-                break;
-                
-        }
+        commandCallback(*cmd);
     }
     else // if it's not a command we try to send it
-    {
-        app_control->sendMessage(input_string);        
+    {   
+        commandCallback(Command_SendMessage(input_string));  
     }
 
 }
@@ -276,7 +246,7 @@ bool MainApp::ProcessEvent(wxEvent& event)
             )
         {
             wxCommandEvent cmd_evt(wxEVT_COMMAND_ENTER);
-            main_frame->OnEnter(cmd_evt);
+            //main_frame->OnEnter(cmd_evt);
             return true;
         }
     }    
@@ -293,9 +263,7 @@ bool MainApp::ProcessEvent(wxEvent& event)
 bool MainApp::OnInit()
 {    
     // create window, protocol and control objects, and tie them all together
-	main_frame = new MainFrame();
-	protocol = new NMSProtocol();
-    app_control = new AppControl(main_frame, protocol);
+    app_control = new AppControl<MainFrameWrapper, NMSProtocol>;
     
 	return true;
 }
@@ -304,7 +272,6 @@ int MainApp::OnExit()
 {
     // main_frame deleted by wxWidgets
     delete app_control;
-    delete protocol;
     
     return wxApp::OnExit();
 }

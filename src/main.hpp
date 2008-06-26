@@ -30,6 +30,8 @@
 #ifndef MAIN_HPP_INCLUDED
 #define MAIN_HPP_INCLUDED
 
+#include <boost/function.hpp>
+
 #include <wx/wx.h>
 #include <wx/app.h>
 #include <wx/frame.h>
@@ -63,73 +65,9 @@ struct WindowScales
 
 	
 	
-/** A command to the Application Control Class.
-* @ingroup ctrl_cmd
-* Send this command to AppControl.
-*/
-struct ControlCommand
-{
-	
-    /** The Command ID Type
-    * @ingroup ctrl_cmd
-    */
-    enum command_id_t {	
-		ID_INVALID = 0, /**< Invalid Command */
-		ID_EXIT, /**< user asked to exit */
-		ID_PRINT_MSG, /**< print a message */	
-		ID_CONNECT_TO, /**< connect to a remote site */
-		ID_DISCONNECT, /**< disconnect from a remote site */
-	
-	
-		/** Number of command identifiers.
-		* As the first command (ID_INVALID) starts from 0,
-		* this element specifies how many commands there are.
-		*/
-		ID_NUM_COMMANDS 
-	};
-	
-	/** The command ID*/
-	const command_id_t id;	
-	
-	
-	/** Constructor. */
-	ControlCommand(const command_id_t& _id)
-		: id(_id)
-	{}
-
-	virtual ~ControlCommand()
-	{}
-};
-
-/** Command to print a message.
-* @ingroup ctrl_cmd
-*
-*/
-struct Command_PrintMessage : public ControlCommand
-{
-	// the message you want to print
-	const std::wstring msg;
-	
-	Command_PrintMessage(const std::wstring& str)
-		: msg(str), ControlCommand(ID_PRINT_MSG)
-	{ }
-};
-
-/** Command to connect to a remote site.
-* @ingroup ctrl_cmd
-*
-*/
-struct Command_ConnectTo : public ControlCommand
-{
-    const std::wstring remote_host;
-    
-	Command_ConnectTo(const std::wstring& str)
-		: remote_host(str), ControlCommand(ID_CONNECT_TO)
-	{ }
-};
 
 
-
+class MainFrameWrapper;
 
 
 /** Main Window.
@@ -141,14 +79,12 @@ struct Command_ConnectTo : public ControlCommand
 *
 * @see AbstractGui::setAppControl
 */
-class MainFrame : public wxFrame, public AbstractGui
+class MainFrame : public wxFrame
 {
 	/** Enum for wxWidgets window identifiers.
 	*
 	*/
-	enum {
-    	ID_INPUT_BOX = wxID_HIGHEST+1
-	};
+	enum { ID_INPUT_BOX = wxID_HIGHEST+1 };
 
 
 	/** proportions and sizes for this window. */
@@ -165,6 +101,9 @@ class MainFrame : public wxFrame, public AbstractGui
 
 	/** Input text box */
 	wxTextCtrl* text_input_box;
+
+    boost::function1<void, const ControlCommand&> commandCallback;
+
 
 	/** creates and initializes menu bars*/
 	void createMenuBar();
@@ -184,13 +123,7 @@ class MainFrame : public wxFrame, public AbstractGui
 	*/
 	void printMessage(const std::wstring& str);
 
-	/** Close the windows.
-	* Overrides pure virtual base class version.
-	*/
-	void close()
-	{
-		Close(false);
-	}
+
 
 	/** Check if a string is a command
 	* 
@@ -218,13 +151,15 @@ class MainFrame : public wxFrame, public AbstractGui
 	parseCommand(const std::wstring& str);    
 
 public:
+
+    friend class MainFrameWrapper;
     
 	/** Constructor.
 	*
 	* Initialize base class, set scales,
 	* create menu bar and text boxes
 	*/
-	MainFrame();    
+	MainFrame( boost::function1<void, const ControlCommand&> _commandCallback);    
 
 	/** Called if the user wants to quit. */
 	void OnQuit(wxCommandEvent& event);
@@ -239,6 +174,41 @@ public:
 };
 
 
+class MainFrameWrapper
+{
+    MainFrame* main_frame;
+
+public:
+    MainFrameWrapper 
+        (boost::function1<void, const ControlCommand&> commandCallback)
+        : main_frame(NULL)
+        
+    { 
+        main_frame = new MainFrame(commandCallback);    
+    }
+    
+    ~MainFrameWrapper()
+    {
+        // MainFrame is derived from wxWindow. As such, simply deleting the 
+        // object would be incorrect. Instead we have to ask it to destroy 
+        // itself.
+        //main_frame->Close();
+    }
+    
+    
+    void printMessage(const std::wstring& str)
+    {
+        main_frame->printMessage(str);
+    }
+    
+	void close()
+	{
+		main_frame->Close(false);
+	}
+
+};
+
+
 
 /** Application entry point.
 * @ingroup gui
@@ -248,14 +218,10 @@ public:
 */
 class MainApp : public wxApp
 {
-	/** Main window */
-	MainFrame* main_frame;
+
 
 	/** Application control object*/
-	AppControl* app_control;
-	
-	/** Communication Protocol object */
-	NMSProtocol* protocol;
+	AppControl<MainFrameWrapper, NMSProtocol>* app_control;
 	
 
 public:

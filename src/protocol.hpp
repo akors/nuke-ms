@@ -51,38 +51,39 @@ public:
     { }
 };
 
-class NMSProtocol : public AbstractProtocol
+
+class NMSProtocol
 {
     typedef boost::asio::ip::tcp ba_tcp;
 
     boost::asio::io_service io_service;
     ba_tcp::socket socket;
     
- 
-    /** Connect to a remote site.
-     * @param id The string representation of the address of the remote site
-     */
-    virtual void connect_to(const std::wstring& id);
-    
-    /* Send message to connected remote site.
-     * @param msg The message you want to send
-     */
-    virtual void send(const std::wstring& msg);
-    
-    /** Disconnect from the remote site.
-     * 
-     */
-    virtual void disconnect();    
-    
-    virtual bool is_connected();   
-    
-    
-public:
+     
+public:   
 
     NMSProtocol()
         : io_service(), socket(io_service)
     { }
     
+    
+    /** Connect to a remote site.
+     * @param id The string representation of the address of the remote site
+     */
+    void connect_to(const std::wstring& id);
+    
+    /* Send message to connected remote site.
+     * @param msg The message you want to send
+     */
+    void send(const std::wstring& msg);
+    
+    /** Disconnect from the remote site.
+     * 
+     */
+    void disconnect();    
+    
+    bool is_connected();   
+ 
     
 };
 

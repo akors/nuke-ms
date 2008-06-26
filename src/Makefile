@@ -36,7 +36,7 @@ doc:
 	doxygen $(DOXYFILE)
 	
 
-nms: main.o control.o protocol.o
+nms: main.o protocol.o
 	$(CXX) $(CXXFLAGS) -l$(B_LIB_SYSTEM) $( WX_CXXFLAGS) $(WX_LIBS) -o $@ $^ 
 
 main.o: main.cpp
