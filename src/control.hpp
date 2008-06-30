@@ -246,6 +246,9 @@ void AppControl<GuiT, ProtocolT>::handleCommand(const ControlCommand& cmd)
         
         case ControlCommand::ID_SEND_MSG:
         {
+            if ( !protocol.is_connected())
+                return;
+        
 			const Command_SendMessage& cmd_msg =
 				dynamic_cast<const Command_SendMessage&> (cmd);
 			

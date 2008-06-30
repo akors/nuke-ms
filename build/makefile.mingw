@@ -1,0 +1,38 @@
+
+BOOST_LIBDIR="D:\korsunsa\trunk\Boost\lib"
+
+INCLUDEDIRS=-I"D:\korsunsa\trunk\Boost\include\boost-1_35"
+
+LIBDIRS=-L$(BOOST_LIBDIR) -L"C:\MinGW\lib"
+
+# directory stuff
+DOXYFILE=..\doc\Doxyfile
+
+B_SUFFIX=-mgw34-mt-sd-1_35
+
+#now composing all boost libraries used
+B_LIB_SYSTEM=boost_system$(B_SUFFIX)
+B_LIB_THREADS=boost_thread$(B_SUFFIX)
+
+B_LIBS=$(B_LIB_SYSTEM)
+
+# wxWidgets stuff
+include wx_libs.txt
+include wx_cxxflags.txt
+
+CXXFLAGS=-g $(INCLUDEDIRS) $(WX_CXXFLAGS) -D_WINNT=0x0501
+
+all: nms
+
+doc: 
+	doxygen $(DOXYFILE)	
+
+nms: main.o protocol.o
+	$(CXX) $(CXXFLAGS) $(LIBDIRS) -o $@ $^ -l$(B_LIBS) $(WX_LIBS) -lws2_32
+
+
+clean:
+	del *.exe *.o *.obj
+
+doc_clean:
+	del ../doc/html

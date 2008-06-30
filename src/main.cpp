@@ -33,6 +33,8 @@
 
 ////////////////////////////// MainFrame Private //////////////////////////////
 
+boost::function1<void, wxCommandEvent&> MainFrame::OnEnter_callback;
+
 void MainFrame::createMenuBar()
 {
 	// create menu bar
@@ -170,6 +172,9 @@ MainFrame::MainFrame
 	: wxFrame(NULL, -1, wxT("killer app"), wxDefaultPosition, wxSize(600, 500)),
 	commandCallback(_commandCallback)
 {
+	// Opening a hole for MainApp to get to the OnEnter member function
+	OnEnter_callback = boost::bind(&MainFrame::OnEnter, this, _1);
+
 	// softcoding the window sizes
     scales.border_width = 10;
     scales.displaybox_size = wxSize(300, 50);
@@ -192,8 +197,8 @@ void MainFrame::OnQuit(wxCommandEvent& event)
 
 
 
-
 void MainFrame::OnEnter(wxCommandEvent& event)
+
 {
     // create reference to a std::wstring
     const std::wstring& input_string = 
@@ -240,15 +245,16 @@ bool MainApp::ProcessEvent(wxEvent& event)
     {
         
         // only if control and shift are NOT down, call OnEnter
-        if ( ((wxKeyEvent&) event).GetKeyCode() == WXK_RETURN &&
-            !((wxKeyEvent&) event).ControlDown() &&
-            !((wxKeyEvent&) event).ShiftDown() 
+        if ( static_cast<wxKeyEvent&>(event).GetKeyCode() == WXK_RETURN &&
+            !static_cast<wxKeyEvent&>(event).ControlDown() &&
+            !static_cast<wxKeyEvent&>(event).ShiftDown() 
             )
         {
             wxCommandEvent cmd_evt(wxEVT_COMMAND_ENTER);
-            //main_frame->OnEnter(cmd_evt);
+            MainFrame::OnEnter_callback(cmd_evt);
             return true;
         }
+
     }    
 
     // dont stop processing the event in this function
@@ -262,7 +268,7 @@ bool MainApp::ProcessEvent(wxEvent& event)
 
 bool MainApp::OnInit()
 {    
-    // create window, protocol and control objects, and tie them all together
+    // Create AppControl object, which creates its components
     app_control = new AppControl<MainFrameWrapper, NMSProtocol>;
     
 	return true;
@@ -270,7 +276,7 @@ bool MainApp::OnInit()
 
 int MainApp::OnExit()
 {
-    // main_frame deleted by wxWidgets
+    
     delete app_control;
     
     return wxApp::OnExit();
@@ -284,7 +290,7 @@ int MainApp::OnExit()
 
 BEGIN_EVENT_TABLE(MainFrame, wxFrame)
 	EVT_MENU(wxID_EXIT, MainFrame::OnQuit)
-	EVT_TEXT_ENTER(MainFrame::ID_INPUT_BOX, MainFrame::OnEnter)
+	//EVT_TEXT_ENTER(MainFrame::ID_INPUT_BOX, MainFrame::OnEnter)
 END_EVENT_TABLE()
 
 

@@ -151,6 +151,8 @@ class MainFrame : public wxFrame
 	parseCommand(const std::wstring& str);    
 
 public:
+	// opening a hole for MainApp, so it can call OnEnter when 
+	static boost::function1<void, wxCommandEvent&> OnEnter_callback;
 
     friend class MainFrameWrapper;
     
