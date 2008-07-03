@@ -19,7 +19,7 @@ B_SUFFIX=-gcc42-mt-1_35
 #now composing all boost libraries used
 B_LIB_SYSTEM=boost_system$(B_SUFFIX)
 
-B_LIB_THREADS=boost_thread$(B_SUFFIX)
+B_LIB_THREAD=boost_thread$(B_SUFFIX)
 
 
 # wxWidgets stuff
@@ -37,15 +37,11 @@ doc:
 	
 
 nms: main.o protocol.o
-	$(CXX) $(CXXFLAGS) -l$(B_LIB_SYSTEM) $( WX_CXXFLAGS) $(WX_LIBS) -o $@ $^ 
+	$(CXX) $(CXXFLAGS) $(WX_CXXFLAGS)  -o $@ $^  -l$(B_LIB_THREAD) -l$(B_LIB_SYSTEM)  $(WX_LIBS)
 
 main.o: main.cpp
 	$(CXX) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ $^
 	
-	
-	
-helloworld_asio: helloworld_asio.cpp
-	$(CXX) $(CXXFLAGS) -o $@ $^ -l$(B_LIB_SYSTEM) -l$(B_LIB_THREADS)
 
 
 clean:

@@ -32,10 +32,12 @@
 
 #include <boost/function.hpp>
 
-#include <wx/wx.h>
+
 #include <wx/app.h>
 #include <wx/frame.h>
 #include <wx/menu.h>
+#include <wx/textctrl.h>
+#include <wx/sizer.h>
 
 #include "control.hpp"
 #include "protocol.hpp"

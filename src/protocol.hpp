@@ -32,36 +32,37 @@
 #include "control.hpp"
 
 
-class NMSProtocolError : public std::runtime_error
+/** Class for errors that can be issued by the Communication Protocol.
+*/
+class ProtocolError : public std::runtime_error
 {
     std::string msg;
 public:
-    NMSProtocolError() throw()
+    ProtocolError() throw()
         : std::runtime_error("Unknown Communication Protocol Error")
     { }
     
-    NMSProtocolError(const std::string& str) throw()
+    ProtocolError(const std::string& str) throw()
         : std::runtime_error(str)
     {}
     
     virtual const char* what() throw()
     { return std::runtime_error::what(); }
 
-    virtual ~NMSProtocolError() throw()
+    virtual ~ProtocolError() throw()
     { }
 };
 
-
+/** Client Communication Protocol.
+*/
 class NMSProtocol
 {
-    typedef boost::asio::ip::tcp ba_tcp;
-
-    boost::asio::io_service io_service;
-    ba_tcp::socket socket;
-    
+    boost::asio::io_service io_service; /**< IO Service object */
+    boost::asio::ip::tcp::socket socket; /**< TCP socket */
      
 public:   
 
+    /** Constructor. */
     NMSProtocol()
         : io_service(), socket(io_service)
     { }
@@ -82,11 +83,9 @@ public:
      */
     void disconnect();    
     
-    bool is_connected();   
- 
+    bool is_connected(); 
     
 };
-
 
 
 #endif /*PROTOCOL_HPP_*/

@@ -19,6 +19,7 @@
 */
 
 #include <boost/tokenizer.hpp>
+
 #include "protocol.hpp"
 
 
@@ -26,7 +27,7 @@ void NMSProtocol::connect_to(const std::wstring& id)
 {
 
     if (socket.is_open())
-        throw NMSProtocolError("Allready connected.");   
+        throw ProtocolError("Allready connected.");   
     
         
     // hopefully the string is made up of the hostname and the service name
@@ -36,6 +37,8 @@ void NMSProtocol::connect_to(const std::wstring& id)
     typedef boost::tokenizer<boost::char_separator<wchar_t>,
                              std::wstring::const_iterator, std::wstring >
         tokenizer;        
+        
+    // get the part before the colon and the part after the colon
     boost::char_separator<wchar_t> colons(L":");
     tokenizer tokens(id, colons);
     
@@ -43,13 +46,13 @@ void NMSProtocol::connect_to(const std::wstring& id)
 
     // bail out, if there were no tokens
     if ( tok_iter == tokens.end() )
-        throw NMSProtocolError("Invalid remote site identifier.");
+        throw ProtocolError("Invalid remote site identifier.");
         
     // create host from first token
     std::string host(tok_iter->begin(), tok_iter->end());
     
     if ( ++tok_iter == tokens.end() )
-        throw NMSProtocolError("Invalid remote site identifier.");
+        throw ProtocolError("Invalid remote site identifier.");
         
     // create service from second token
     std::string service(tok_iter->begin(), tok_iter->end());
@@ -57,10 +60,10 @@ void NMSProtocol::connect_to(const std::wstring& id)
     
     try 
     {   
-        ba_tcp::resolver resolver(io_service); // get a resolver
-        ba_tcp::resolver::query query(host, service); // create a query
+        boost::asio::ip::tcp::resolver resolver(io_service); // get a resolver
+        boost::asio::ip::tcp::resolver::query query(host, service); // create a query
         // resolve the query
-        ba_tcp::resolver::iterator iterator = resolver.resolve(query); 
+        boost::asio::ip::tcp::resolver::iterator iterator = resolver.resolve(query); 
         
         socket.connect(*iterator); // connect to the first found host
     } 
@@ -68,13 +71,14 @@ void NMSProtocol::connect_to(const std::wstring& id)
     {
         boost::system::error_code ignored;
         socket.close(ignored);
-        throw NMSProtocolError(e.what());
+        throw ProtocolError(e.what());
     }
     
 }
 
 void NMSProtocol::send(const std::wstring& msg)
 {
+    // turn std::wstring into a void* buffer, and put it on the wire
     socket.send(boost::asio::buffer(reinterpret_cast<const void*>(msg.c_str()), 
             msg.length() * sizeof(std::wstring::value_type)));
 }

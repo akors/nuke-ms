@@ -137,8 +137,7 @@ class AppControl
 {
     GuiT gui;
     ProtocolT protocol;
-    
-private:
+
     // not assignable, not copyable
     AppControl& operator= (const AppControl&);
     AppControl(const AppControl&);
@@ -254,11 +253,13 @@ void AppControl<GuiT, ProtocolT>::handleCommand(const ControlCommand& cmd)
         }
             
         case ControlCommand::ID_CONNECT_TO:
+        {
 		    const Command_ConnectTo& cmd_cnt =
 		        dynamic_cast<const Command_ConnectTo&> (cmd);
 		        
 	        connectTo(cmd_cnt.remote_host);
             break;
+        }
             
         default:
             printMessage(L"Invalid command!");
