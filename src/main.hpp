@@ -40,6 +40,8 @@
 #include "control.hpp"
 #include "protocol.hpp"
 
+
+
 /** Proportions for the window.
 * @ingroup gui
 * This struct contains members that are used by MainFrame to determine the size
@@ -59,33 +61,22 @@ struct WindowScales
     
     /** How many parts of the window size will the input text box use*/
 	unsigned int inputbox_proportion;
-};
-
-
-
-	
+};	
 	
 
-
+// Forward Declaration for friend declaration
 class MainFrameWrapper;
 
 
 /** Main Window.
 * @ingroup gui
 * This class represents the main window. Construct it and a window will appear.
-* <br> 
-* After construction immediately call the inherited member setAppControl()
-* to bind the GUI object to the application control object.
 *
-* @see AbstractGui::setAppControl
 */
 class MainFrame : public wxFrame
 {
-	/** Enum for wxWidgets window identifiers.
-	*
-	*/
+	/** Enum for wxWidgets window identifiers. */
 	enum { ID_INPUT_BOX = wxID_HIGHEST+1 };
-
 
 	/** proportions and sizes for this window. */
 	WindowScales scales;
@@ -102,8 +93,8 @@ class MainFrame : public wxFrame
 	/** Input text box */
 	wxTextCtrl* text_input_box;
 
+	/** The function object to call when a command was issued by the user */
     boost::function1<void, const ControlCommand&> commandCallback;
-
 
 	/** creates and initializes menu bars*/
 	void createMenuBar();
@@ -138,20 +129,19 @@ class MainFrame : public wxFrame
 
 	/** Parse a string and interpret it as command.
 	* You might want to check if this seems like a Command befor calling this 
-    * function
+    * function.
 	* 
 	* @param str The string you want to be interpreted as command
 	* @return A pointer to the command that was retrieved from parsing.
 	* ControlCommand::id == ID_INVALID, if the command could not be parsed.
-	* @note the return value points to a heap object. Don't forget to delete it,
-	* when you dont need it anymore.
 	* @todo add proper parser here
 	*/
 	static boost::shared_ptr<ControlCommand>
 	parseCommand(const std::wstring& str);    
 
 public:
-	// opening a hole for MainApp, so it can call OnEnter when 
+	// opening a hole for MainApp, so it can call OnEnter when the user hit the
+	// enter key.
 	static boost::function1<void, wxCommandEvent&> OnEnter_callback;
 
     friend class MainFrameWrapper;
@@ -159,15 +149,15 @@ public:
 	/** Constructor.
 	*
 	* Initialize base class, set scales,
-	* create menu bar and text boxes
+	* create menu bar and text boxes.
 	*/
 	MainFrame( boost::function1<void, const ControlCommand&> _commandCallback);    
 
 	/** Called if the user wants to quit. */
 	void OnQuit(wxCommandEvent& event);
 
-	/** Called i the user hits the return key without 
-	*holding down the shift or ctrl. key
+	/** Called when the user hits the return key without 
+	* holding down the shift or ctrl. key
 	*/
 	void OnEnter(wxCommandEvent& event);    
 
@@ -175,12 +165,20 @@ public:
 	DECLARE_EVENT_TABLE()
 };
 
-
+/** Wrapper around the MainFrame class, to be used by the AppControl object.
+* @ingroup gui
+* This class is needed, because wxWindow objects (from which MainFrame is 
+* derived) can only be created by allocating it with new. However, AppControl 
+* stores the gui object locally.
+* @see MainFrame
+*/
 class MainFrameWrapper
 {
     MainFrame* main_frame;
 
 public:
+
+	/** Constructor. Creates a new MainFrame object. */
     MainFrameWrapper 
         (boost::function1<void, const ControlCommand&> commandCallback)
         : main_frame(NULL)
@@ -192,17 +190,17 @@ public:
     ~MainFrameWrapper()
     {
         // MainFrame is derived from wxWindow. As such, simply deleting the 
-        // object would be incorrect. Instead we have to ask it to destroy 
-        // itself.
+        // object would be incorrect. It has to delete itself.
         //main_frame->Close();
     }
     
-    
+    /** Print a message. @see MainFrame::printMessage() */
     void printMessage(const std::wstring& str)
     {
         main_frame->printMessage(str);
     }
     
+	/** Closes the Main Frame. @see MainFrame::Close() */
 	void close()
 	{
 		main_frame->Close(false);
@@ -221,10 +219,8 @@ public:
 class MainApp : public wxApp
 {
 
-
 	/** Application control object*/
-	AppControl<MainFrameWrapper, NMSProtocol>* app_control;
-	
+	AppControl<MainFrameWrapper, NMSProtocol>* app_control;	
 
 public:
 

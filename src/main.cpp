@@ -18,12 +18,13 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
-#include "main.hpp"
-#include <wx/aboutdlg.h>
-#include <boost/tokenizer.hpp>
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
+#include <boost/tokenizer.hpp>
+
+#include <wx/aboutdlg.h>
+
+#include "main.hpp"
 
 
 
@@ -198,7 +199,6 @@ void MainFrame::OnQuit(wxCommandEvent& event)
 
 
 void MainFrame::OnEnter(wxCommandEvent& event)
-
 {
     // create reference to a std::wstring
     const std::wstring& input_string = 
@@ -212,8 +212,7 @@ void MainFrame::OnEnter(wxCommandEvent& event)
 	    return;
 	    
     // print everything the user typed to the screen
-	commandCallback(Command_PrintMessage(input_string));		
-
+	commandCallback(Command_PrintMessage(input_string));
 	
     
     // check if this is a command

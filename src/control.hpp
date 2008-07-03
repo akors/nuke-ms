@@ -60,8 +60,7 @@ struct ControlCommand
 		ID_PRINT_MSG, /**< print a message */	
 		ID_SEND_MSG, /**< Send the message to the remote site */
 		ID_CONNECT_TO, /**< connect to a remote site */
-		ID_DISCONNECT, /**< disconnect from a remote site */
-	
+		ID_DISCONNECT, /**< disconnect from a remote site */	
 	
 		/** Number of command identifiers.
 		* As the first command (ID_INVALID) starts from 0,
@@ -71,8 +70,7 @@ struct ControlCommand
 	};
 	
 	/** The command ID*/
-	const command_id_t id;	
-	
+	const command_id_t id;		
 	
 	/** Constructor. */
 	ControlCommand(const command_id_t& _id)
@@ -85,7 +83,6 @@ struct ControlCommand
 
 /** Command to print a message.
 * @ingroup ctrl_cmd
-*
 */
 struct Command_PrintMessage : public ControlCommand
 {
@@ -97,9 +94,8 @@ struct Command_PrintMessage : public ControlCommand
 	{ }
 };
 
-/** Command to print a message.
+/** Command to send a message.
 * @ingroup ctrl_cmd
-*
 */
 struct Command_SendMessage : public ControlCommand
 {
@@ -113,7 +109,6 @@ struct Command_SendMessage : public ControlCommand
 
 /** Command to connect to a remote site.
 * @ingroup ctrl_cmd
-*
 */
 struct Command_ConnectTo : public ControlCommand
 {
@@ -128,11 +123,12 @@ struct Command_ConnectTo : public ControlCommand
 
 /** Application Control Class.
 * @ingroup app_ctrl
-* This class controls the whole Application. It provides Member funcions
-* which control each part of the application. <br>
-* When creating an instance of this class you have to bind (register) a gui Object 
-* that is derived from AbstractGui by passing a pointer to it. 
-* By doing so, you also register the instance in the gui object.
+* This class controls the whole Application. It provides Callback functions
+* that can be used by the components to report events. These callback functions
+* determine the actions to be taken.
+*
+* @tparam GuiT Class of the GUI object.
+* @tparam ProtocolT Class of the Connection Protocol object.
 * 
 * @note Copy construction and assignment are not allowed.
 */
@@ -147,6 +143,7 @@ private:
     AppControl& operator= (const AppControl&);
     AppControl(const AppControl&);
     
+	
     void connectTo(const std::wstring& id);
 	
 	void sendMessage(const std::wstring& msg);
@@ -257,13 +254,11 @@ void AppControl<GuiT, ProtocolT>::handleCommand(const ControlCommand& cmd)
         }
             
         case ControlCommand::ID_CONNECT_TO:
-        {
 		    const Command_ConnectTo& cmd_cnt =
 		        dynamic_cast<const Command_ConnectTo&> (cmd);
 		        
 	        connectTo(cmd_cnt.remote_host);
             break;
-        }
             
         default:
             printMessage(L"Invalid command!");

@@ -12,7 +12,7 @@ const_cast<>'s shall not be used at all, see below.
 
 const- ness:
 Restrict the users of your classes or functions and yourself as far as possible:
-if the current scope does not actually alter a data element, this element should
+if the current scope does not actually alter a data element, this element shall
 be declared const.
 const_cast<>'s are not allowed, except for extraordinary circumstances.
 
@@ -35,13 +35,29 @@ actually really critical parts of code.
 Every object should have a proper destructor (note that default destructors are
 often "proper" enough), no matter where or how it is used.
 Write your destructors with great care, allways clean up _every_ resource used 
-in your class. Don't make any assumptions on the state of the object or it's 
+in your class. Avoid anything that takes time, such as I/O. A logfile entry
+might be okay, but dont send or receive anything. Also dont't do anything 
+that requires a mutex to be locked.
+Don't make any assumptions on the state of the object or it's 
 environent, expect it to be invalid, corrupted or whatever. You still have to
 shut down and free all resources as gracefully as possible. Destructors just 
 CAN'T fail. If the time of an object has come, then it's over. 
 Also, NEVER EVER throw an exception from the destructor (watch out for function
 calls that might throw them). 
 
-Error handling:
 
+Error handling:
+Errors are propagated through the program by exceptions. Errors (an action that
+failed) are reported by the entity that was supposed to to that action 
+(function) to the entity that requested this action (caller).
+Errors that can be anticipated, for example a failing connect() shall be or be
+derived from std::runtime_error. Every function that can throw such an error
+shall declare to do so. The caller shall catch this exception, unless the only 
+reacton to this error would be to throw another exception.
+Errors that can not be anticipated, for example wrong usage of a function 
+(namely a bug) or failure of memory allocation shall be or be derived from 
+std::logic_error (apart from failing memory allocation, which of course shall be
+std::bad_alloc). These error shall not be declared in the function header and
+must not be caught by callers, but must only be caught by top- level functions
+(such as main(), or thread entry points).
 
