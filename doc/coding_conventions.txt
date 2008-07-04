@@ -9,13 +9,13 @@ type, use the dynamic_cast<>.
 const_cast<>'s shall not be used at all, see below.
 
 
-
 const- ness:
 Restrict the users of your classes or functions and yourself as far as possible:
 if the current scope does not actually alter a data element, this element shall
 be declared const.
+All member functions that do not modify any of it's enclosing class' 
+non- mutable member variables shall be declared const.
 const_cast<>'s are not allowed, except for extraordinary circumstances.
-
 
 
 static- vs dynamic polymorphism

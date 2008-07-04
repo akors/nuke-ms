@@ -38,64 +38,64 @@ boost::function1<void, wxCommandEvent&> MainFrame::OnEnter_callback;
 
 void MainFrame::createMenuBar()
 {
-	// create menu bar
-	menu_bar = new wxMenuBar();
+    // create menu bar
+    menu_bar = new wxMenuBar();
 
-	// create menu
-	menu_file = new wxMenu();
-	menu_file->Append(wxID_EXIT, wxT("&Quit"), wxT("Exit Application"));
+    // create menu
+    menu_file = new wxMenu();
+    menu_file->Append(wxID_EXIT, wxT("&Quit"), wxT("Exit Application"));
 
-	// append menu to menu bar
-	menu_bar->Append(menu_file, wxT("File"));
+    // append menu to menu bar
+    menu_bar->Append(menu_file, wxT("File"));
 
-	// register menu bar to the main window
-	this->SetMenuBar(menu_bar);
+    // register menu bar to the main window
+    this->SetMenuBar(menu_bar);
 }
 
 
 void MainFrame::createTextBoxes()
 {
     // create vertical sizer
-	wxBoxSizer* vertsizer = new wxBoxSizer(wxVERTICAL);
+    wxBoxSizer* vertsizer = new wxBoxSizer(wxVERTICAL);
 
     // create text box for displaying text (read only)
-	text_display_box = new wxTextCtrl(this, wxID_ANY, wxT(""),
-				wxDefaultPosition, scales.displaybox_size, 
-				wxTE_READONLY | wxTE_MULTILINE);
+    text_display_box = new wxTextCtrl(this, wxID_ANY, wxT(""),
+                wxDefaultPosition, scales.displaybox_size, 
+                wxTE_READONLY | wxTE_MULTILINE);
 
     // create text box for writing text
-	text_input_box = new wxTextCtrl(this, ID_INPUT_BOX, wxT(""),
-				wxDefaultPosition, scales.inputbox_size, 
-				wxTE_PROCESS_ENTER | wxTE_MULTILINE);
+    text_input_box = new wxTextCtrl(this, ID_INPUT_BOX, wxT(""),
+                wxDefaultPosition, scales.inputbox_size, 
+                wxTE_PROCESS_ENTER | wxTE_MULTILINE);
 
     // add the upper textbox to the sizer
-	vertsizer->Add(
-			text_display_box, // the text box we want to add
-			scales.displaybox_proportion,  // the relative size
-			wxALL | // border everywhere
+    vertsizer->Add(
+            text_display_box, // the text box we want to add
+            scales.displaybox_proportion,  // the relative size
+            wxALL | // border everywhere
             wxEXPAND |  // item expands to fill space 
             wxALIGN_CENTER_HORIZONTAL, 
-			scales.border_width // border size
-			  );
+            scales.border_width // border size
+              );
 
     // add the lower textbox to the sizer
-	vertsizer->Add(
-			text_input_box, // the text box we want to add
-			scales.inputbox_proportion,  // the relative size
-			wxALL | // border everywhere
+    vertsizer->Add(
+            text_input_box, // the text box we want to add
+            scales.inputbox_proportion,  // the relative size
+            wxALL | // border everywhere
             wxEXPAND |  // item expands to fill space 
             wxALIGN_CENTER_HORIZONTAL, 
-			scales.border_width // border size
-			  );
+            scales.border_width // border size
+              );
 
-	// assign sizer to window
-	this->SetSizer(vertsizer);
+    // assign sizer to window
+    this->SetSizer(vertsizer);
 
-	// set limitations on minimum size
-	this->SetSizeHints(vertsizer->GetMinSize());
-	
-	// set focus on the input box
-	text_input_box->SetFocus();
+    // set limitations on minimum size
+    this->SetSizeHints(vertsizer->GetMinSize());
+    
+    // set focus on the input box
+    text_input_box->SetFocus();
 }
 
 
@@ -116,52 +116,56 @@ MainFrame::parseCommand(const std::wstring& str)
         goto invalid_command;
 
 
-	if  ( !tok_iter->compare( L"/exit" ) )	
-		return boost::shared_ptr<ControlCommand>
-			(new ControlCommand(ControlCommand::ID_EXIT));
-			
-    if  ( !tok_iter->compare( L"/disconnect" ) )	
-		return boost::shared_ptr<ControlCommand>
-			(new ControlCommand(ControlCommand::ID_DISCONNECT));
-			
-	
-	else if ( !tok_iter->compare( L"/print") )
-	{
-	    if (++tok_iter == tokens.end() )
-            goto invalid_command;
-	        
-		return boost::shared_ptr<ControlCommand> 
-			(new Command_PrintMessage(*tok_iter));
-	}
-			
-	else if ( !tok_iter->compare( L"/connect") )	
-	{	    
-	    if (++tok_iter == tokens.end() )
+    if  ( !tok_iter->compare( L"/exit" ) )    
+        return boost::shared_ptr<ControlCommand>
+            (new ControlCommand(ControlCommand::ID_EXIT));
+            
+    if  ( !tok_iter->compare( L"/disconnect" ) )    
+        return boost::shared_ptr<ControlCommand>
+            (new ControlCommand(ControlCommand::ID_DISCONNECT));
+            
+    
+    else if ( !tok_iter->compare( L"/print") )
+    {
+        if (++tok_iter == tokens.end() )
             goto invalid_command;
             
-		return boost::shared_ptr<ControlCommand> 
-			(new Command_ConnectTo(*tok_iter));		
-	}
-	
-	// if comparison failed, the command is invalid		
-			
+        return boost::shared_ptr<ControlCommand> 
+            (new Command_PrintMessage(*tok_iter));
+    }
+            
+    else if ( !tok_iter->compare( L"/connect") )    
+    {        
+        if (++tok_iter == tokens.end() )
+            goto invalid_command;
+            
+        return boost::shared_ptr<ControlCommand> 
+            (new Command_ConnectTo(*tok_iter));        
+    }
+    
+    // if comparison failed, the command is invalid        
+            
 invalid_command:
-	return boost::shared_ptr<ControlCommand> 
-			(new ControlCommand(ControlCommand::ID_INVALID));
+    return boost::shared_ptr<ControlCommand> 
+            (new ControlCommand(ControlCommand::ID_INVALID));
 }
 
 
 void MainFrame::printMessage(const std::wstring& str)
 {
+    // lock the printer mutex while printing
+    boost::lock_guard<boost::mutex> printlock(print_mutex);
+    
     text_display_box->AppendText( (str + L'\n').c_str() );
 }
 
 
+#if 0
 void MainFrame::printMessage(const wxString& str)
 {
     text_display_box->AppendText( str + L'\n' );
 }
-
+#endif
 
 
 
@@ -170,30 +174,30 @@ void MainFrame::printMessage(const wxString& str)
 
 MainFrame::MainFrame
         (boost::function1<void, const ControlCommand&> _commandCallback)
-	: wxFrame(NULL, -1, wxT("killer app"), wxDefaultPosition, wxSize(600, 500)),
-	commandCallback(_commandCallback)
+    : wxFrame(NULL, -1, wxT("killer app"), wxDefaultPosition, wxSize(600, 500)),
+    commandCallback(_commandCallback)
 {
-	// Opening a hole for MainApp to get to the OnEnter member function
-	OnEnter_callback = boost::bind(&MainFrame::OnEnter, this, _1);
+    // Opening a hole for MainApp to get to the OnEnter member function
+    OnEnter_callback = boost::bind(&MainFrame::OnEnter, this, _1);
 
-	// softcoding the window sizes
+    // softcoding the window sizes
     scales.border_width = 10;
     scales.displaybox_size = wxSize(300, 50);
     scales.inputbox_size = wxSize(300, 50);
     scales.displaybox_proportion = 3;
     scales.inputbox_proportion = 1;
-	
-	createMenuBar();
-	createTextBoxes();
+    
+    createMenuBar();
+    createTextBoxes();
 
-	Show(true);
+    Show(true);
 }
 
 
 
 void MainFrame::OnQuit(wxCommandEvent& event)
 {
-	Close(true);
+    Close(true);
 }
 
 
@@ -203,25 +207,25 @@ void MainFrame::OnEnter(wxCommandEvent& event)
     // create reference to a std::wstring
     const std::wstring& input_string = 
         wxString2wstring(text_input_box->GetValue() ); 
-	
-	// clear input box
-	text_input_box->Clear();
-	
-	// nothing to do if the user entered nothing
-	if ( input_string.empty() )
-	    return;
-	    
+    
+    // clear input box
+    text_input_box->Clear();
+    
+    // nothing to do if the user entered nothing
+    if ( input_string.empty() )
+        return;
+        
     // print everything the user typed to the screen
-	commandCallback(Command_PrintMessage(input_string));
-	
+    commandCallback(Command_PrintMessage(input_string));
+    
     
     // check if this is a command
     if ( MainFrame::isCommand(input_string) )
     {
-		// create a shared pointer from the output
-		boost::shared_ptr<ControlCommand> cmd =
-		    MainFrame::parseCommand(input_string);
-		
+        // create a shared pointer from the output
+        boost::shared_ptr<ControlCommand> cmd =
+            MainFrame::parseCommand(input_string);
+        
         commandCallback(*cmd);
     }
     else // if it's not a command we try to send it
@@ -253,7 +257,6 @@ bool MainApp::ProcessEvent(wxEvent& event)
             MainFrame::OnEnter_callback(cmd_evt);
             return true;
         }
-
     }    
 
     // dont stop processing the event in this function
@@ -270,7 +273,7 @@ bool MainApp::OnInit()
     // Create AppControl object, which creates its components
     app_control = new AppControl<MainFrameWrapper, NMSProtocol>;
     
-	return true;
+    return true;
 }
 
 int MainApp::OnExit()
@@ -288,8 +291,8 @@ int MainApp::OnExit()
 
 
 BEGIN_EVENT_TABLE(MainFrame, wxFrame)
-	EVT_MENU(wxID_EXIT, MainFrame::OnQuit)
-	//EVT_TEXT_ENTER(MainFrame::ID_INPUT_BOX, MainFrame::OnEnter)
+    EVT_MENU(wxID_EXIT, MainFrame::OnQuit)
+    //EVT_TEXT_ENTER(MainFrame::ID_INPUT_BOX, MainFrame::OnEnter)
 END_EVENT_TABLE()
 
 

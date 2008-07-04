@@ -14,13 +14,13 @@ B_SUFFIX=-mgw34-mt-sd-1_35
 B_LIB_SYSTEM=boost_system$(B_SUFFIX)
 B_LIB_THREADS=boost_thread$(B_SUFFIX)
 
-B_LIBS=$(B_LIB_SYSTEM)
+B_LIBS=-l$(B_LIB_SYSTEM) -l$(B_LIB_THREADS)
 
 # wxWidgets stuff
-include wx_libs.txt
-include wx_cxxflags.txt
+include wxwin_libs.txt
+include wxwin_cxxflags.txt
 
-CXXFLAGS=-g $(INCLUDEDIRS) $(WX_CXXFLAGS) -D_WINNT=0x0501
+CXXFLAGS=-g $(INCLUDEDIRS) $(WX_CXXFLAGS) -D_WIN32_WINNT=0x0501
 
 all: nms
 
@@ -28,7 +28,7 @@ doc:
 	doxygen $(DOXYFILE)	
 
 nms: main.o protocol.o
-	$(CXX) $(CXXFLAGS) $(LIBDIRS) -o $@ $^ -l$(B_LIBS) $(WX_LIBS) -lws2_32
+	$(CXX) $(CXXFLAGS) $(LIBDIRS) -o $@ $^ $(B_LIBS) $(WX_LIBS) -lws2_32
 
 
 clean:

@@ -57,7 +57,7 @@ level of their enclosing class.
     
 5) if, else, else if, for, while, try and catch execution blocks begin on the
 next line after their respective statement. All statements and blocks inside 
-are indented one addition level.
+are indented one additional level.
 If the execution block is only one statement, the braces can be ommited. 
 
     Example:

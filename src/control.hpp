@@ -50,35 +50,35 @@
 */
 struct ControlCommand
 {
-	
+    
     /** The Command ID Type
     * @ingroup ctrl_cmd
     */
-    enum command_id_t {	
-		ID_INVALID = 0, /**< Invalid Command */
-		ID_EXIT, /**< user asked to exit */
-		ID_PRINT_MSG, /**< print a message */	
-		ID_SEND_MSG, /**< Send the message to the remote site */
-		ID_CONNECT_TO, /**< connect to a remote site */
-		ID_DISCONNECT, /**< disconnect from a remote site */	
-	
-		/** Number of command identifiers.
-		* As the first command (ID_INVALID) starts from 0,
-		* this element specifies how many commands there are.
-		*/
-		ID_NUM_COMMANDS 
-	};
-	
-	/** The command ID*/
-	const command_id_t id;		
-	
-	/** Constructor. */
-	ControlCommand(const command_id_t& _id)
-		: id(_id)
-	{}
+    enum command_id_t {    
+        ID_INVALID = 0, /**< Invalid Command */
+        ID_EXIT, /**< user asked to exit */
+        ID_PRINT_MSG, /**< print a message */    
+        ID_SEND_MSG, /**< Send the message to the remote site */
+        ID_CONNECT_TO, /**< connect to a remote site */
+        ID_DISCONNECT, /**< disconnect from a remote site */    
+    
+        /** Number of command identifiers.
+        * As the first command (ID_INVALID) starts from 0,
+        * this element specifies how many commands there are.
+        */
+        ID_NUM_COMMANDS 
+    };
+    
+    /** The command ID*/
+    const command_id_t id;        
+    
+    /** Constructor. */
+    ControlCommand(const command_id_t& _id)
+        : id(_id)
+    {}
 
-	virtual ~ControlCommand()
-	{}
+    virtual ~ControlCommand()
+    {}
 };
 
 /** Command to print a message.
@@ -86,12 +86,12 @@ struct ControlCommand
 */
 struct Command_PrintMessage : public ControlCommand
 {
-	// the message you want to print
-	const std::wstring msg;
-	
-	Command_PrintMessage(const std::wstring& str)
-		: msg(str), ControlCommand(ID_PRINT_MSG)
-	{ }
+    // the message you want to print
+    const std::wstring msg;
+    
+    Command_PrintMessage(const std::wstring& str)
+        : msg(str), ControlCommand(ID_PRINT_MSG)
+    { }
 };
 
 /** Command to send a message.
@@ -99,12 +99,12 @@ struct Command_PrintMessage : public ControlCommand
 */
 struct Command_SendMessage : public ControlCommand
 {
-	// the message you want to print
-	const std::wstring msg;
-	
-	Command_SendMessage(const std::wstring& str)
-		: msg(str), ControlCommand(ID_SEND_MSG)
-	{ }
+    // the message you want to print
+    const std::wstring msg;
+    
+    Command_SendMessage(const std::wstring& str)
+        : msg(str), ControlCommand(ID_SEND_MSG)
+    { }
 };
 
 /** Command to connect to a remote site.
@@ -114,9 +114,9 @@ struct Command_ConnectTo : public ControlCommand
 {
     const std::wstring remote_host;
     
-	Command_ConnectTo(const std::wstring& str)
-		: remote_host(str), ControlCommand(ID_CONNECT_TO)
-	{ }
+    Command_ConnectTo(const std::wstring& str)
+        : remote_host(str), ControlCommand(ID_CONNECT_TO)
+    { }
 };
 
 
@@ -142,63 +142,75 @@ class AppControl
     AppControl& operator= (const AppControl&);
     AppControl(const AppControl&);
     
-	
+    /** Connect to a remote site.
+    * The Protocol is requested to connect to a remote site, that is uniquely
+    * identified by the string id.
+    * 
+    * @param id The string that identifies the remote site. This string must be 
+    * understood by the protocol.
+    */
     void connectTo(const std::wstring& id);
-	
-	void sendMessage(const std::wstring& msg);
+    
+    /** Send a message to the site that is connected. 
+    * If the protocol is not connected to a remote site or failed to send 
+    * the message, an error message is displayed.
+    * @param msg The message you want to send
+    */
+    void sendMessage(const std::wstring& msg);
 
-	
-	void disconnect()
-	{
-	    protocol.disconnect();
-	    this->printMessage(L"Disconnected");
-	}
-	
-	/** Print a message to the screen securely
-	* 
-	* @param the message you want to print
-	*/
-	void printMessage(const std::wstring& msg)
-	{
-		gui.printMessage(msg);
-	}
-	
-	void close()
-	{
-		gui.close();
-	}
+    /** Disconnect from a remote site, if connected */
+    void disconnect()
+    {
+        protocol.disconnect();
+        printMessage(L"Disconnected");
+    }
+    
+    /** Print a message to the screen securely
+    * 
+    * @param the message you want to print
+    */
+    void printMessage(const std::wstring& msg)
+    {
+        gui.printMessage(msg);
+    }
+    
+    /** Shut down the application. */
+    void close()
+    {
+        gui.close();
+    }
         
 public:
-	/** Constructor.
-	*
-	* Creates an object, registers the gui object and registers this in the
-	* gui object.
-	*
-	* @param _gui The gui object you want to bind to this object.
-	* @see AbstractGui
-	*/  
-	AppControl()
-	: protocol(), gui(boost::bind(&AppControl::handleCommand, this, _1))
-	{ }
-	
-	
-	void handleCommand(const ControlCommand& ctrl_cmd);
+    /** Constructor.
+    * Registers the handleCommand callback with the gui object.
+    */  
+    AppControl()
+    : protocol(), gui(boost::bind(&AppControl::handleCommand, this, _1))
+    { }
+    
+    /** Handle a command.
+    * This function should be used as a callback for the GUI.
+    * Commands that are passed in are evaluated. If requested action can not
+    * be performed, an error message is displayed.
+    * @param ctrl_cmd The command that 
+    */
+    void handleCommand(const ControlCommand& ctrl_cmd) throw();
 };
 
 
 
 template <typename GuiT, typename ProtocolT>
 void AppControl<GuiT, ProtocolT>::connectTo(const std::wstring& id)
-{	    
+{        
     try { 
         protocol.connect_to(id);
         this->printMessage(L"Connected to " + id);
     } 
     catch (const std::exception& e)
     {
-        std::string errmsg(e.what());	        
-	    this->printMessage(L"Failed to connect to " + id + L": " 
-	                      + std::wstring(errmsg.begin(), errmsg.end()) );
+        std::string errmsg(e.what());            
+        this->printMessage(L"Failed to connect to " + id + L": " 
+                          + std::wstring(errmsg.begin(), errmsg.end()) );
     }
 }
 
@@ -206,37 +218,38 @@ template <typename GuiT, typename ProtocolT>
 void AppControl<GuiT, ProtocolT>::sendMessage(const std::wstring& msg)
 {
     try {
-	    protocol.send(msg);
+        protocol.send(msg);
     } 
     catch (const std::exception& e)
     {
-        std::string errmsg(e.what());	        
-	    this->printMessage(L"Failed to send message: " 
-	                        + std::wstring(errmsg.begin(), errmsg.end()));
+        std::string errmsg(e.what());            
+        this->printMessage(L"Failed to send message: " 
+                            + std::wstring(errmsg.begin(), errmsg.end()));
     }
 }
 
 template <typename GuiT, typename ProtocolT>
-void AppControl<GuiT, ProtocolT>::handleCommand(const ControlCommand& cmd)
+void AppControl<GuiT, ProtocolT>::handleCommand(const ControlCommand& cmd) 
+    throw()
 {
     // determine actions depending on the id of the command
     switch ( cmd.id )
     {
 
         case ControlCommand::ID_EXIT:
-			close();
-			break;
+            close();
+            break;
             
         case ControlCommand::ID_DISCONNECT:
-			disconnect();
-			break;
+            disconnect();
+            break;
             
         case ControlCommand::ID_PRINT_MSG:
         {
-			const Command_PrintMessage& cmd_msg =
-				dynamic_cast<const Command_PrintMessage&> (cmd);
-			
-			printMessage(cmd_msg.msg);
+            const Command_PrintMessage& cmd_msg =
+                dynamic_cast<const Command_PrintMessage&> (cmd);
+            
+            printMessage(cmd_msg.msg);
             break;
         }
         
@@ -245,19 +258,19 @@ void AppControl<GuiT, ProtocolT>::handleCommand(const ControlCommand& cmd)
             if ( !protocol.is_connected())
                 return;
         
-			const Command_SendMessage& cmd_msg =
-				dynamic_cast<const Command_SendMessage&> (cmd);
-			
-			sendMessage(cmd_msg.msg);
+            const Command_SendMessage& cmd_msg =
+                dynamic_cast<const Command_SendMessage&> (cmd);
+            
+            sendMessage(cmd_msg.msg);
             break;
         }
             
         case ControlCommand::ID_CONNECT_TO:
         {
-		    const Command_ConnectTo& cmd_cnt =
-		        dynamic_cast<const Command_ConnectTo&> (cmd);
-		        
-	        connectTo(cmd_cnt.remote_host);
+            const Command_ConnectTo& cmd_cnt =
+                dynamic_cast<const Command_ConnectTo&> (cmd);
+                
+            connectTo(cmd_cnt.remote_host);
             break;
         }
             

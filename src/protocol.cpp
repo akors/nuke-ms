@@ -90,7 +90,7 @@ void NMSProtocol::disconnect()
 }
 
 
-bool NMSProtocol::is_connected()
+bool NMSProtocol::is_connected() const
 {
     return socket.is_open();
 }

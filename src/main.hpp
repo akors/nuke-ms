@@ -31,7 +31,7 @@
 #define MAIN_HPP_INCLUDED
 
 #include <boost/function.hpp>
-
+#include <boost/thread/mutex.hpp>
 
 #include <wx/app.h>
 #include <wx/frame.h>
@@ -53,18 +53,18 @@
 */
 struct WindowScales
 {
-	unsigned int border_width; /**< Border width*/
+    unsigned int border_width; /**< Border width*/
 
-	wxSize displaybox_size; /**< size of the Output text box */
-	wxSize inputbox_size; /**< size of the input text box*/
+    wxSize displaybox_size; /**< size of the Output text box */
+    wxSize inputbox_size; /**< size of the input text box*/
 
     /** How many parts of the window size will the output text box use*/
-	unsigned int displaybox_proportion;
+    unsigned int displaybox_proportion;
     
     /** How many parts of the window size will the input text box use*/
-	unsigned int inputbox_proportion;
-};	
-	
+    unsigned int inputbox_proportion;
+};    
+    
 
 // Forward Declaration for friend declaration
 class MainFrameWrapper;
@@ -77,94 +77,97 @@ class MainFrameWrapper;
 */
 class MainFrame : public wxFrame
 {
-	/** Enum for wxWidgets window identifiers. */
-	enum { ID_INPUT_BOX = wxID_HIGHEST+1 };
-
-	/** proportions and sizes for this window. */
-	WindowScales scales;
-
-	/** menu bar */
-	wxMenuBar* menu_bar;
-
-	/** Menu item called "File" */
-	wxMenu* menu_file;
-
-	/** Output text box*/
-	wxTextCtrl* text_display_box;
-
-	/** Input text box */
-	wxTextCtrl* text_input_box;
-
-	/** The function object to call when a command was issued by the user */
-    boost::function1<void, const ControlCommand&> commandCallback;
-
-	/** creates and initializes menu bars*/
-	void createMenuBar();
-
-	/** creates and initializes text boxes */
-	void createTextBoxes();
-
-	/** Print a message to the Output text box.
-	*
-	* @param str The string you  want to print
-	*/
-	void printMessage(const wxString& str);
-
-	/** Print a message to the Output text box.
-	*
-	* @param str The string you  want to print
-	*/
-	void printMessage(const std::wstring& str);
 
 
 
-	/** Check if a string is a command
-	* 
-	* @param str The string you want to be checked
-	* @todo Add proper checking here
-	*/
-	static bool isCommand(const std::wstring& str)
-	{
-    	return ((str.size() != 0) &&(str[0] == L'/'));
-	}
+    /** Enum for wxWidgets window identifiers. */
+    enum { ID_INPUT_BOX = wxID_HIGHEST+1 };
+
+    /** proportions and sizes for this window. */
+    WindowScales scales;
+
+    /** menu bar */
+    wxMenuBar* menu_bar;
+
+    /** Menu item called "File" */
+    wxMenu* menu_file;
+
+    /** Output text box*/
+    wxTextCtrl* text_display_box;
+
+    /** Input text box */
+    wxTextCtrl* text_input_box;
+
+    /** The function object to call when a command was issued by the user */
+    const boost::function1<void, const ControlCommand&> commandCallback;
+
+    
+    boost::mutex print_mutex;
+    
+    
+    /** creates and initializes menu bars*/
+    void createMenuBar();
+
+    /** creates and initializes text boxes */
+    void createTextBoxes();
 
 
-	/** Parse a string and interpret it as command.
-	* You might want to check if this seems like a Command befor calling this 
+    /** Print a message to the Output text box.
+    * Locks the printer mutex.
+    * 
+    * @param str The string you  want to print
+    */
+    void printMessage(const std::wstring& str);
+
+
+
+    /** Check if a string is a command
+    * 
+    * @param str The string you want to be checked
+    * @todo Add proper checking here
+    */
+    static bool isCommand(const std::wstring& str)
+    {
+        return ((str.size() != 0) &&(str[0] == L'/'));
+    }
+
+
+    /** Parse a string and interpret it as command.
+    * You might want to check if this seems like a Command befor calling this 
     * function.
-	* 
-	* @param str The string you want to be interpreted as command
-	* @return A pointer to the command that was retrieved from parsing.
-	* ControlCommand::id == ID_INVALID, if the command could not be parsed.
-	* @todo add proper parser here
-	*/
-	static boost::shared_ptr<ControlCommand>
-	parseCommand(const std::wstring& str);    
+    * 
+    * @param str The string you want to be interpreted as command
+    * @return A pointer to the command that was retrieved from parsing.
+    * ControlCommand::id == ID_INVALID, if the command could not be parsed.
+    * @todo add proper parser here
+    */
+    static boost::shared_ptr<ControlCommand>
+    parseCommand(const std::wstring& str);    
 
 public:
-	// opening a hole for MainApp, so it can call OnEnter when the user hit the
-	// enter key.
-	static boost::function1<void, wxCommandEvent&> OnEnter_callback;
+    // opening a hole for MainApp, so it can call OnEnter when the user hit the
+    // enter key.
+    static boost::function1<void, wxCommandEvent&> OnEnter_callback;
 
     friend class MainFrameWrapper;
     
-	/** Constructor.
-	*
-	* Initialize base class, set scales,
-	* create menu bar and text boxes.
-	*/
-	MainFrame( boost::function1<void, const ControlCommand&> _commandCallback);    
+    /** Constructor.
+    *
+    * Initialize base class, set scales,
+    * create menu bar and text boxes.
+    */
+    MainFrame( boost::function1<void, const ControlCommand&> _commandCallback);    
 
-	/** Called if the user wants to quit. */
-	void OnQuit(wxCommandEvent& event);
+    /** Called if the user wants to quit. */
+    void OnQuit(wxCommandEvent& event);
 
-	/** Called when the user hits the return key without 
-	* holding down the shift or ctrl. key
-	*/
-	void OnEnter(wxCommandEvent& event);    
+    /** Called when the user hits the return key without 
+    * holding down the shift or ctrl. key
+    */
+    void OnEnter(wxCommandEvent& event);    
 
 
-	DECLARE_EVENT_TABLE()
+    DECLARE_EVENT_TABLE()
 };
 
 /** Wrapper around the MainFrame class, to be used by the AppControl object.
@@ -180,7 +183,7 @@ class MainFrameWrapper
 
 public:
 
-	/** Constructor. Creates a new MainFrame object. */
+    /** Constructor. Creates a new MainFrame object. */
     MainFrameWrapper 
         (boost::function1<void, const ControlCommand&> commandCallback)
         : main_frame(NULL)
@@ -202,11 +205,11 @@ public:
         main_frame->printMessage(str);
     }
     
-	/** Closes the Main Frame. @see MainFrame::Close() */
-	void close()
-	{
-		main_frame->Close(false);
-	}
+    /** Closes the Main Frame. @see MainFrame::Close() */
+    void close()
+    {
+        main_frame->Close(false);
+    }
 
 };
 
@@ -221,28 +224,28 @@ public:
 class MainApp : public wxApp
 {
 
-	/** Application control object*/
-	AppControl<MainFrameWrapper, NMSProtocol>* app_control;	
+    /** Application control object*/
+    AppControl<MainFrameWrapper, NMSProtocol>* app_control;    
 
 public:
 
-	bool OnInit(); /**< gets called when the application starts */
-	int OnExit(); /**< gets called when the application terminates*/
+    bool OnInit(); /**< gets called when the application starts */
+    int OnExit(); /**< gets called when the application terminates*/
 
-	/** Process a wxWidget event 
-	*
-	* This member function gets called whenever an event happens.
-	* It overrides the base class version to get more control over the event
-	* handling.
-	* <br> <br>
-	* It checks if the event is a key event. If it is, it checks wether 
-	* the event was caused by pressing down the Return key.
-	* If it was and control or Shift were not pressed, the function calls
-	* MainFrame::OnEnter() and returns. <br>
-	* If any of these conditions are not true, the function calls the base
-	* class version of itself and returns.
-	*/
-	virtual bool ProcessEvent(wxEvent& event);
+    /** Process a wxWidget event 
+    *
+    * This member function gets called whenever an event happens.
+    * It overrides the base class version to get more control over the event
+    * handling.
+    * <br> <br>
+    * It checks if the event is a key event. If it is, it checks wether 
+    * the event was caused by pressing down the Return key.
+    * If it was and control or Shift were not pressed, the function calls
+    * MainFrame::OnEnter() and returns. <br>
+    * If any of these conditions are not true, the function calls the base
+    * class version of itself and returns.
+    */
+    virtual bool ProcessEvent(wxEvent& event);
 };
 
 
@@ -254,7 +257,7 @@ public:
 */
 inline std::wstring wxString2wstring(const wxString& str)
 {
-	return std::wstring( str.wc_str(wxConvLocal) );
+    return std::wstring( str.wc_str(wxConvLocal) );
 }
 
 
@@ -266,7 +269,7 @@ inline std::wstring wxString2wstring(const wxString& str)
 */
 inline wxString wstring2wxString(const std::wstring& str)
 {
-	return wxString( str.c_str() );
+    return wxString( str.c_str() );
 }
 
 

@@ -46,7 +46,7 @@ public:
         : std::runtime_error(str)
     {}
     
-    virtual const char* what() throw()
+    virtual const char* what() const throw() 
     { return std::runtime_error::what(); }
 
     virtual ~ProtocolError() throw()
@@ -66,8 +66,7 @@ public:
     NMSProtocol()
         : io_service(), socket(io_service)
     { }
-    
-    
+
     /** Connect to a remote site.
      * @param id The string representation of the address of the remote site
      */
@@ -83,7 +82,7 @@ public:
      */
     void disconnect();    
     
-    bool is_connected(); 
+    bool is_connected() const; 
     
 };
 
