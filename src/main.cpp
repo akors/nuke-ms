@@ -131,7 +131,7 @@ MainFrame::parseCommand(const std::wstring& str)
             goto invalid_command;
             
         return boost::shared_ptr<ControlCommand> 
-            (new Command_PrintMessage(*tok_iter));
+            (new MessageCommand<ControlCommand::ID_PRINT_MSG>(*tok_iter));
     }
             
     else if ( !tok_iter->compare( L"/connect") )    
@@ -140,7 +140,7 @@ MainFrame::parseCommand(const std::wstring& str)
             goto invalid_command;
             
         return boost::shared_ptr<ControlCommand> 
-            (new Command_ConnectTo(*tok_iter));        
+            (new MessageCommand<ControlCommand::ID_CONNECT_TO>(*tok_iter));        
     }
     
     // if comparison failed, the command is invalid        
@@ -216,7 +216,7 @@ void MainFrame::OnEnter(wxCommandEvent& event)
         return;
         
     // print everything the user typed to the screen
-    commandCallback(Command_PrintMessage(input_string));
+    commandCallback(MessageCommand<ControlCommand::ID_PRINT_MSG>(input_string));
     
     
     // check if this is a command
@@ -230,7 +230,7 @@ void MainFrame::OnEnter(wxCommandEvent& event)
     }
     else // if it's not a command we try to send it
     {   
-        commandCallback(Command_SendMessage(input_string));  
+        commandCallback(MessageCommand<ControlCommand::ID_SEND_MSG>(input_string));  
     }
 
 }

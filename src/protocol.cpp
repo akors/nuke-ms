@@ -3,7 +3,7 @@
 /*
  *   NMS - Nuclear Messaging System
  *   Copyright (C) 2008  Alexander Korsunsky
- * 
+ *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
  *   the Free Software Foundation, either version 3 of the License, or
@@ -25,75 +25,88 @@
 
 void NMSProtocol::connect_to(const std::wstring& id)
 {
+    // get ourself exclusive access to the socket
+    ResourcesSafe::GuardedSocket socket = resources_safe.get_socket();
 
-    if (socket.is_open())
-        throw ProtocolError("Allready connected.");   
-    
-        
+    if (static_cast<boost::asio::ip::tcp::socket&>(socket).is_open())
+        throw ProtocolError("Allready connected.");
+
+
     // hopefully the string is made up of the hostname and the service name
     // seperated by a colon
-    
+
     // get ourself a tokenizer
     typedef boost::tokenizer<boost::char_separator<wchar_t>,
                              std::wstring::const_iterator, std::wstring >
-        tokenizer;        
-        
+        tokenizer;
+
     // get the part before the colon and the part after the colon
     boost::char_separator<wchar_t> colons(L":");
     tokenizer tokens(id, colons);
-    
+
     tokenizer::iterator tok_iter = tokens.begin();
 
     // bail out, if there were no tokens
     if ( tok_iter == tokens.end() )
         throw ProtocolError("Invalid remote site identifier.");
-        
+
     // create host from first token
     std::string host(tok_iter->begin(), tok_iter->end());
-    
+
     if ( ++tok_iter == tokens.end() )
         throw ProtocolError("Invalid remote site identifier.");
-        
+
     // create service from second token
     std::string service(tok_iter->begin(), tok_iter->end());
+
+
+    try
+    {
     
-    
-    try 
-    {   
-        boost::asio::ip::tcp::resolver resolver(io_service); // get a resolver
+        boost::asio::ip::tcp::resolver resolver(resources_safe.get_io_service()); // get a resolver
         boost::asio::ip::tcp::resolver::query query(host, service); // create a query
         // resolve the query
-        boost::asio::ip::tcp::resolver::iterator iterator = resolver.resolve(query); 
-        
-        socket.connect(*iterator); // connect to the first found host
-    } 
-    catch(const boost::system::system_error& e) 
+        boost::asio::ip::tcp::resolver::iterator iterator = resolver.resolve(query);
+
+        static_cast<boost::asio::ip::tcp::socket&>(socket).connect(*iterator); // connect to the first found host
+    }
+    catch(const boost::system::system_error& e)
     {
         boost::system::error_code ignored;
-        socket.close(ignored);
+        static_cast<boost::asio::ip::tcp::socket&>(socket).close(ignored);
         throw ProtocolError(e.what());
     }
-    
+
 }
 
 void NMSProtocol::send(const std::wstring& msg)
 {
+    ResourcesSafe::GuardedSocket socket = resources_safe.get_socket();
+
+    // take the socket from the safe, 
     // turn std::wstring into a void* buffer, and put it on the wire
-    socket.send(boost::asio::buffer(reinterpret_cast<const void*>(msg.c_str()), 
-            msg.length() * sizeof(std::wstring::value_type)));
+    static_cast<boost::asio::ip::tcp::socket&>(socket)
+        .send(boost::asio::buffer(reinterpret_cast<const void*>(msg.c_str()),
+                msg.length() * sizeof(std::wstring::value_type)));
 }
 
 void NMSProtocol::disconnect()
 {
+
     // close the socket, don't care for errors
-    try { socket.close(); } catch(...) {}
+    try { 
+        static_cast<boost::asio::ip::tcp::socket&>(resources_safe.get_socket())
+            .close(); 
+    } catch(...) {}
 }
 
 
-bool NMSProtocol::is_connected() const
+bool NMSProtocol::is_connected()
 {
-    return socket.is_open();
+    return 
+    static_cast<boost::asio::ip::tcp::socket&>(resources_safe.get_socket())
+        .is_open();
 }
-    
-    
-    
+
+
+
