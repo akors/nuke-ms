@@ -37,6 +37,9 @@
 #ifndef CONTROL_HPP_INCLUDED
 #define CONTROL_HPP_INCLUDED
 
+
+
+
 #include <stdexcept>
 #include <string>
 
@@ -50,6 +53,7 @@
 */
 struct ControlCommand
 {
+    
     
     /** The Command ID Type
     */
@@ -117,7 +121,7 @@ struct ProtocolNotification
     {}
 };
 
-#if 1
+
 struct ReceivedMsgNotification : public ProtocolNotification
 {
     const std::wstring msg;
@@ -126,7 +130,7 @@ struct ReceivedMsgNotification : public ProtocolNotification
         : msg(_msg), ProtocolNotification(ID_RECEIVED_MSG)
     {}
 };
-#endif
+
 
 /** This class represents a positive or negative reply to a requested operation.
 */
@@ -231,7 +235,8 @@ public:
     * Registers the handleCommand callback with the gui object.
     */  
     AppControl()
-    : protocol(), gui(boost::bind(&AppControl::handleCommand, this, _1))
+    : protocol(boost::bind(&AppControl::handleNotification, this, _1)), 
+        gui(boost::bind(&AppControl::handleCommand, this, _1))
     { }
     
     /** Handle a command.
@@ -258,12 +263,11 @@ void AppControl<GuiT, ProtocolT>::connectTo(const std::wstring& id)
 {        
     try { 
         protocol.connect_to(id);
-        this->printMessage(L"Connected to " + id);
     } 
     catch (const std::exception& e)
     {
         std::string errmsg(e.what());            
-        this->printMessage(L"Failed to connect to " + id + L": " 
+        this->printMessage(L"* Failed to connect to " + id + L": " 
                           + std::wstring(errmsg.begin(), errmsg.end()) );
     }
 }
@@ -338,25 +342,28 @@ template <typename GuiT, typename ProtocolT>
 void AppControl<GuiT, ProtocolT>::handleNotification
                                     (const ProtocolNotification& notification) 
 {
+    std::cerr<<"In AppControl<GuiT, ProtocolT>::handleNotification\n";
+
     switch (notification.id)
     {
         case ProtocolNotification::ID_RECEIVED_MSG:
         {
             const ReceivedMsgNotification& msg =
-                dynamic_cast<ReceivedMsgNotification&> (notification);
+                dynamic_cast<const ReceivedMsgNotification&> (notification);
                 
-            handleCommand(MessageCommand<ControlCommand::ID_PRINT_MSG>(msg.msg));
+            printMessage(L">> " + msg.msg);
+            break;
         }
         
         case ProtocolNotification::ID_CONNECT_REPORT:
         {
             const RequestReport& rprt =
-                dynamic_cast<RequestReport&> (notification);
+                dynamic_cast<const RequestReport&> (notification);
                 
             if (rprt.successful)
-                printMessage(L"Connecting succeeded.");
+                printMessage(L"*  Connecting succeeded.");
             else
-                printMessage(L"Connecting failed: " + rprt.failure_reason);
+                printMessage(L"*  Connecting failed: " + rprt.failure_reason);
             
             break;
         }
@@ -364,12 +371,12 @@ void AppControl<GuiT, ProtocolT>::handleNotification
         case ProtocolNotification::ID_SEND_REPORT:
         {
             const RequestReport& rprt =
-                dynamic_cast<RequestReport&> (notification);
+                dynamic_cast<const RequestReport&> (notification);
                 
             if (rprt.successful)
                 ;// nothing ...
             else
-                printMessage(L"Failed to send message: " + rprt.failure_reason);
+                printMessage(L"*  Failed to send message: " + rprt.failure_reason);
             break;
         }
         default:

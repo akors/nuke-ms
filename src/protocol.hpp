@@ -27,6 +27,7 @@
 
 #include <stdexcept>
 
+#include <boost/function.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/asio.hpp>
@@ -59,12 +60,13 @@ public:
 */
 class NMSProtocol
 {
+    typedef boost::asio::ip::tcp tcp;
 
     class ResourcesSafe
     {    
-        boost::asio::io_service io_service;
         boost::recursive_mutex io_mutex;
         
+        // boost::asio::io_service io_service;        
         boost::asio::ip::tcp::socket socket;
     
         
@@ -102,28 +104,95 @@ class NMSProtocol
         
     public:    
         
-        typedef GuardedResource<boost::asio::io_service> GuardedIOService;
+        //typedef GuardedResource<boost::asio::io_service> GuardedIOService;
         typedef GuardedResource<boost::asio::ip::tcp::socket> GuardedSocket;
     
-        ResourcesSafe()
-            : io_service(), socket(io_service)
+        ResourcesSafe(boost::asio::io_service& _io_service)
+            : socket(_io_service)
         { }
-        
+
+#if 0
         GuardedIOService get_io_service()
         {
             return GuardedIOService(io_mutex, io_service);
         }
+#endif
         
         GuardedSocket get_socket()
         {
             return GuardedSocket(io_mutex, socket);
         }
         
-    } resources_safe;
+    };
 
     
+    class Worker
+    {
+        // wait for the thread 3 seconds
+        enum { threadwait_ms = 3000 };
+    
+        ResourcesSafe& resources_safe;
+        boost::asio::io_service& io_service; 
+        
+        boost::function1<void, const ProtocolNotification&> notification_callback;
+        
+        boost::thread waiting_thread;
+        
+        
+        void handleTimeout(boost::system::error_code& error)
+        {            
+            notification_callback(ReceivedMsgNotification(L"The bell rang!"));
+        }
+        
+    public:
+    
+        Worker(ResourcesSafe& safe, boost::asio::io_service& _io_service,
+             boost::function1<void, const ProtocolNotification&> notf_callback)
+             
+            : resources_safe(safe), io_service(_io_service),
+                notification_callback(notf_callback), 
+                waiting_thread(boost::ref(*this))
+        { }
+        
+        void operator()()
+        {
+            boost::asio::deadline_timer t(io_service, 
+                boost::posix_time::seconds(5));                
+            t.async_wait(boost::bind(&Worker::handleTimeout, this, _1));
+            
+            io_service.run();
+        }
+        
+        /** Destructor. Kills anything that blocks. */
+        ~Worker()
+        {
+            try {
+            io_service.stop();
+            io_service.reset();            
+           
+            waiting_thread.timed_join(boost::posix_time::millisec(threadwait_ms));
+          
+            // if the waiting failed, interrupt and then detach the thread
+            waiting_thread.interrupt();
+            waiting_thread.detach();
+            } catch(...) {}
+        }
+        
+    };
+    
+    boost::function1<void, const ProtocolNotification&> notification_callback;    
+    boost::scoped_ptr<Worker> worker;
+    
+    // the io_service object is  thread safe.
+    boost::asio::io_service io_service; 
+    ResourcesSafe resources_safe;
 public:
 
+    NMSProtocol(const boost::function1<void, const ProtocolNotification&>&
+                _notification_callback)
+        : io_service(), resources_safe(io_service), 
+          notification_callback(_notification_callback)
+    {}
 
     /** Connect to a remote site.
      * @param id The string representation of the address of the remote site
@@ -142,6 +211,10 @@ public:
 
     bool is_connected();
 
+    ~NMSProtocol()
+    {
+        worker.reset();
+    }
 };
 
 

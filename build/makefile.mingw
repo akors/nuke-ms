@@ -20,7 +20,7 @@ B_LIBS=-l$(B_LIB_SYSTEM) -l$(B_LIB_THREADS)
 include wxwin_libs.txt
 include wxwin_cxxflags.txt
 
-CXXFLAGS=-g $(INCLUDEDIRS) $(WX_CXXFLAGS) -D_WIN32_WINNT=0x0501
+CXXFLAGS=-g -mthreads $(INCLUDEDIRS) $(WX_CXXFLAGS) -D_WIN32_WINNT=0x0501
 
 all: nms
 
