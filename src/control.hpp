@@ -3,7 +3,7 @@
 /*
  *   NMS - Nuclear Messaging System
  *   Copyright (C) 2008  Alexander Korsunsky
- * 
+ *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
  *   the Free Software Foundation, either version 3 of the License, or
@@ -20,8 +20,8 @@
 
 
 /** @mainpage
-* 
-* The Nuclear Messaging System is intended as a cross- plattform, 
+*
+* The Nuclear Messaging System is intended as a cross- plattform,
 * highly portable instant messenger.
 */
 
@@ -53,28 +53,28 @@
 */
 struct ControlCommand
 {
-    
-    
+
+
     /** The Command ID Type
     */
-    enum command_id_t {    
+    enum command_id_t {
         ID_INVALID = 0, /**< Invalid Command */
         ID_EXIT, /**< user asked to exit */
-        ID_PRINT_MSG, /**< print a message */    
+        ID_PRINT_MSG, /**< print a message */
         ID_SEND_MSG, /**< Send the message to the remote site */
         ID_CONNECT_TO, /**< connect to a remote site */
         ID_DISCONNECT, /**< disconnect from a remote site */
-    
+
         /** Number of command identifiers.
         * As the first command (ID_INVALID) starts from 0,
         * this element specifies how many commands there are.
         */
-        ID_NUM_COMMANDS 
+        ID_NUM_COMMANDS
     };
-    
+
     /** The command ID*/
-    const command_id_t id;        
-    
+    const command_id_t id;
+
     /** Constructor. */
     ControlCommand(const command_id_t& _id)
         : id(_id)
@@ -86,15 +86,15 @@ struct ControlCommand
 
 /** This template is for all commands that are used to transfer one string as a
 * message.
-*/ 
+*/
 template <ControlCommand::command_id_t CMD_ID>
 struct MessageCommand : public ControlCommand
 {
     const std::wstring msg;
-    
+
     MessageCommand(const std::wstring& str)
         : msg(str), ControlCommand(CMD_ID)
-    { } 
+    { }
 };
 
 
@@ -109,15 +109,15 @@ struct ProtocolNotification
         ID_SEND_REPORT,
         ID_RECEIVED_MSG
     };
-    
+
     const notification_id_t id;
-    
+
     /** Construct a Report denoting failure */
     ProtocolNotification(notification_id_t _id)
         : id(_id)
     {}
-    
-    virtual ~ProtocolNotification() 
+
+    virtual ~ProtocolNotification()
     {}
 };
 
@@ -125,7 +125,7 @@ struct ProtocolNotification
 struct ReceivedMsgNotification : public ProtocolNotification
 {
     const std::wstring msg;
-    
+
     ReceivedMsgNotification(const std::wstring& _msg)
         : msg(_msg), ProtocolNotification(ID_RECEIVED_MSG)
     {}
@@ -138,18 +138,18 @@ struct RequestReport
 {
     const bool successful;
     const std::wstring failure_reason;
-    
+
     /** Construct a positive report */
     RequestReport()
         : successful(true)
     {}
-    
+
     /** Construct a negative report */
     RequestReport(const std::wstring& reason)
         : successful(false), failure_reason(reason)
     {}
-    
-    virtual ~RequestReport() 
+
+    virtual ~RequestReport()
     {}
 };
 
@@ -161,7 +161,7 @@ struct ReportNotification : public ProtocolNotification, public RequestReport
     ReportNotification()
         : ProtocolNotification(NOTIF_ID), RequestReport()
     {}
-    
+
     /** Generate a negative report */
     ReportNotification(const std::wstring& reason)
         : ProtocolNotification(NOTIF_ID), RequestReport(reason)
@@ -179,11 +179,11 @@ struct ReportNotification : public ProtocolNotification, public RequestReport
 *
 * @tparam GuiT Class of the GUI object.
 * @tparam ProtocolT Class of the Connection Protocol object.
-* 
+*
 * @note Copy construction and assignment are not allowed.
 */
 template <typename GuiT, typename ProtocolT>
-class AppControl 
+class AppControl
 {
     GuiT gui;
     ProtocolT protocol;
@@ -191,18 +191,18 @@ class AppControl
     // not assignable, not copyable
     AppControl& operator= (const AppControl&);
     AppControl(const AppControl&);
-    
+
     /** Connect to a remote site.
     * The Protocol is requested to connect to a remote site, that is uniquely
     * identified by the string id.
-    * 
-    * @param id The string that identifies the remote site. This string must be 
+    *
+    * @param id The string that identifies the remote site. This string must be
     * understood by the protocol.
     */
     void connectTo(const std::wstring& id);
-    
-    /** Send a message to the site that is connected. 
-    * If the protocol is not connected to a remote site or failed to send 
+
+    /** Send a message to the site that is connected.
+    * If the protocol is not connected to a remote site or failed to send
     * the message, an error message is displayed.
     * @param msg The message you want to send
     */
@@ -214,42 +214,42 @@ class AppControl
         protocol.disconnect();
         printMessage(L"Disconnected");
     }
-    
+
     /** Print a message to the screen securely
-    * 
+    *
     * @param the message you want to print
     */
     void printMessage(const std::wstring& msg)
     {
         gui.printMessage(msg);
     }
-    
+
     /** Shut down the application. */
     void close()
     {
         gui.close();
     }
-        
+
 public:
     /** Constructor.
     * Registers the handleCommand callback with the gui object.
-    */  
+    */
     AppControl()
-    : protocol(boost::bind(&AppControl::handleNotification, this, _1)), 
+    : protocol(boost::bind(&AppControl::handleNotification, this, _1)),
         gui(boost::bind(&AppControl::handleCommand, this, _1))
     { }
-    
+
     /** Handle a command.
     * This function should be used as a callback for the GUI.
     * Commands that are passed in are evaluated. If requested action can not
     * be performed, an error message is displayed.
-    * @param ctrl_cmd The command that 
+    * @param ctrl_cmd The command that
     */
     void handleCommand(const ControlCommand& ctrl_cmd);
-    
-    
+
+
     /** Handle a Protocol Notification.
-    * This function should be used as a callback by the Protocol, when the 
+    * This function should be used as a callback by the Protocol, when the
     * Protocol wants to report an event.
     * @param rprt The report
     */
@@ -260,14 +260,14 @@ public:
 
 template <typename GuiT, typename ProtocolT>
 void AppControl<GuiT, ProtocolT>::connectTo(const std::wstring& id)
-{        
-    try { 
+{
+    try {
         protocol.connect_to(id);
-    } 
+    }
     catch (const std::exception& e)
     {
-        std::string errmsg(e.what());            
-        this->printMessage(L"* Failed to connect to " + id + L": " 
+        std::string errmsg(e.what());
+        this->printMessage(L"* Failed to connect to " + id + L": "
                           + std::wstring(errmsg.begin(), errmsg.end()) );
     }
 }
@@ -277,17 +277,17 @@ void AppControl<GuiT, ProtocolT>::sendMessage(const std::wstring& msg)
 {
     try {
         protocol.send(msg);
-    } 
+    }
     catch (const std::exception& e)
     {
-        std::string errmsg(e.what());            
-        this->printMessage(L"Failed to send message: " 
+        std::string errmsg(e.what());
+        this->printMessage(L"Failed to send message: "
                             + std::wstring(errmsg.begin(), errmsg.end()));
     }
 }
 
 template <typename GuiT, typename ProtocolT>
-void AppControl<GuiT, ProtocolT>::handleCommand(const ControlCommand& cmd) 
+void AppControl<GuiT, ProtocolT>::handleCommand(const ControlCommand& cmd)
 {
     // determine actions depending on the id of the command
     switch ( cmd.id )
@@ -296,53 +296,52 @@ void AppControl<GuiT, ProtocolT>::handleCommand(const ControlCommand& cmd)
         case ControlCommand::ID_EXIT:
             close();
             break;
-            
+
         case ControlCommand::ID_DISCONNECT:
             disconnect();
             break;
-            
+
         case ControlCommand::ID_PRINT_MSG:
         {
             const MessageCommand<ControlCommand::ID_PRINT_MSG>& cmd_msg =
                 dynamic_cast<const MessageCommand<ControlCommand::ID_PRINT_MSG>&> (cmd);
-            
+
             printMessage(L"<< " + cmd_msg.msg);
             break;
         }
-        
+
         case ControlCommand::ID_SEND_MSG:
         {
             if ( !protocol.is_connected())
                 return;
-        
+
             const MessageCommand<ControlCommand::ID_SEND_MSG>& cmd_msg =
                 dynamic_cast<const MessageCommand<ControlCommand::ID_SEND_MSG>&> (cmd);
-            
+
             sendMessage(cmd_msg.msg);
             break;
         }
-            
+
         case ControlCommand::ID_CONNECT_TO:
         {
             const MessageCommand<ControlCommand::ID_CONNECT_TO>& cmd_cnt =
                 dynamic_cast<const MessageCommand<ControlCommand::ID_CONNECT_TO>&> (cmd);
-                
+
             connectTo(cmd_cnt.msg);
             break;
         }
-            
+
         default:
             printMessage(L"Invalid command!");
             break;
-            
+
     }
 }
 
 template <typename GuiT, typename ProtocolT>
 void AppControl<GuiT, ProtocolT>::handleNotification
-                                    (const ProtocolNotification& notification) 
+                                    (const ProtocolNotification& notification)
 {
-    std::cerr<<"In AppControl<GuiT, ProtocolT>::handleNotification\n";
 
     switch (notification.id)
     {
@@ -350,38 +349,43 @@ void AppControl<GuiT, ProtocolT>::handleNotification
         {
             const ReceivedMsgNotification& msg =
                 dynamic_cast<const ReceivedMsgNotification&> (notification);
-                
+
             printMessage(L">> " + msg.msg);
             break;
         }
-        
+
         case ProtocolNotification::ID_CONNECT_REPORT:
         {
             const RequestReport& rprt =
                 dynamic_cast<const RequestReport&> (notification);
-                
+
             if (rprt.successful)
                 printMessage(L"*  Connecting succeeded.");
             else
+            {
                 printMessage(L"*  Connecting failed: " + rprt.failure_reason);
-            
+                protocol.disconnect();
+            }
             break;
         }
-            
+
         case ProtocolNotification::ID_SEND_REPORT:
         {
             const RequestReport& rprt =
                 dynamic_cast<const RequestReport&> (notification);
-                
+
             if (rprt.successful)
                 ;// nothing ...
             else
+            {
                 printMessage(L"*  Failed to send message: " + rprt.failure_reason);
+                protocol.disconnect();
+            }
             break;
         }
         default:
             printMessage(L"ERROR: Invalid Protocol Notification!");
-        
+
     }
 }
 

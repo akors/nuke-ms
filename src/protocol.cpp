@@ -29,8 +29,15 @@ void NMSProtocol::connect_to(const std::wstring& id)
 {
     // check to see if the socket is allready open
     if (static_cast<tcp::socket&>(resources_safe.get_socket()).is_open())
-        throw ProtocolError("Allready connected.");
+    {
+        notification_callback(
+            ReportNotification
+                <ProtocolNotification::ID_CONNECT_REPORT>
+                (L"Allready connected.")
+            );
 
+        return;
+    }
 
     // hopefully the string is made up of the hostname and the service name
     // seperated by a colon
@@ -65,47 +72,47 @@ void NMSProtocol::connect_to(const std::wstring& id)
     struct AsyncHandler {
         /** Handle a returned Connection request
         * @param error System error code, if there was one
-        * @param notification_callback The callback function to be callen when 
+        * @param notification_callback The callback function to be callen when
         * notifying about events
         */
         static void handleConnect(
                     const boost::system::error_code& error,
-                    boost::function1<void, const ProtocolNotification&> 
+                    boost::function1<void, const ProtocolNotification&>
                         notification_callback)
         {
             if (error)
             {
                 std::string errmsg(error.message());
                 std::wstring werrmsg(errmsg.begin(), errmsg.end());
-                
+
                 notification_callback(
                     ReportNotification
                         <ProtocolNotification::ID_CONNECT_REPORT>
                         (werrmsg)
-                    );  
-            }  
+                    );
+            }
             else
             {
                 notification_callback(
                     ReportNotification
                         <ProtocolNotification::ID_CONNECT_REPORT>
                         ()
-                    );  
+                    );
             }
         }
 
         /** Handle a returned Resolver request
         * @param error System error code, if there was one
         * @param resources_safe The safe that contains the thread-shared resources
-        * @param notification_callback The callback function to be callen when 
+        * @param notification_callback The callback function to be callen when
         * notifying about events
         *
         * Performs an asynchronous connect. @see handleConnect
         */
-        static void handleResolve(const boost::system::error_code& error, 
+        static void handleResolve(const boost::system::error_code& error,
                         tcp::resolver::iterator endpoint_iterator,
                         ResourcesSafe& resources_safe,
-                        boost::function1<void, const ProtocolNotification&> 
+                        boost::function1<void, const ProtocolNotification&>
                             notification_callback
                         )
         {
@@ -113,51 +120,53 @@ void NMSProtocol::connect_to(const std::wstring& id)
             {
                 std::string errmsg(error.message());
                 std::wstring werrmsg(errmsg.begin(), errmsg.end());
-            
-            
+
+
                 notification_callback(
                     ReportNotification
                         <ProtocolNotification::ID_CONNECT_REPORT>
                         (werrmsg)
-                    );  
+                    );
             }
             else
-            {                        
+            {
                 // get ourself exclusive access to the socket
-                ResourcesSafe::GuardedSocket socket = 
+                ResourcesSafe::GuardedSocket socket =
                     resources_safe.get_socket();
-                    
+
                 static_cast<tcp::socket&>(resources_safe.get_socket())
                     .async_connect(
                             *endpoint_iterator,
                             boost::bind(&AsyncHandler::handleConnect,
-                                    boost::asio::placeholders::error, 
+                                    boost::asio::placeholders::error,
                                     notification_callback)
                             );
-            }                   
+            }
         }
     };
 
     try
     {
-        
-        tcp::resolver resolver(io_service); // get a resolver    
+
+        tcp::resolver resolver(io_service); // get a resolver
         tcp::resolver::query query(host, service); // create a query
-        
-        // resolve the query, connect to the remote site        
-        resolver.async_resolve(query, 
-                                boost::bind(&AsyncHandler::handleResolve, 
+
+        // resolve the query, connect to the remote site
+        resolver.async_resolve(query,
+                                boost::bind(&AsyncHandler::handleResolve,
                                             _1, _2, boost::ref(resources_safe),
                                             notification_callback
                                             ));
-        
+
         // create a working thread
-        worker.reset(
-            new Worker(resources_safe, io_service, notification_callback));
+        static_cast<boost::scoped_ptr<Worker>&>
+            (resources_safe.get_threadptr()).
+        reset(new Worker(resources_safe, io_service, notification_callback));
     }
     catch(const boost::system::system_error& e)
     {
-        worker.reset(); // delete worker
+        static_cast<boost::scoped_ptr<Worker>&>
+            (resources_safe.get_threadptr()).reset(); // delete worker
         throw ProtocolError(e.what());
     }
 
@@ -167,7 +176,7 @@ void NMSProtocol::send(const std::wstring& msg)
 {
     ResourcesSafe::GuardedSocket socket = resources_safe.get_socket();
 
-    // take the socket from the safe, 
+    // take the socket from the safe,
     // turn std::wstring into a void* buffer, and put it on the wire
     static_cast<tcp::socket&>(socket)
         .send(boost::asio::buffer(reinterpret_cast<const void*>(msg.c_str()),
@@ -177,18 +186,19 @@ void NMSProtocol::send(const std::wstring& msg)
 void NMSProtocol::disconnect()
 {
     // close the socket, don't care for errors
-    try { 
-        worker.reset();
-    
+    try {
+        static_cast<boost::scoped_ptr<Worker>&>
+            (resources_safe.get_threadptr()).reset();
+
         static_cast<tcp::socket&>(resources_safe.get_socket())
-            .close(); 
+            .close();
     } catch(...) {}
 }
 
 bool NMSProtocol::is_connected()
 {
 try {
-    return 
+    return
     static_cast<tcp::socket&>(resources_safe.get_socket())
         .is_open();
 }
@@ -197,7 +207,7 @@ catch(const std::exception& e)
     std::cerr<<"Caught exception: "<<e.what()<<'\n';
     return false;
 }
-    
+
 }
 
 

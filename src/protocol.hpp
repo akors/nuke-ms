@@ -62,26 +62,29 @@ class NMSProtocol
 {
     typedef boost::asio::ip::tcp tcp;
 
+    class Worker;
+
     class ResourcesSafe
-    {    
+    {
+        boost::recursive_mutex threadptr_mutex;
         boost::recursive_mutex io_mutex;
-        
-        // boost::asio::io_service io_service;        
+
+        boost::scoped_ptr<Worker> thread_ptr;
         boost::asio::ip::tcp::socket socket;
-    
-        
+
+
         /** RAII Proxy class through which all treasures can be accessed.
-        * On construction, this class acquires a mutex and releases this 
+        * On construction, this class acquires a mutex and releases this
         * mutex on destruction.
         */
         template <typename GuardedT>
         struct GuardedResource
         {
-            GuardedT& treasure;            
+            GuardedT& treasure;
             boost::lock_guard<boost::recursive_mutex> treasure_guard;
             boost::recursive_mutex& guard_mutex;
-                
-            /** Copy constructible 
+
+            /** Copy constructible
             * Transfers the ownership of the lock from other to *this.
             */
             GuardedResource(const GuardedResource& other)
@@ -89,108 +92,107 @@ class NMSProtocol
                 guard_mutex(other.guard_mutex), treasure(other.treasure)
             {
             }
-            
+
             GuardedResource(boost::recursive_mutex& _guard_mutex, GuardedT& _treasure)
                 : guard_mutex(_guard_mutex), treasure_guard(_guard_mutex),
                     treasure(_treasure)
             {}
-            
+
             operator GuardedT&()
             {
                 return treasure;
-            }            
-            
+            }
+
         };
-        
-    public:    
-        
-        //typedef GuardedResource<boost::asio::io_service> GuardedIOService;
+
+    public:
+
+        typedef GuardedResource<boost::scoped_ptr<Worker> > GuardedThreadPtr;
         typedef GuardedResource<boost::asio::ip::tcp::socket> GuardedSocket;
-    
+
         ResourcesSafe(boost::asio::io_service& _io_service)
             : socket(_io_service)
         { }
 
-#if 0
-        GuardedIOService get_io_service()
-        {
-            return GuardedIOService(io_mutex, io_service);
-        }
-#endif
-        
         GuardedSocket get_socket()
         {
             return GuardedSocket(io_mutex, socket);
         }
-        
+
+        GuardedThreadPtr get_threadptr()
+        {
+            return GuardedThreadPtr(threadptr_mutex, thread_ptr);
+        }
     };
 
-    
+
     class Worker
     {
         // wait for the thread 3 seconds
         enum { threadwait_ms = 3000 };
-    
+
         ResourcesSafe& resources_safe;
-        boost::asio::io_service& io_service; 
-        
+        boost::asio::io_service& io_service;
+
         boost::function1<void, const ProtocolNotification&> notification_callback;
-        
+
         boost::thread waiting_thread;
-        
-        
+
+
         void handleTimeout(boost::system::error_code& error)
-        {            
+        {
             notification_callback(ReceivedMsgNotification(L"The bell rang!"));
         }
-        
+
     public:
-    
+
         Worker(ResourcesSafe& safe, boost::asio::io_service& _io_service,
              boost::function1<void, const ProtocolNotification&> notf_callback)
-             
+
             : resources_safe(safe), io_service(_io_service),
-                notification_callback(notf_callback), 
+                notification_callback(notf_callback),
                 waiting_thread(boost::ref(*this))
         { }
-        
+
         void operator()()
         {
-            boost::asio::deadline_timer t(io_service, 
-                boost::posix_time::seconds(5));                
+            boost::asio::deadline_timer t(io_service,
+                boost::posix_time::seconds(5));
             t.async_wait(boost::bind(&Worker::handleTimeout, this, _1));
-            
+
             io_service.run();
         }
-        
+
         /** Destructor. Kills anything that blocks. */
         ~Worker()
         {
             try {
             io_service.stop();
-            io_service.reset();            
-           
+            io_service.reset();
+
             waiting_thread.timed_join(boost::posix_time::millisec(threadwait_ms));
-          
+
             // if the waiting failed, interrupt and then detach the thread
             waiting_thread.interrupt();
             waiting_thread.detach();
             } catch(...) {}
         }
-        
+
     };
-    
-    boost::function1<void, const ProtocolNotification&> notification_callback;    
-    boost::scoped_ptr<Worker> worker;
-    
+
+
+
+
+    boost::function1<void, const ProtocolNotification&> notification_callback;
+
     // the io_service object is  thread safe.
-    boost::asio::io_service io_service; 
+    boost::asio::io_service io_service;
     ResourcesSafe resources_safe;
 public:
 
     NMSProtocol(const boost::function1<void, const ProtocolNotification&>&
                 _notification_callback)
-        : io_service(), resources_safe(io_service), 
+        : io_service(), resources_safe(io_service),
           notification_callback(_notification_callback)
     {}
 
@@ -213,7 +215,7 @@ public:
 
     ~NMSProtocol()
     {
-        worker.reset();
+        static_cast<boost::scoped_ptr<Worker>&>(resources_safe.get_threadptr()).reset();
     }
 };
 
