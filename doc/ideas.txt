@@ -1,0 +1,10 @@
+Chat Mutex - Participants can send messages only subsequently. If Bob 
+currently holds the mutex, Alice cant send anything. However, she can ask
+Bob for the mutex (button). If bob does not explicitly declines, Alice gets
+the mutex.
+
+Drag &n Drop support for file transactions
+
+Configurable key bindings, which produce all kinds of actions, such es 
+entering predefined phrases in the window
+ 
