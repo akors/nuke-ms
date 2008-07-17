@@ -26,7 +26,8 @@
 
 #include "main.hpp"
 
-
+using namespace nms;
+using namespace gui;
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////// MainFrame Methods //////////////////////////////
@@ -99,9 +100,13 @@ void MainFrame::createTextBoxes()
 }
 
 
-boost::shared_ptr<ControlCommand> 
+boost::shared_ptr<control::ControlCommand> 
 MainFrame::parseCommand(const std::wstring& str)
 {
+    // we are basically dealing only with Control commands, so it would be nice
+    // if all the types were in scope
+    using namespace control;
+
     // get ourself a tokenizer
     typedef boost::tokenizer<boost::char_separator<wchar_t>,
                              std::wstring::const_iterator, std::wstring >
@@ -173,7 +178,7 @@ void MainFrame::printMessage(const wxString& str)
 
 
 MainFrame::MainFrame
-        (boost::function1<void, const ControlCommand&> _commandCallback)
+        (boost::function1<void, const control::ControlCommand&> _commandCallback)
     : wxFrame(NULL, -1, wxT("killer app"), wxDefaultPosition, wxSize(600, 500)),
     commandCallback(_commandCallback)
 {
@@ -216,21 +221,26 @@ void MainFrame::OnEnter(wxCommandEvent& event)
         return;
         
     // print everything the user typed to the screen
-    commandCallback(MessageCommand<ControlCommand::ID_PRINT_MSG>(input_string));
+    commandCallback(
+            control::MessageCommand<control::ControlCommand::ID_PRINT_MSG>
+                (input_string)
+        );
     
     
     // check if this is a command
     if ( MainFrame::isCommand(input_string) )
     {
         // create a shared pointer from the output
-        boost::shared_ptr<ControlCommand> cmd =
+        boost::shared_ptr<control::ControlCommand> cmd =
             MainFrame::parseCommand(input_string);
         
         commandCallback(*cmd);
     }
     else // if it's not a command we try to send it
     {   
-        commandCallback(MessageCommand<ControlCommand::ID_SEND_MSG>(input_string));  
+        commandCallback(control::MessageCommand
+                            <control::ControlCommand::ID_SEND_MSG>
+                            (input_string));  
     }
 
 }
@@ -271,7 +281,8 @@ bool MainApp::ProcessEvent(wxEvent& event)
 bool MainApp::OnInit()
 {    
     // Create AppControl object, which creates its components
-    app_control = new AppControl<MainFrameWrapper, NMSProtocol>;
+    app_control = 
+        new control::AppControl<MainFrameWrapper, protocol::NMSProtocol>;
     
     return true;
 }

@@ -27,13 +27,26 @@
 
 #include <stdexcept>
 
-#include <boost/function.hpp>
+#include <boost/asio.hpp>
+
 #include <boost/thread/thread.hpp>
 #include <boost/thread/recursive_mutex.hpp>
-#include <boost/asio.hpp>
+
+
+#include <boost/statechart/state_machine.hpp>
+#include <boost/statechart/simple_state.hpp>
+#include <boost/statechart/transition.hpp>
+#include <boost/statechart/event.hpp>
+#include <boost/statechart/custom_reaction.hpp>
+
+#include <boost/function.hpp>
 
 #include "control.hpp"
 
+namespace nms 
+{
+namespace protocol
+{
 
 /** Class for errors that can be issued by the Communication Protocol.
 */
@@ -56,168 +69,240 @@ public:
     { }
 };
 
+
+
+
+
+
+struct EventConnectRequest : boost::statechart::event<EventConnectRequest> 
+{
+    std::wstring where;
+    
+    EventConnectRequest(const std::wstring& _where)
+        : where(_where)
+    {}
+};
+
+
+struct EventConnectReport : boost::statechart::event<EventConnectRequest>
+{
+    bool success;
+
+    EventConnectReport(bool _success)
+        : success(_success)
+    {}
+
+};
+
+struct EventRcvdMsg : boost::statechart::event<EventRcvdMsg>
+{
+    std::wstring msg;
+    EventRcvdMsg(const std::wstring& _msg)
+        : msg(_msg)
+    { }
+};
+
+
+struct EventSendMsg : boost::statechart::event<EventSendMsg>
+{
+    std::wstring msg;
+    EventSendMsg(const std::wstring& _msg)
+        : msg(_msg)
+    { }
+};
+
+struct EventDisconnect : boost::statechart::event<EventDisconnect> 
+{};
+
+
+
+
+struct StateUnconnected;
+struct StateConnected;
+
+
+struct ProtocolMachine
+    : public boost::statechart::state_machine<ProtocolMachine, StateUnconnected>
+{
+    boost::function1 <void, const control::ProtocolNotification&> 
+        notification_callback;
+    
+    ProtocolMachine(const boost::function1
+                        <void, const control::ProtocolNotification&>&
+                        _notification_callback)
+        : notification_callback(_notification_callback)
+    {}
+};
+
+
+
+
+
+struct StateIdle;
+struct StateTryingConnect;
+
+struct StateUnconnected
+    : public boost::statechart::simple_state<StateUnconnected,
+                                                ProtocolMachine,
+                                                StateIdle>
+{ };
+
+
+struct StateIdle
+    : public boost::statechart::simple_state<StateIdle,
+                                                StateUnconnected>
+{
+    typedef boost::statechart::custom_reaction< EventConnectRequest > reactions;
+
+
+    boost::statechart::result react(const EventConnectRequest& request)
+    {
+        std::cout<<"Trying to connect to "<<std::string(request.where.begin(), request.where.end())<<"\n";
+        return transit<StateTryingConnect>();
+    }
+};
+
+struct StateTryingConnect
+    : public boost::statechart::simple_state<StateTryingConnect,
+                                                StateUnconnected>
+{
+    typedef boost::statechart::custom_reaction< EventConnectReport > reactions;
+
+    boost::statechart::result react(const EventConnectReport& rprt)
+    {
+        if (rprt.success)
+        {
+            context<ProtocolMachine>()
+                .notification_callback(
+                    control::ReportNotification
+                        <control::ProtocolNotification::ID_CONNECT_REPORT>()
+                    );
+                    
+            return transit<StateConnected>();
+        }
+        else
+        {
+            context<ProtocolMachine>()
+                .notification_callback(
+                    control::ReportNotification
+                        <control::ProtocolNotification::ID_CONNECT_REPORT>
+                        (L"Sorry, connection failed.\n")
+                    );
+        
+            return transit<StateUnconnected>();
+        }
+    }
+
+};
+
+
+struct StateConnected
+    : public boost::statechart::simple_state<StateConnected,
+                                                ProtocolMachine>
+{
+    typedef boost::mpl::list<
+        boost::statechart::custom_reaction< EventSendMsg >,
+        boost::statechart::custom_reaction< EventRcvdMsg >,
+        boost::statechart::custom_reaction<EventDisconnect>
+    > reactions;
+
+    StateConnected()
+    {
+        std::cout<<"We are connected!\n";
+    }
+    
+    ~StateConnected()
+    {
+        context<ProtocolMachine>()
+            .notification_callback(
+                control::ProtocolNotification
+                    (control::ProtocolNotification::ID_DISCONNECTED)
+                );
+    }
+    
+
+
+    
+    boost::statechart::result react(const EventSendMsg& msg)
+    {
+        std::cout<<"Sending message: "<<std::string(msg.msg.begin(), msg.msg.end())<<'\n';
+        return discard_event();
+    }
+
+    boost::statechart::result react(const EventRcvdMsg& msg)
+    {
+        context<ProtocolMachine>()
+            .notification_callback(
+                control::ReceivedMsgNotification
+                    (msg.msg)
+                );
+                
+        return discard_event();
+    }
+    
+    boost::statechart::result react(const EventDisconnect&)
+    {
+
+        return transit<StateUnconnected>();
+    }
+
+};
+
+
+
 /** Client Communication Protocol.
 */
 class NMSProtocol
 {
+    ProtocolMachine protocol_machine;
+    
     typedef boost::asio::ip::tcp tcp;
 
-    class Worker;
+    boost::function1<void, const control::ProtocolNotification&> 
+        notification_callback;
+    
 
-    class ResourcesSafe
-    {
-        boost::recursive_mutex threadptr_mutex;
-        boost::recursive_mutex io_mutex;
-
-        boost::scoped_ptr<Worker> thread_ptr;
-        boost::asio::ip::tcp::socket socket;
-
-
-        /** RAII Proxy class through which all treasures can be accessed.
-        * On construction, this class acquires a mutex and releases this
-        * mutex on destruction.
-        */
-        template <typename GuardedT>
-        struct GuardedResource
-        {
-            GuardedT& treasure;
-            boost::lock_guard<boost::recursive_mutex> treasure_guard;
-            boost::recursive_mutex& guard_mutex;
-
-            /** Copy constructible
-            * Transfers the ownership of the lock from other to *this.
-            */
-            GuardedResource(const GuardedResource& other)
-                : treasure_guard(other.guard_mutex, boost::adopt_lock),
-                guard_mutex(other.guard_mutex), treasure(other.treasure)
-            {
-            }
-
-            GuardedResource(boost::recursive_mutex& _guard_mutex, GuardedT& _treasure)
-                : guard_mutex(_guard_mutex), treasure_guard(_guard_mutex),
-                    treasure(_treasure)
-            {}
-
-            operator GuardedT&()
-            {
-                return treasure;
-            }
-
-        };
-
-    public:
-
-        typedef GuardedResource<boost::scoped_ptr<Worker> > GuardedThreadPtr;
-        typedef GuardedResource<boost::asio::ip::tcp::socket> GuardedSocket;
-
-        ResourcesSafe(boost::asio::io_service& _io_service)
-            : socket(_io_service)
-        { }
-
-        GuardedSocket get_socket()
-        {
-            return GuardedSocket(io_mutex, socket);
-        }
-
-        GuardedThreadPtr get_threadptr()
-        {
-            return GuardedThreadPtr(threadptr_mutex, thread_ptr);
-        }
-    };
-
-
-    class Worker
-    {
-        // wait for the thread 3 seconds
-        enum { threadwait_ms = 3000 };
-
-        ResourcesSafe& resources_safe;
-        boost::asio::io_service& io_service;
-
-        boost::function1<void, const ProtocolNotification&> notification_callback;
-
-        boost::thread waiting_thread;
-
-
-        void handleTimeout(boost::system::error_code& error)
-        {
-            notification_callback(ReceivedMsgNotification(L"The bell rang!"));
-        }
-
-    public:
-
-        Worker(ResourcesSafe& safe, boost::asio::io_service& _io_service,
-             boost::function1<void, const ProtocolNotification&> notf_callback)
-
-            : resources_safe(safe), io_service(_io_service),
-                notification_callback(notf_callback),
-                waiting_thread(boost::ref(*this))
-        { }
-
-        void operator()()
-        {
-            boost::asio::deadline_timer t(io_service,
-                boost::posix_time::seconds(5));
-            t.async_wait(boost::bind(&Worker::handleTimeout, this, _1));
-
-            io_service.run();
-        }
-
-        /** Destructor. Kills anything that blocks. */
-        ~Worker()
-        {
-            try {
-            io_service.stop();
-            io_service.reset();
-
-            waiting_thread.timed_join(boost::posix_time::millisec(threadwait_ms));
-
-            // if the waiting failed, interrupt and then detach the thread
-            waiting_thread.interrupt();
-            waiting_thread.detach();
-            } catch(...) {}
-        }
-
-    };
-
-
-
-
-    boost::function1<void, const ProtocolNotification&> notification_callback;
-
-    // the io_service object is  thread safe.
-    boost::asio::io_service io_service;
-    ResourcesSafe resources_safe;
+    
+    
 public:
 
-    NMSProtocol(const boost::function1<void, const ProtocolNotification&>&
-                _notification_callback)
-        : io_service(), resources_safe(io_service),
-          notification_callback(_notification_callback)
-    {}
+    NMSProtocol(const boost::function1<void, 
+                                        const control::ProtocolNotification&>&
+                    _notification_callback)
+        : notification_callback(_notification_callback), 
+            protocol_machine(_notification_callback)
+    {
+        protocol_machine.initiate();
+    }
 
     /** Connect to a remote site.
      * @param id The string representation of the address of the remote site
      */
-    void connect_to(const std::wstring& id);
+    void connect_to(const std::wstring& id)
+    {       
+        protocol_machine.process_event(EventConnectRequest(id));
+        protocol_machine.process_event(EventConnectReport(true));
+    }
 
-    /* Send message to connected remote site.
+    /** Send message to connected remote site.
      * @param msg The message you want to send
      */
-    void send(const std::wstring& msg);
+    void send(const std::wstring& msg)
+    {
+        protocol_machine.process_event(EventSendMsg(msg));
+    }
 
     /** Disconnect from the remote site.
      *
      */
-    void disconnect();
-
-    bool is_connected();
-
-    ~NMSProtocol()
+    void disconnect()
     {
-        static_cast<boost::scoped_ptr<Worker>&>(resources_safe.get_threadptr()).reset();
+        protocol_machine.process_event(EventDisconnect());
     }
+    
 };
 
+} // namespace protocol
+} // namespace nms 
 
 #endif /*PROTOCOL_HPP_*/

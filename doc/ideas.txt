@@ -8,3 +8,8 @@ Drag &n Drop support for file transactions
 Configurable key bindings, which produce all kinds of actions, such es 
 entering predefined phrases in the window
  
+Chatroom Namespaces:
+The Chatroom space of a server is grouped into a hierarchical structure.
+Each Room can have other rooms but still can be used for communications.
+A server can "mount" another server under a location in the hierarchy.
+ 

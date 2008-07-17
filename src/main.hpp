@@ -43,6 +43,10 @@
 #include "protocol.hpp"
 
 
+namespace nms
+{
+namespace gui
+{
 
 /** Proportions for the window.
 * @ingroup gui
@@ -99,7 +103,7 @@ class MainFrame : public wxFrame
     wxTextCtrl* text_input_box;
 
     /** The function object to call when a command was issued by the user */
-    const boost::function1<void, const ControlCommand&> commandCallback;
+    const boost::function1<void,const control::ControlCommand&> commandCallback;
 
     
     boost::mutex print_mutex;
@@ -141,7 +145,7 @@ class MainFrame : public wxFrame
     * ControlCommand::id == ID_INVALID, if the command could not be parsed.
     * @todo add proper parser here
     */
-    static boost::shared_ptr<ControlCommand>
+    static boost::shared_ptr<control::ControlCommand>
     parseCommand(const std::wstring& str);    
 
 public:
@@ -156,7 +160,8 @@ public:
     * Initialize base class, set scales,
     * create menu bar and text boxes.
     */
-    MainFrame( boost::function1<void, const ControlCommand&> _commandCallback);    
+    MainFrame(boost::function1<void, const control::ControlCommand&>
+                _commandCallback);    
 
     /** Called if the user wants to quit. */
     void OnQuit(wxCommandEvent& event);
@@ -185,7 +190,7 @@ public:
 
     /** Constructor. Creates a new MainFrame object. */
     MainFrameWrapper 
-        (boost::function1<void, const ControlCommand&> commandCallback)
+        (boost::function1<void, const control::ControlCommand&> commandCallback)
         : main_frame(NULL)
         
     { 
@@ -225,7 +230,7 @@ class MainApp : public wxApp
 {
 
     /** Application control object*/
-    AppControl<MainFrameWrapper, NMSProtocol>* app_control;    
+    control::AppControl<MainFrameWrapper, protocol::NMSProtocol>* app_control;    
 
 public:
 
@@ -273,6 +278,8 @@ inline wxString wstring2wxString(const std::wstring& str)
 }
 
 
+} // namespace gui
+} // namespace nms
 
 #endif // ifndef MAIN_HPP_INCLUDED
 

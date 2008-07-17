@@ -47,6 +47,11 @@
 #include <boost/bind.hpp>
 
 
+namespace nms
+{
+namespace control
+{
+
 /** A command to the Application Control Class.
 * @ingroup ctrl_cmd
 * Send this command to AppControl.
@@ -107,7 +112,8 @@ struct ProtocolNotification
     enum notification_id_t {
         ID_CONNECT_REPORT,
         ID_SEND_REPORT,
-        ID_RECEIVED_MSG
+        ID_RECEIVED_MSG,
+        ID_DISCONNECTED
     };
 
     const notification_id_t id;
@@ -212,7 +218,6 @@ class AppControl
     void disconnect()
     {
         protocol.disconnect();
-        printMessage(L"Disconnected");
     }
 
     /** Print a message to the screen securely
@@ -312,9 +317,6 @@ void AppControl<GuiT, ProtocolT>::handleCommand(const ControlCommand& cmd)
 
         case ControlCommand::ID_SEND_MSG:
         {
-            if ( !protocol.is_connected())
-                return;
-
             const MessageCommand<ControlCommand::ID_SEND_MSG>& cmd_msg =
                 dynamic_cast<const MessageCommand<ControlCommand::ID_SEND_MSG>&> (cmd);
 
@@ -345,6 +347,12 @@ void AppControl<GuiT, ProtocolT>::handleNotification
 
     switch (notification.id)
     {
+        case ProtocolNotification::ID_DISCONNECTED:
+        {
+            printMessage(L"*  Disconnected.");
+            break;
+        }
+
         case ProtocolNotification::ID_RECEIVED_MSG:
         {
             const ReceivedMsgNotification& msg =
@@ -364,7 +372,6 @@ void AppControl<GuiT, ProtocolT>::handleNotification
             else
             {
                 printMessage(L"*  Connecting failed: " + rprt.failure_reason);
-                protocol.disconnect();
             }
             break;
         }
@@ -378,16 +385,24 @@ void AppControl<GuiT, ProtocolT>::handleNotification
                 ;// nothing ...
             else
             {
-                printMessage(L"*  Failed to send message: " + rprt.failure_reason);
-                protocol.disconnect();
+                printMessage(L"*  Failed to send message: " + 
+                                rprt.failure_reason);
             }
             break;
         }
         default:
+            // should not happen
             printMessage(L"ERROR: Invalid Protocol Notification!");
 
     }
 }
+
+
+} // namespace control
+
+} // namespace nms
+
+
 
 #endif // ifndef CONTROL_HPP_INCLUDED
 
