@@ -82,8 +82,6 @@ class MainFrameWrapper;
 class MainFrame : public wxFrame
 {
 
-
-
     /** Enum for wxWidgets window identifiers. */
     enum { ID_INPUT_BOX = wxID_HIGHEST+1 };
 
@@ -105,7 +103,7 @@ class MainFrame : public wxFrame
     /** The function object to call when a command was issued by the user */
     const boost::function1<void,const control::ControlCommand&> commandCallback;
 
-    
+    /** The mutex to ensure synchronized access to the display resource*/
     boost::mutex print_mutex;
     
     
@@ -119,9 +117,12 @@ class MainFrame : public wxFrame
     /** Print a message to the Output text box.
     * Locks the printer mutex.
     * 
-    * @param str The string you  want to print
+    * @param str The string you want to print
+    * @throws std::runtime_error if a ressource could not be allocated. 
+    * e.g. a threading resource.
     */
-    void printMessage(const std::wstring& str);
+    void printMessage(const std::wstring& str)
+        throw(std::runtime_error);
 
 
 
@@ -130,14 +131,15 @@ class MainFrame : public wxFrame
     * @param str The string you want to be checked
     * @todo Add proper checking here
     */
-    static bool isCommand(const std::wstring& str)
+    inline static bool isCommand(const std::wstring& str)
+        throw()
     {
-        return ((str.size() != 0) &&(str[0] == L'/'));
+        return ((str.size() != 0) && (str[0] == L'/'));
     }
 
 
     /** Parse a string and interpret it as command.
-    * You might want to check if this seems like a Command befor calling this 
+    * You might want to check if this seems like a Command before calling this 
     * function.
     * 
     * @param str The string you want to be interpreted as command
@@ -149,8 +151,10 @@ class MainFrame : public wxFrame
     parseCommand(const std::wstring& str);    
 
 public:
-    // opening a hole for MainApp, so it can call OnEnter when the user hit the
-    // enter key.
+    /** Loophole for MainApp.
+    * opening a hole for MainApp, so it can call OnEnter when the user hit the
+    * enter key. 
+    */
     static boost::function1<void, wxCommandEvent&> OnEnter_callback;
 
     friend class MainFrameWrapper;
@@ -159,18 +163,20 @@ public:
     *
     * Initialize base class, set scales,
     * create menu bar and text boxes.
+    *
+    * @param _commandCallback A function object that will be called when the 
+    * user issues a command
     */
     MainFrame(boost::function1<void, const control::ControlCommand&>
-                _commandCallback);    
+                _commandCallback)  throw();    
 
     /** Called if the user wants to quit. */
-    void OnQuit(wxCommandEvent& event);
+    void OnQuit(wxCommandEvent& event) throw();
 
     /** Called when the user hits the return key without 
     * holding down the shift or ctrl. key
     */
-    void OnEnter(wxCommandEvent& event);    
-
+    void OnEnter(wxCommandEvent& event) throw(); 
 
     DECLARE_EVENT_TABLE()
 };
@@ -184,6 +190,7 @@ public:
 */
 class MainFrameWrapper
 {
+    /** The actual MainFrame class */
     MainFrame* main_frame;
 
 public:
@@ -191,27 +198,32 @@ public:
     /** Constructor. Creates a new MainFrame object. */
     MainFrameWrapper 
         (boost::function1<void, const control::ControlCommand&> commandCallback)
+        throw()
         : main_frame(NULL)
-        
     { 
         main_frame = new MainFrame(commandCallback);    
     }
     
     ~MainFrameWrapper()
+        throw()
     {
         // MainFrame is derived from wxWindow. As such, simply deleting the 
         // object would be incorrect. It has to delete itself.
-        //main_frame->Close();
     }
     
-    /** Print a message. @see MainFrame::printMessage() */
+    /** Print a message. 
+    * @see MainFrame::printMessage() 
+    * @throws std::runtime_error if a ressource could not be allocated. 
+    * e.g. a threading resource.
+    */
     void printMessage(const std::wstring& str)
+        throw (std::runtime_error)
     {
         main_frame->printMessage(str);
     }
     
     /** Closes the Main Frame. @see MainFrame::Close() */
-    void close()
+    void close() throw()
     {
         main_frame->Close(false);
     }
@@ -223,8 +235,8 @@ public:
 /** Application entry point.
 * @ingroup gui
 * This class represents the main thread of execution.
-* 
 *
+* @todo Do semthing sensible when an exception is thrown.
 */
 class MainApp : public wxApp
 {
@@ -234,8 +246,8 @@ class MainApp : public wxApp
 
 public:
 
-    bool OnInit(); /**< gets called when the application starts */
-    int OnExit(); /**< gets called when the application terminates*/
+    bool OnInit() throw(); /**< gets called when the application starts */
+    int OnExit() throw(); /**< gets called when the application terminates*/
 
     /** Process a wxWidget event 
     *
@@ -250,7 +262,7 @@ public:
     * If any of these conditions are not true, the function calls the base
     * class version of itself and returns.
     */
-    virtual bool ProcessEvent(wxEvent& event);
+    virtual bool ProcessEvent(wxEvent& event) throw();
 };
 
 
@@ -261,6 +273,7 @@ public:
 * @warning Probably not portable
 */
 inline std::wstring wxString2wstring(const wxString& str)
+    throw()
 {
     return std::wstring( str.wc_str(wxConvLocal) );
 }
@@ -273,6 +286,7 @@ inline std::wstring wxString2wstring(const wxString& str)
 * @warning Probably not portable
 */
 inline wxString wstring2wxString(const std::wstring& str)
+    throw()
 {
     return wxString( str.c_str() );
 }

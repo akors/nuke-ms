@@ -111,6 +111,8 @@ MainFrame::parseCommand(const std::wstring& str)
     typedef boost::tokenizer<boost::char_separator<wchar_t>,
                              std::wstring::const_iterator, std::wstring >
         tokenizer;        
+        
+try {
     boost::char_separator<wchar_t> whitespace(L" \t\r\n");
     tokenizer tokens(str, whitespace);
     
@@ -118,7 +120,7 @@ MainFrame::parseCommand(const std::wstring& str)
 
     // bail out, if there were no tokens
     if ( tok_iter == tokens.end() )
-        goto invalid_command;
+        throw false;
 
 
     if  ( !tok_iter->compare( L"/exit" ) )    
@@ -133,7 +135,7 @@ MainFrame::parseCommand(const std::wstring& str)
     else if ( !tok_iter->compare( L"/print") )
     {
         if (++tok_iter == tokens.end() )
-            goto invalid_command;
+            throw false;
             
         return boost::shared_ptr<ControlCommand> 
             (new MessageCommand<ControlCommand::ID_PRINT_MSG>(*tok_iter));
@@ -142,21 +144,25 @@ MainFrame::parseCommand(const std::wstring& str)
     else if ( !tok_iter->compare( L"/connect") )    
     {        
         if (++tok_iter == tokens.end() )
-            goto invalid_command;
+            throw false;
             
         return boost::shared_ptr<ControlCommand> 
             (new MessageCommand<ControlCommand::ID_CONNECT_TO>(*tok_iter));        
     }
-    
-    // if comparison failed, the command is invalid        
+        
             
-invalid_command:
+}
+catch(...) {} 
+// if somebody threw something, or if we reached this line,
+// the command is invalid
+
     return boost::shared_ptr<ControlCommand> 
             (new ControlCommand(ControlCommand::ID_INVALID));
 }
 
 
 void MainFrame::printMessage(const std::wstring& str)
+    throw (std::runtime_error)
 {
     // lock the printer mutex while printing
     boost::lock_guard<boost::mutex> printlock(print_mutex);
@@ -165,20 +171,13 @@ void MainFrame::printMessage(const std::wstring& str)
 }
 
 
-#if 0
-void MainFrame::printMessage(const wxString& str)
-{
-    text_display_box->AppendText( str + L'\n' );
-}
-#endif
-
-
-
 ////////////////////////////// MainFrame Public ///////////////////////////////
 
 
 MainFrame::MainFrame
         (boost::function1<void, const control::ControlCommand&> _commandCallback)
+    throw()
+        
     : wxFrame(NULL, -1, wxT("killer app"), wxDefaultPosition, wxSize(600, 500)),
     commandCallback(_commandCallback)
 {
@@ -201,6 +200,7 @@ MainFrame::MainFrame
 
 
 void MainFrame::OnQuit(wxCommandEvent& event)
+    throw()
 {
     Close(true);
 }
@@ -208,6 +208,7 @@ void MainFrame::OnQuit(wxCommandEvent& event)
 
 
 void MainFrame::OnEnter(wxCommandEvent& event)
+    throw()
 {
     // create reference to a std::wstring
     const std::wstring& input_string = 
@@ -252,46 +253,80 @@ void MainFrame::OnEnter(wxCommandEvent& event)
 
 
 bool MainApp::ProcessEvent(wxEvent& event)
+    throw()
 {
-    // check for key down event
-    if (event.GetEventType() == wxEVT_CHAR)
-    {
-        
-        // only if control and shift are NOT down, call OnEnter
-        if ( static_cast<wxKeyEvent&>(event).GetKeyCode() == WXK_RETURN &&
-            !static_cast<wxKeyEvent&>(event).ControlDown() &&
-            !static_cast<wxKeyEvent&>(event).ShiftDown() 
-            )
+    bool baseclass_result;
+    try {
+        // check for key down event
+        if (event.GetEventType() == wxEVT_CHAR)
         {
-            wxCommandEvent cmd_evt(wxEVT_COMMAND_ENTER);
-            MainFrame::OnEnter_callback(cmd_evt);
-            return true;
-        }
-    }    
+            
+            // only if control and shift are NOT down, call OnEnter
+            if ( static_cast<wxKeyEvent&>(event).GetKeyCode() == WXK_RETURN &&
+                !static_cast<wxKeyEvent&>(event).ControlDown() &&
+                !static_cast<wxKeyEvent&>(event).ShiftDown() 
+                )
+            {
+                wxCommandEvent cmd_evt(wxEVT_COMMAND_ENTER);            
 
-    // dont stop processing the event in this function
-    event.Skip();
+                MainFrame::OnEnter_callback(cmd_evt);
+
+                
+                return true;
+            }
+        }    
+
+        // dont stop processing the event in this function
+        event.Skip();
+        
+        // call base class version of this function
+        baseclass_result = wxEvtHandler::ProcessEvent(event);
+    }
     
-    // call base class version of this function
-    return wxEvtHandler::ProcessEvent(event);
+    // there isn't much to do if an exception propagated until here
+    catch(const std::exception& e)
+    {
+        std::cerr<<"ERROR: An exception occured: "<<e.what()<<". Terminating\n";
+        this->GetTopWindow()->Close();
+    } 
+    catch(...)
+    {
+        std::cerr<<"ERROR: An unknown exception occured. Terminating\n";
+        this->GetTopWindow()->Close();
+    }
+    
+    return baseclass_result;
 }
 
 
 
 bool MainApp::OnInit()
+    throw()
 {    
     // Create AppControl object, which creates its components
-    app_control = 
-        new control::AppControl<MainFrameWrapper, protocol::NMSProtocol>;
+    try {
+        app_control = 
+            new control::AppControl<MainFrameWrapper, protocol::NMSProtocol>;
+    } // say goodbye if initialization failed
+    catch(const std::exception& e)
+    {
+        std::cerr<<"ERROR: An exception occured: "<<e.what()<<". Terminating\n";
+        return false;
+    } 
+    catch(...)
+    {
+        std::cerr<<"ERROR: An unknown exception occured. Terminating\n";
+        return false;
+    }
     
     return true;
 }
 
 int MainApp::OnExit()
+    throw()
 {
     
-    delete app_control;
-    
+    delete app_control;    
     return wxApp::OnExit();
 }
 

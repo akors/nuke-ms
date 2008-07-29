@@ -48,16 +48,20 @@ calls that might throw them).
 
 Error handling:
 Errors are propagated through the program by exceptions. Errors (an action that
-failed) are reported by the entity that was supposed to to that action 
+failed) are reported by the entity that was supposed to do that action 
 (function) to the entity that requested this action (caller).
+Every public function has to declare wether it throws an exception via a throw
+specifier and in the documentation. std::bad_alloc's do not have to be specified. 
+
 Errors that can be anticipated, for example a failing connect() shall be or be
-derived from std::runtime_error. Every function that can throw such an error
-shall declare to do so. The caller shall catch this exception, unless the only 
-reacton to this error would be to throw another exception.
-Errors that can not be anticipated, for example wrong usage of a function 
-(namely a bug) or failure of memory allocation shall be or be derived from 
-std::logic_error (apart from failing memory allocation, which of course shall be
-std::bad_alloc). These error shall not be declared in the function header and
+derived from std::runtime_error. 
+The caller shall catch this exception appropriately, unless the only 
+reaction to this error would be to throw another exception.
+
+Errors that can only be caused by programming erros shall be or be derived from 
+std::logic_error.
+These error shall not be declared in the function header and
 must not be caught by callers, but must only be caught by top- level functions
 (such as main(), or thread entry points).
+a
 
