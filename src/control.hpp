@@ -28,10 +28,7 @@
 
 
 /** @defgroup app_ctrl Application Control */
-/** @defgroup  ctrl_cmd Control Commands 
-* @ingroup app_ctrl */
-/** @defgroup  notif Notification Messages 
-* @ingroup app_ctrl */
+
 
 
 
@@ -47,148 +44,13 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
 
+#include "notifications.hpp"
+#include "commands.hpp"
 
 namespace nms
 {
 namespace control
 {
-
-/** A command to the Application Control Class.
-* @ingroup ctrl_cmd
-* Send this command to AppControl.
-*/
-struct ControlCommand
-{
-
-    /** The Command ID Type
-    */
-    enum command_id_t {
-        ID_INVALID = 0, /**< Invalid Command */
-        ID_EXIT, /**< user asked to exit */
-        ID_PRINT_MSG, /**< print a message */
-        ID_SEND_MSG, /**< Send the message to the remote site */
-        ID_CONNECT_TO, /**< connect to a remote site */
-        ID_DISCONNECT, /**< disconnect from a remote site */
-
-        /** Number of command identifiers.
-        * As the first command (ID_INVALID) starts from 0,
-        * this element specifies how many commands there are.
-        */
-        ID_NUM_COMMANDS
-    };
-
-    const command_id_t id; /**< The command ID*/
-    
-
-    /** Constructor. */
-    ControlCommand(const command_id_t& _id) throw()
-        : id(_id)
-    {}
-
-    virtual ~ControlCommand()
-    {}
-};
-
-/** This template is for all commands that are used to transfer one string as 
-* payload. 
-* @ingroup ctrl_cmd
-*/
-template <ControlCommand::command_id_t CMD_ID>
-struct MessageCommand : public ControlCommand
-{
-    /** The message you want to transport */
-    const std::wstring msg;
-
-    /** Constructor.
-    * @param str The message you want to transport
-    */
-    MessageCommand(const std::wstring& str)  throw()
-        : msg(str), ControlCommand(CMD_ID)
-    { }
-};
-
-
-
-/** A notification from the Communication protocol regarding an event
-* @ingroup notif
-*/
-struct ProtocolNotification
-{
-    /** The type of operation that is reported about.
-    */
-    enum notification_id_t {
-        ID_CONNECT_REPORT, /**< Report regarding a connection attempt */
-        ID_SEND_REPORT, /**< Report regarding a sent message */
-        ID_RECEIVED_MSG, /**< Message received */
-        ID_DISCONNECTED /**< Disconnected */
-    };
-
-    /** What kind of Notification */
-    const notification_id_t id;
-
-    /** Construct a Report denoting failure */
-    ProtocolNotification(notification_id_t _id)  throw()
-        : id(_id)
-    {}
-
-    virtual ~ProtocolNotification()
-    {}
-};
-
-/** Notification regarding a received message 
-* @ingroup notif*/
-struct ReceivedMsgNotification : public ProtocolNotification
-{
-    /** The message that was received */
-    const std::wstring msg;
-
-    /** Constructor.
-    * @param _msg The message that was received
-    */
-    ReceivedMsgNotification(const std::wstring& _msg)  throw()
-        : msg(_msg), ProtocolNotification(ID_RECEIVED_MSG)
-    {}
-};
-
-
-/** This class represents a positive or negative reply to a requested operation.
-* @ingroup notif
-*/
-struct RequestReport
-{
-    const bool successful; /**< Good news or bad news? */
-    const std::wstring failure_reason; /**< What went wrong? */
-
-    /** Construct a positive report */
-    RequestReport()  throw()
-        : successful(true)
-    {}
-
-    /** Construct a negative report */
-    RequestReport(const std::wstring& reason)  throw()
-        : successful(false), failure_reason(reason)
-    {}
-
-    virtual ~RequestReport()
-    {}
-};
-
-/** A generic notification that involves reporting about Success or failure */
-template <ProtocolNotification::notification_id_t NOTIF_ID>
-struct ReportNotification : public ProtocolNotification, public RequestReport
-{
-    /** Generate a successful report */
-    ReportNotification()  throw()
-        : ProtocolNotification(NOTIF_ID), RequestReport()
-    {}
-
-    /** Generate a negative report */
-    ReportNotification(const std::wstring& reason)  throw()
-        : ProtocolNotification(NOTIF_ID), RequestReport(reason)
-    {}
-};
-
-
 
 
 /** Application Control Class.
@@ -207,9 +69,9 @@ class AppControl
 {
     GuiT gui; /**< The GUI object */
     ProtocolT protocol; /**< The Communication protocol object */
-    
+
 private:
-    
+
     AppControl& operator= (const AppControl&); /**<  not assignable */
     AppControl(const AppControl&); /**<   not copyable */
 
@@ -237,10 +99,10 @@ private:
     {
         try {
             protocol.disconnect();
-        } 
+        }
         catch (const std::exception& e) {
             const char* errmsg = e.what();
-            printMessage(L"*  Failed to disconnect: " + 
+            printMessage(L"*  Failed to disconnect: " +
                             std::wstring(errmsg, errmsg+strlen(errmsg)));
         }
     }
@@ -251,11 +113,11 @@ private:
     */
     void printMessage(const std::wstring& msg)
         throw()
-    {    
+    {
         try {
             gui.printMessage(msg);
         }
-        catch (const std::exception& e) 
+        catch (const std::exception& e)
         {
             std::cerr<<"ERROR: Failed to print message: "<<e.what()<<'\n';
         }
@@ -433,7 +295,7 @@ void AppControl<GuiT, ProtocolT>::handleNotification
                 ;// nothing ...
             else
             {
-                printMessage(L"*  Failed to send message: " + 
+                printMessage(L"*  Failed to send message: " +
                                 rprt.failure_reason);
             }
             break;

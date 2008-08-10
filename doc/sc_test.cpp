@@ -1,158 +1,99 @@
 #include <iostream>
 
-#include <boost/statechart/state_machine.hpp>
-#include <boost/statechart/simple_state.hpp>
+#include <boost/thread/thread.hpp>
+#include <boost/thread/mutex.hpp>
+
+#include <boost/statechart/asynchronous_state_machine.hpp>
+#include <boost/statechart/fifo_scheduler.hpp>
+
+#include <boost/statechart/state.hpp>
 #include <boost/statechart/event.hpp>
 #include <boost/statechart/transition.hpp>
 #include <boost/statechart/custom_reaction.hpp>
+
 #include <boost/mpl/list.hpp>
 
 
-
-
-
 struct EventConnectRequest : boost::statechart::event<EventConnectRequest> {};
-struct EventConnectReport : boost::statechart::event<EventConnectRequest>
-{
-    bool success;
 
-    EventConnectReport(bool _success)
-        : success(_success)
-    {}
-
-};
-
-struct EventRcvdMsg : boost::statechart::event<EventRcvdMsg>
-{
-    std::string msg;
-    EventRcvdMsg(const std::string& _msg)
-        : msg(_msg)
-    { }
-};
-
-struct EventDisconnect : boost::statechart::event<EventDisconnect> {};
-
-
-
-
-
-struct StateUnconnected;
 struct StateConnected;
-
-
+struct StateUnconnected;
 
 class ProtocolMachine
-    : public boost::statechart::state_machine<ProtocolMachine, StateUnconnected>
+    : public boost::statechart::asynchronous_state_machine<ProtocolMachine,
+                                                            StateUnconnected>
 {
+public:
 
+    int x;
+
+    ProtocolMachine(my_context ctx, int _x)
+        : my_base(ctx), x(_x)
+    {}
 };
 
+struct StateConnected
+        : public boost::statechart::state<StateConnected,
+                                            ProtocolMachine>
+{
 
-struct StateIdle;
-struct StateTryingConnect;
+    StateConnected(my_context ctx)
+        : my_base(ctx)
+    {
+        std::cout<<"Entered state Connected.\n";
+        std::cout<<"x = "<<(context<ProtocolMachine>().x)<<'\n';
+    }
+};
 
 struct StateUnconnected
-    : public boost::statechart::simple_state<StateUnconnected,
-                                                ProtocolMachine,
-                                                StateIdle>
+        : public boost::statechart::state<StateUnconnected,
+                                            ProtocolMachine>
 {
+    typedef boost::statechart::custom_reaction<EventConnectRequest> reactions;
 
-    StateUnconnected()
-    { std::cout<<"We are not connected.\n"; }
-
-};
-
-
-struct StateIdle
-    : public boost::statechart::simple_state<StateIdle,
-                                                StateUnconnected>
-{
-    typedef boost::statechart::custom_reaction< EventConnectRequest > reactions;
-
-    StateIdle()
+    StateUnconnected(my_context ctx)
+        : my_base(ctx)
     {
-        std::cout<<"Machine in Connected/Idle\n";
+        std::cout<<"Entered state Unconnected.\n";
+        std::cout<<"x = "<<(context<ProtocolMachine>().x)<<'\n';
     }
 
     boost::statechart::result react(const EventConnectRequest&)
     {
-        return transit<StateTryingConnect>();
-    }
-};
-
-struct StateTryingConnect
-    : public boost::statechart::simple_state<StateTryingConnect,
-                                                StateUnconnected>
-{
-    typedef boost::statechart::custom_reaction< EventConnectReport > reactions;
-
-    StateTryingConnect()
-    {
-        std::cout<<"Trying to connect\n";
-    }
-
-    boost::statechart::result react(const EventConnectReport& rprt)
-    {
-        if (rprt.success)
-        {
-            std::cout<<"Connection successful! Changin to connected\n";
-            return transit<StateConnected>();
-        }
-        else
-        {
-            std::cout<<"Sorry, connection failed.\n";
-            return transit<StateUnconnected>();
-        }
-    }
-
-};
-
-
-struct StateConnected
-    : public boost::statechart::simple_state<StateConnected,
-                                                ProtocolMachine>
-{
-    StateConnected()
-    {
-        std::cout<<"We are connected!\n";
-    }
-
-#if 0
-    ~StateConnected()
-    { std::cout<<"Leaving connected.\n"; }
-#endif
-
-    typedef boost::mpl::list<
-                boost::statechart::custom_reaction< EventRcvdMsg >,
-                boost::statechart::transition<EventDisconnect, StateUnconnected>
-                >
-        reactions;
-
-
-    boost::statechart::result react(const EventRcvdMsg& msg)
-    {
-        std::cout<<"Received mgs: "<<msg.msg<<'\n';
-        return discard_event();
+        std::cout<<"User requested transition\n";
+        return transit<StateConnected>();
     }
 };
 
 
 int main()
 {
-    ProtocolMachine protocol_machine;
-    protocol_machine.initiate();
+    boost::statechart::fifo_scheduler<> machine_scheduler(true);
 
-    std::cout<<"\n-- Sending EventConnectRequest\n";
-    protocol_machine.process_event(EventConnectRequest());
+    boost::statechart::fifo_scheduler<>::processor_handle event_processor =
+        machine_scheduler.create_processor<ProtocolMachine>(411);
 
-    std::cout<<"\n-- Sending Successful connection\n";
-    protocol_machine.process_event(EventConnectReport(true));
+    machine_scheduler.initiate_processor(event_processor);
 
-    std::cout<<"\n-- Sending EventRcvdMsg\n";
-    protocol_machine.process_event(EventRcvdMsg("Hello World!"));
 
-    std::cout<<"\n-- Sending Disconnect\n";
-    protocol_machine.process_event(EventDisconnect());
+
+
+    boost::thread machine_thread(
+        boost::bind(&boost::statechart::fifo_scheduler<>::operator(),
+                    &machine_scheduler,
+                    0)
+        );
+
+
+
+    boost::intrusive_ptr<EventConnectRequest> event_ptr =
+        new EventConnectRequest();
+
+    machine_scheduler.queue_event(event_processor, event_ptr);
+
+
+    machine_scheduler.terminate();
+    machine_thread.join();
 
     return 0;
 }

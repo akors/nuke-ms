@@ -36,110 +36,193 @@ using namespace protocol;
 
 
 
-struct EventConnectRequest : boost::statechart::event<EventConnectRequest>
-{
-    std::wstring where;
+/** @todo Insert documenation into the doc of the state reactions */
 
-    EventConnectRequest(const std::wstring& _where)
-        : where(_where)
+/** Template for events with one parameter.
+* This class is to be used for boost::state_machine, to identify events that
+* carry one parameter. It has tags to distinguish the event types.
+*
+* @tparam ParmType The type of the parameter
+* @tparam EventTag The tag to distinguish the events. This can be an arbitary,
+* but distinct type, such as empty structs.
+*/
+template <typename ParmType, typename EventTag>
+struct Parm1Event
+    : public boost::statechart::event<Parm1Event<ParmType, EventTag> >
+{
+    ParmType parm;
+
+    Parm1Event(const ParmType& _parm)
+        : parm(_parm)
     {}
 };
 
-struct EventConnectReport : boost::statechart::event<EventConnectRequest>
-{
-    bool success;
+// Tags for different events with one parameter
+struct EventConnectRequestTag {};
+struct EventConnectReportTag {};
+struct EventRcvdMsgTag {};
+struct EventSendMsgTag {};
 
-    EventConnectReport(bool _success)
-        : success(_success)
-    {}
-};
+// Typedefs for events with one parameter.
+typedef Parm1Event<std::wstring, EventConnectRequestTag> EventConnectRequest;
+typedef Parm1Event<bool, EventConnectReportTag> EventConnectReport;
+typedef Parm1Event<std::wstring, EventRcvdMsgTag> EventRcvdMsg;
+typedef Parm1Event<std::wstring, EventSendMsgTag> EventSendMsg;
 
-struct EventRcvdMsg : boost::statechart::event<EventRcvdMsg>
-{
-    std::wstring msg;
-
-    EventRcvdMsg(const std::wstring& _msg)
-        : msg(_msg)
-    { }
-};
-
-
-struct EventSendMsg : boost::statechart::event<EventSendMsg>
-{
-    std::wstring msg;
-
-    EventSendMsg(const std::wstring& _msg)
-        : msg(_msg)
-    { }
-};
-
-struct EventDisconnect : boost::statechart::event<EventDisconnect>
+struct EventDisconnectRequest : boost::statechart::event<EventDisconnectRequest>
 {};
 
 
-
-
+// forward declarations for the main protocol machines
 struct StateUnconnected;
-struct StateConnected;
 
-
+/** The Protoc State Machine.
+* This class represents the Overall State of the Protocol.
+* Events can be dispatched to this machine, and the according actions will be
+* performed.
+*
+* Currently, this class is an "asynchronous_state_machine", which has it's own
+* thread. Refer to the documention of Boost.Statechart for details on how to
+* create and use this class, and how to dispatch events.
+*/
 struct ProtocolMachine
     : public boost::statechart::asynchronous_state_machine<
-        ProtocolMachine,
-        StateUnconnected
+            ProtocolMachine,
+            StateUnconnected
         >
 {
+    /** The callback for notifications. */
     boost::function1 <void, const control::ProtocolNotification&>
         notification_callback;
 
+    /** Constructor. To be used only by Boost.Statechart classes. */
     ProtocolMachine(my_context ctx,
                     const boost::function1
                         <void, const control::ProtocolNotification&>&
-                        _notification_callback) throw()
+                        _notification_callback)
+        throw()
         : my_base(ctx),
             notification_callback(_notification_callback)
     {}
 };
 
-
-
-
-
+// forward declarations that are needed for transition reactions.
 struct StateIdle;
 struct StateTryingConnect;
 
+/** If the Protocol is unconnected.
+* Reacting to:
+* Nothing. (defer to substates)
+*/
 struct StateUnconnected
     : public boost::statechart::simple_state<StateUnconnected,
                                                 ProtocolMachine,
                                                 StateIdle>
 { };
 
+/** If the protocol is in a connected state.
+*
+* Reacting to:
+* EventSendMsg,
+* EventRcvdMsg,
+* EventDisconnectRequest
+*/
+struct StateConnected
+    : public boost::statechart::simple_state<StateConnected,
+                                                ProtocolMachine>
+{
+    typedef boost::mpl::list<
+        boost::statechart::custom_reaction< EventSendMsg >,
+        boost::statechart::custom_reaction< EventRcvdMsg >,
+        boost::statechart::custom_reaction<EventDisconnectRequest>
+    > reactions;
 
+    StateConnected()
+    {
+        std::cout<<"We are connected!\n";
+    }
+
+
+    boost::statechart::result react(const EventSendMsg& msg)
+    {
+        std::cout<<"Sending message: ";
+        std::cout<<std::string(msg.parm.begin(), msg.parm.end())<<'\n';
+
+        return discard_event();
+    }
+
+    boost::statechart::result react(const EventRcvdMsg& msg)
+    {
+        context<ProtocolMachine>()
+            .notification_callback(
+                control::ReceivedMsgNotification
+                    (msg.parm)
+                );
+
+        return discard_event();
+    }
+
+    boost::statechart::result react(const EventDisconnectRequest&)
+    {
+        context<ProtocolMachine>()
+            .notification_callback(
+                control::ProtocolNotification
+                    (control::ProtocolNotification::ID_DISCONNECTED)
+                );
+
+        return transit<StateUnconnected>();
+    }
+
+};
+
+
+
+
+
+/** If the protocol is doing nothing.
+* Substate of StateUnconnected.
+*
+* Reacting to:
+* EventConnectRequest
+*/
 struct StateIdle
     : public boost::statechart::simple_state<StateIdle,
                                                 StateUnconnected>
 {
     typedef boost::statechart::custom_reaction< EventConnectRequest > reactions;
 
+    /** React to a EventConnectRequest Event.
+    *
+    */
     boost::statechart::result react(const EventConnectRequest& request)
     {
-        std::cout<<"Trying to connect to "<<std::string(request.where.begin(), request.where.end())<<"\n";
+        std::cout<<"Trying to connect to "<<std::string(request.parm.begin(), request.parm.end())<<"\n";
         return transit<StateTryingConnect>();
     }
 };
 
+/** If the protocol is doing nothing.
+* Substate of StateUnconnected.
+*
+* Reacting to:
+* EventConnectReport,
+* EventDisconnectRequest
+*/
 struct StateTryingConnect
     : public boost::statechart::simple_state<StateTryingConnect,
                                                 StateUnconnected>
 {
     typedef boost::mpl::list<
         boost::statechart::custom_reaction< EventConnectReport >,
-        boost::statechart::custom_reaction<EventDisconnect>
+        boost::statechart::custom_reaction<EventDisconnectRequest>
     > reactions;
 
+    /** React to a EventConnectReport Event.
+    *
+    */
     boost::statechart::result react(const EventConnectReport& rprt)
     {
-        if (rprt.success)
+        if (rprt.parm)
         {
             context<ProtocolMachine>()
                 .notification_callback(
@@ -162,7 +245,10 @@ struct StateTryingConnect
         }
     }
 
-    boost::statechart::result react(const EventDisconnect&)
+    /** React to a EventDisconnectRequest Event.
+    *
+    */
+    boost::statechart::result react(const EventDisconnectRequest&)
     {
         context<ProtocolMachine>()
             .notification_callback(
@@ -174,57 +260,6 @@ struct StateTryingConnect
     }
 
 };
-
-
-struct StateConnected
-    : public boost::statechart::simple_state<StateConnected,
-                                                ProtocolMachine>
-{
-    typedef boost::mpl::list<
-        boost::statechart::custom_reaction< EventSendMsg >,
-        boost::statechart::custom_reaction< EventRcvdMsg >,
-        boost::statechart::custom_reaction<EventDisconnect>
-    > reactions;
-
-    StateConnected()
-    {
-        std::cout<<"We are connected!\n";
-    }
-
-
-    boost::statechart::result react(const EventSendMsg& msg)
-    {
-        std::cout<<"Sending message: ";
-        std::cout<<std::string(msg.msg.begin(), msg.msg.end())<<'\n';
-
-        return discard_event();
-    }
-
-    boost::statechart::result react(const EventRcvdMsg& msg)
-    {
-        context<ProtocolMachine>()
-            .notification_callback(
-                control::ReceivedMsgNotification
-                    (msg.msg)
-                );
-
-        return discard_event();
-    }
-
-    boost::statechart::result react(const EventDisconnect&)
-    {
-        context<ProtocolMachine>()
-            .notification_callback(
-                control::ProtocolNotification
-                    (control::ProtocolNotification::ID_DISCONNECTED)
-                );
-
-        return transit<StateUnconnected>();
-    }
-
-};
-
-
 
 
 
@@ -265,10 +300,8 @@ NMSProtocol::~NMSProtocol()
     machine_scheduler.terminate();
 
     try {
-
         // give the thread a few seconds time to join
         machine_thread.timed_join(boost::posix_time::millisec(threadwait_ms));
-
     }
     catch(...)
     {}
@@ -278,6 +311,8 @@ NMSProtocol::~NMSProtocol()
         return;
 
     machine_thread.interrupt();
+
+    // if interruption failed, let the thread detach
 }
 
 
@@ -302,7 +337,6 @@ void NMSProtocol::connect_to(const std::wstring& id)
 void NMSProtocol::send(const std::wstring& msg)
     throw(std::runtime_error, ProtocolError)
 {
-
     boost::intrusive_ptr<EventSendMsg>
     send_evt(new EventSendMsg(msg));
 
@@ -314,8 +348,8 @@ void NMSProtocol::disconnect()
     throw(std::runtime_error, ProtocolError)
 {
 #if 1
-    boost::intrusive_ptr<EventDisconnect>
-    disconnect_evt(new EventDisconnect);
+    boost::intrusive_ptr<EventDisconnectRequest>
+    disconnect_evt(new EventDisconnectRequest);
 
     machine_scheduler.queue_event(event_processor, disconnect_evt);
 #endif

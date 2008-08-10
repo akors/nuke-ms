@@ -1,9 +1,9 @@
-// main.cpp
+// gui.cpp
 
 /*
  *   NMS - Nuclear Messaging System
  *   Copyright (C) 2008  Alexander Korsunsky
- * 
+ *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
  *   the Free Software Foundation, either version 3 of the License, or
@@ -22,12 +22,49 @@
 #include <boost/bind.hpp>
 #include <boost/tokenizer.hpp>
 
-#include <wx/aboutdlg.h>
+#include "gui.hpp"
 
-#include "main.hpp"
+#include "control.hpp"
 
 using namespace nms;
 using namespace gui;
+
+
+
+/** Application entry point.
+* @ingroup gui
+* This class represents the main thread of execution.
+*
+* @todo Do semthing sensible when an exception is thrown.
+*/
+class MainApp : public wxApp
+{
+
+    /** Application control object*/
+    control::AppControl<MainFrameWrapper, protocol::NMSProtocol>* app_control;
+
+public:
+
+    bool OnInit() throw(); /**< gets called when the application starts */
+    int OnExit() throw(); /**< gets called when the application terminates*/
+
+    /** Process a wxWidget event
+    *
+    * This member function gets called whenever an event happens.
+    * It overrides the base class version to get more control over the event
+    * handling.
+    * <br> <br>
+    * It checks if the event is a key event. If it is, it checks wether
+    * the event was caused by pressing down the Return key.
+    * If it was and control or Shift were not pressed, the function calls
+    * MainFrame::OnEnter() and returns. <br>
+    * If any of these conditions are not true, the function calls the base
+    * class version of itself and returns.
+    */
+    virtual bool ProcessEvent(wxEvent& event) throw();
+};
+
+
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////// MainFrame Methods //////////////////////////////
@@ -61,12 +98,12 @@ void MainFrame::createTextBoxes()
 
     // create text box for displaying text (read only)
     text_display_box = new wxTextCtrl(this, wxID_ANY, wxT(""),
-                wxDefaultPosition, scales.displaybox_size, 
+                wxDefaultPosition, scales.displaybox_size,
                 wxTE_READONLY | wxTE_MULTILINE);
 
     // create text box for writing text
     text_input_box = new wxTextCtrl(this, ID_INPUT_BOX, wxT(""),
-                wxDefaultPosition, scales.inputbox_size, 
+                wxDefaultPosition, scales.inputbox_size,
                 wxTE_PROCESS_ENTER | wxTE_MULTILINE);
 
     // add the upper textbox to the sizer
@@ -74,8 +111,8 @@ void MainFrame::createTextBoxes()
             text_display_box, // the text box we want to add
             scales.displaybox_proportion,  // the relative size
             wxALL | // border everywhere
-            wxEXPAND |  // item expands to fill space 
-            wxALIGN_CENTER_HORIZONTAL, 
+            wxEXPAND |  // item expands to fill space
+            wxALIGN_CENTER_HORIZONTAL,
             scales.border_width // border size
               );
 
@@ -84,8 +121,8 @@ void MainFrame::createTextBoxes()
             text_input_box, // the text box we want to add
             scales.inputbox_proportion,  // the relative size
             wxALL | // border everywhere
-            wxEXPAND |  // item expands to fill space 
-            wxALIGN_CENTER_HORIZONTAL, 
+            wxEXPAND |  // item expands to fill space
+            wxALIGN_CENTER_HORIZONTAL,
             scales.border_width // border size
               );
 
@@ -94,13 +131,13 @@ void MainFrame::createTextBoxes()
 
     // set limitations on minimum size
     this->SetSizeHints(vertsizer->GetMinSize());
-    
+
     // set focus on the input box
     text_input_box->SetFocus();
 }
 
 
-boost::shared_ptr<control::ControlCommand> 
+boost::shared_ptr<control::ControlCommand>
 MainFrame::parseCommand(const std::wstring& str)
 {
     // we are basically dealing only with Control commands, so it would be nice
@@ -110,12 +147,12 @@ MainFrame::parseCommand(const std::wstring& str)
     // get ourself a tokenizer
     typedef boost::tokenizer<boost::char_separator<wchar_t>,
                              std::wstring::const_iterator, std::wstring >
-        tokenizer;        
-        
+        tokenizer;
+
 try {
     boost::char_separator<wchar_t> whitespace(L" \t\r\n");
     tokenizer tokens(str, whitespace);
-    
+
     tokenizer::iterator tok_iter = tokens.begin();
 
     // bail out, if there were no tokens
@@ -123,40 +160,40 @@ try {
         throw false;
 
 
-    if  ( !tok_iter->compare( L"/exit" ) )    
+    if  ( !tok_iter->compare( L"/exit" ) )
         return boost::shared_ptr<ControlCommand>
             (new ControlCommand(ControlCommand::ID_EXIT));
-            
-    if  ( !tok_iter->compare( L"/disconnect" ) )    
+
+    if  ( !tok_iter->compare( L"/disconnect" ) )
         return boost::shared_ptr<ControlCommand>
             (new ControlCommand(ControlCommand::ID_DISCONNECT));
-            
-    
+
+
     else if ( !tok_iter->compare( L"/print") )
     {
         if (++tok_iter == tokens.end() )
             throw false;
-            
-        return boost::shared_ptr<ControlCommand> 
+
+        return boost::shared_ptr<ControlCommand>
             (new MessageCommand<ControlCommand::ID_PRINT_MSG>(*tok_iter));
     }
-            
-    else if ( !tok_iter->compare( L"/connect") )    
-    {        
+
+    else if ( !tok_iter->compare( L"/connect") )
+    {
         if (++tok_iter == tokens.end() )
             throw false;
-            
-        return boost::shared_ptr<ControlCommand> 
-            (new MessageCommand<ControlCommand::ID_CONNECT_TO>(*tok_iter));        
+
+        return boost::shared_ptr<ControlCommand>
+            (new MessageCommand<ControlCommand::ID_CONNECT_TO>(*tok_iter));
     }
-        
-            
+
+
 }
-catch(...) {} 
+catch(...) {}
 // if somebody threw something, or if we reached this line,
 // the command is invalid
 
-    return boost::shared_ptr<ControlCommand> 
+    return boost::shared_ptr<ControlCommand>
             (new ControlCommand(ControlCommand::ID_INVALID));
 }
 
@@ -166,7 +203,7 @@ void MainFrame::printMessage(const std::wstring& str)
 {
     // lock the printer mutex while printing
     boost::lock_guard<boost::mutex> printlock(print_mutex);
-    
+
     text_display_box->AppendText( (str + L'\n').c_str() );
 }
 
@@ -177,7 +214,7 @@ void MainFrame::printMessage(const std::wstring& str)
 MainFrame::MainFrame
         (boost::function1<void, const control::ControlCommand&> _commandCallback)
     throw()
-        
+
     : wxFrame(NULL, -1, wxT("killer app"), wxDefaultPosition, wxSize(600, 500)),
     commandCallback(_commandCallback)
 {
@@ -190,7 +227,7 @@ MainFrame::MainFrame
     scales.inputbox_size = wxSize(300, 50);
     scales.displaybox_proportion = 3;
     scales.inputbox_proportion = 1;
-    
+
     createMenuBar();
     createTextBoxes();
 
@@ -211,37 +248,37 @@ void MainFrame::OnEnter(wxCommandEvent& event)
     throw()
 {
     // create reference to a std::wstring
-    const std::wstring& input_string = 
-        wxString2wstring(text_input_box->GetValue() ); 
-    
+    const std::wstring& input_string =
+        wxString2wstring(text_input_box->GetValue() );
+
     // clear input box
     text_input_box->Clear();
-    
+
     // nothing to do if the user entered nothing
     if ( input_string.empty() )
         return;
-        
+
     // print everything the user typed to the screen
     commandCallback(
             control::MessageCommand<control::ControlCommand::ID_PRINT_MSG>
                 (input_string)
         );
-    
-    
+
+
     // check if this is a command
     if ( MainFrame::isCommand(input_string) )
     {
         // create a shared pointer from the output
         boost::shared_ptr<control::ControlCommand> cmd =
             MainFrame::parseCommand(input_string);
-        
+
         commandCallback(*cmd);
     }
     else // if it's not a command we try to send it
-    {   
+    {
         commandCallback(control::MessageCommand
                             <control::ControlCommand::ID_SEND_MSG>
-                            (input_string));  
+                            (input_string));
     }
 
 }
@@ -260,41 +297,41 @@ bool MainApp::ProcessEvent(wxEvent& event)
         // check for key down event
         if (event.GetEventType() == wxEVT_CHAR)
         {
-            
+
             // only if control and shift are NOT down, call OnEnter
             if ( static_cast<wxKeyEvent&>(event).GetKeyCode() == WXK_RETURN &&
                 !static_cast<wxKeyEvent&>(event).ControlDown() &&
-                !static_cast<wxKeyEvent&>(event).ShiftDown() 
+                !static_cast<wxKeyEvent&>(event).ShiftDown()
                 )
             {
-                wxCommandEvent cmd_evt(wxEVT_COMMAND_ENTER);            
+                wxCommandEvent cmd_evt(wxEVT_COMMAND_ENTER);
 
                 MainFrame::OnEnter_callback(cmd_evt);
 
-                
+
                 return true;
             }
-        }    
+        }
 
         // dont stop processing the event in this function
         event.Skip();
-        
+
         // call base class version of this function
         baseclass_result = wxEvtHandler::ProcessEvent(event);
     }
-    
+
     // there isn't much to do if an exception propagated until here
     catch(const std::exception& e)
     {
         std::cerr<<"ERROR: An exception occured: "<<e.what()<<". Terminating\n";
         this->GetTopWindow()->Close();
-    } 
+    }
     catch(...)
     {
         std::cerr<<"ERROR: An unknown exception occured. Terminating\n";
         this->GetTopWindow()->Close();
     }
-    
+
     return baseclass_result;
 }
 
@@ -302,31 +339,31 @@ bool MainApp::ProcessEvent(wxEvent& event)
 
 bool MainApp::OnInit()
     throw()
-{    
+{
     // Create AppControl object, which creates its components
     try {
-        app_control = 
+        app_control =
             new control::AppControl<MainFrameWrapper, protocol::NMSProtocol>;
     } // say goodbye if initialization failed
     catch(const std::exception& e)
     {
         std::cerr<<"ERROR: An exception occured: "<<e.what()<<". Terminating\n";
         return false;
-    } 
+    }
     catch(...)
     {
         std::cerr<<"ERROR: An unknown exception occured. Terminating\n";
         return false;
     }
-    
+
     return true;
 }
 
 int MainApp::OnExit()
     throw()
 {
-    
-    delete app_control;    
+
+    delete app_control;
     return wxApp::OnExit();
 }
 
