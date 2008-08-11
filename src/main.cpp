@@ -18,8 +18,10 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** @file main.hpp
+/** @file main.cpp
 * @brief Application entry point
+*
+* This file contains the main() function and launches the application.
 *
 * @author Alexander Korsunsky
 *

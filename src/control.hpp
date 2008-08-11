@@ -20,7 +20,10 @@
 
 
 /** @file control.hpp
-* @brief Application Control and Management-
+* @brief Application Control and Management
+*
+* This file contains the Application management. Commands and notifications that
+* come from the components are processed and the appropriate actions are made.
 *
 * @author Alexander Korsunsky
 */

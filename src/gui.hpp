@@ -21,6 +21,9 @@
 /** @file gui.hpp
 * @brief Graphical user interface
 *
+* This file contains the Graphical User Interface Layout and Logic. Commands
+* that come from the user are sent to the Application Control entitiy.
+*
 * @author Alexander Korsunsky
 *
 */

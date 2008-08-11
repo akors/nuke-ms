@@ -19,18 +19,26 @@
 */
 
 /** @file protocol.hpp
-* Network communication protocol
+* @brief Network communication protocol.
+*
+* This file contains all of the networking logic.
+* The main class is nms::protocol::NMSProtocol. Use this file within an
+* Application Control entitiy.
+* This file depends only on the file "notifications.hpp" that contains the
+* types for the interface to the Application Control entitiy.
+*
+* @author Alexander Korsunsky
 */
 
 /** @defgroup proto Communication Protocol */
-/** @defgroup proto_machine Comunication Protocol State Machine
-* @ingroup proto */
+
 
 
 #ifndef PROTOCOL_HPP_
 #define PROTOCOL_HPP_
 
 #include <stdexcept>
+#include <string>
 
 #include <boost/asio.hpp>
 #include <boost/thread/thread.hpp>
@@ -50,6 +58,7 @@ using boost::asio::ip::tcp;
 
 
 /** Class for errors that can be issued by the Communication Protocol.
+* @ingroup proto
 */
 class ProtocolError : public std::runtime_error
 {

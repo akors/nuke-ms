@@ -18,7 +18,14 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** @todo Add file documentation */
+/** @file notifications.hpp
+* @brief Notification types.
+*
+* This file contains Types that are used to describe Notifications that are sent
+* from the Protocol to the Application Control entity.
+*
+* @author Alexander Korsunsky
+*/
 
 /** @defgroup  notif Notification Messages
 * @ingroup app_ctrl */

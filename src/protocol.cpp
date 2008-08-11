@@ -29,6 +29,8 @@
 
 #include "protocol.hpp"
 
+/** @defgroup proto_machine Comunication Protocol State Machine
+* @ingroup proto */
 
 using namespace nms;
 using namespace protocol;
@@ -38,6 +40,7 @@ using namespace protocol;
 /** @todo Insert documenation into the doc of the state reactions */
 
 /** Template for events with one parameter.
+* @ingroup proto_machine
 * This class is to be used for boost::state_machine, to identify events that
 * carry one parameter. It has tags to distinguish the event types.
 *
@@ -49,25 +52,37 @@ template <typename ParmType, typename EventTag>
 struct Parm1Event
     : public boost::statechart::event<Parm1Event<ParmType, EventTag> >
 {
+    /** Parameter. */
     ParmType parm;
 
+    /** Constructor. Initializes parameter */
     Parm1Event(const ParmType& _parm)
         : parm(_parm)
     {}
 };
 
 // Tags for different events with one parameter
+/** Tag for connection requests. @ingroup proto_machine */
 struct EventConnectRequestTag {};
+/** Tag for connection reports. @ingroup proto_machine */
 struct EventConnectReportTag {};
+/** Tag for received messages. @ingroup proto_machine */
 struct EventRcvdMsgTag {};
+/** Tag for sent messages. @ingroup proto_machine */
 struct EventSendMsgTag {};
 
 // Typedefs for events with one parameter.
+
+/** Event for connection requests.  @ingroup proto_machine*/
 typedef Parm1Event<std::wstring, EventConnectRequestTag> EventConnectRequest;
+/** Event for connection reports. @ingroup proto_machine */
 typedef Parm1Event<bool, EventConnectReportTag> EventConnectReport;
+/** Event for received messages. @ingroup proto_machine */
 typedef Parm1Event<std::wstring, EventRcvdMsgTag> EventRcvdMsg;
+/** Event for sent messages. @ingroup proto_machine */
 typedef Parm1Event<std::wstring, EventSendMsgTag> EventSendMsg;
 
+/** Event for disconnect requests. @ingroup proto_machine */
 struct EventDisconnectRequest : boost::statechart::event<EventDisconnectRequest>
 {};
 
@@ -76,6 +91,7 @@ struct EventDisconnectRequest : boost::statechart::event<EventDisconnectRequest>
 struct StateUnconnected;
 
 /** The Protoc State Machine.
+* @ingroup proto_machine
 * This class represents the Overall State of the Protocol.
 * Events can be dispatched to this machine, and the according actions will be
 * performed.
@@ -110,6 +126,7 @@ struct StateIdle;
 struct StateTryingConnect;
 
 /** If the Protocol is unconnected.
+* @ingroup proto_machine
 * Reacting to:
 * Nothing. (defer to substates)
 */
@@ -120,6 +137,7 @@ struct StateUnconnected
 { };
 
 /** If the protocol is in a connected state.
+* @ingroup proto_machine
 *
 * Reacting to:
 * EventSendMsg,
@@ -130,6 +148,7 @@ struct StateConnected
     : public boost::statechart::simple_state<StateConnected,
                                                 ProtocolMachine>
 {
+    /** State reactions. */
     typedef boost::mpl::list<
         boost::statechart::custom_reaction< EventSendMsg >,
         boost::statechart::custom_reaction< EventRcvdMsg >,
@@ -141,7 +160,9 @@ struct StateConnected
         std::cout<<"We are connected!\n";
     }
 
-
+    /** React to a EventSendMsg Event.
+    *
+    */
     boost::statechart::result react(const EventSendMsg& msg)
     {
         std::cout<<"Sending message: ";
@@ -150,6 +171,9 @@ struct StateConnected
         return discard_event();
     }
 
+    /** React to a EventRcvdMsg Event.
+    *
+    */
     boost::statechart::result react(const EventRcvdMsg& msg)
     {
         context<ProtocolMachine>()
@@ -161,6 +185,9 @@ struct StateConnected
         return discard_event();
     }
 
+    /** React to a EventDisconnectRequest Event.
+    *
+    */
     boost::statechart::result react(const EventDisconnectRequest&)
     {
         context<ProtocolMachine>()
@@ -179,6 +206,7 @@ struct StateConnected
 
 
 /** If the protocol is doing nothing.
+* @ingroup proto_machine
 * Substate of StateUnconnected.
 *
 * Reacting to:
@@ -188,6 +216,7 @@ struct StateIdle
     : public boost::statechart::simple_state<StateIdle,
                                                 StateUnconnected>
 {
+    /** State reactions. */
     typedef boost::statechart::custom_reaction< EventConnectRequest > reactions;
 
     /** React to a EventConnectRequest Event.
@@ -201,6 +230,7 @@ struct StateIdle
 };
 
 /** If the protocol is doing nothing.
+* @ingroup proto_machine
 * Substate of StateUnconnected.
 *
 * Reacting to:
@@ -211,6 +241,7 @@ struct StateTryingConnect
     : public boost::statechart::simple_state<StateTryingConnect,
                                                 StateUnconnected>
 {
+    /** State reactions. */
     typedef boost::mpl::list<
         boost::statechart::custom_reaction< EventConnectReport >,
         boost::statechart::custom_reaction<EventDisconnectRequest>
