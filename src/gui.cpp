@@ -31,48 +31,12 @@ using namespace gui;
 
 
 
-/** Application entry point.
-* @ingroup gui
-* This class represents the main thread of execution.
-*
-* @todo Do semthing sensible when an exception is thrown.
-*/
-class MainApp : public wxApp
-{
-
-    /** Application control object*/
-    control::AppControl<MainFrameWrapper, protocol::NMSProtocol>* app_control;
-
-public:
-
-    bool OnInit() throw(); /**< gets called when the application starts */
-    int OnExit() throw(); /**< gets called when the application terminates*/
-
-    /** Process a wxWidget event
-    *
-    * This member function gets called whenever an event happens.
-    * It overrides the base class version to get more control over the event
-    * handling.
-    * <br> <br>
-    * It checks if the event is a key event. If it is, it checks wether
-    * the event was caused by pressing down the Return key.
-    * If it was and control or Shift were not pressed, the function calls
-    * MainFrame::OnEnter() and returns. <br>
-    * If any of these conditions are not true, the function calls the base
-    * class version of itself and returns.
-    */
-    virtual bool ProcessEvent(wxEvent& event) throw();
-};
-
-
-
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////// MainFrame Methods //////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////// MainFrame Private //////////////////////////////
 
-boost::function1<void, wxCommandEvent&> MainFrame::OnEnter_callback;
 
 void MainFrame::createMenuBar()
 {
@@ -218,8 +182,6 @@ MainFrame::MainFrame
     : wxFrame(NULL, -1, wxT("killer app"), wxDefaultPosition, wxSize(600, 500)),
     commandCallback(_commandCallback)
 {
-    // Opening a hole for MainApp to get to the OnEnter member function
-    OnEnter_callback = boost::bind(&MainFrame::OnEnter, this, _1);
 
     // softcoding the window sizes
     scales.border_width = 10;
@@ -282,108 +244,6 @@ void MainFrame::OnEnter(wxCommandEvent& event)
     }
 
 }
-
-
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////// MainApp Methods //////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-
-bool MainApp::ProcessEvent(wxEvent& event)
-    throw()
-{
-    bool baseclass_result;
-    try {
-        // check for key down event
-        if (event.GetEventType() == wxEVT_CHAR)
-        {
-
-            // only if control and shift are NOT down, call OnEnter
-            if ( static_cast<wxKeyEvent&>(event).GetKeyCode() == WXK_RETURN &&
-                !static_cast<wxKeyEvent&>(event).ControlDown() &&
-                !static_cast<wxKeyEvent&>(event).ShiftDown()
-                )
-            {
-                wxCommandEvent cmd_evt(wxEVT_COMMAND_ENTER);
-
-                MainFrame::OnEnter_callback(cmd_evt);
-
-
-                return true;
-            }
-        }
-
-        // dont stop processing the event in this function
-        event.Skip();
-
-        // call base class version of this function
-        baseclass_result = wxEvtHandler::ProcessEvent(event);
-    }
-
-    // there isn't much to do if an exception propagated until here
-    catch(const std::exception& e)
-    {
-        std::cerr<<"ERROR: An exception occured: "<<e.what()<<". Terminating\n";
-        this->GetTopWindow()->Close();
-    }
-    catch(...)
-    {
-        std::cerr<<"ERROR: An unknown exception occured. Terminating\n";
-        this->GetTopWindow()->Close();
-    }
-
-    return baseclass_result;
-}
-
-
-
-bool MainApp::OnInit()
-    throw()
-{
-    // Create AppControl object, which creates its components
-    try {
-        app_control =
-            new control::AppControl<MainFrameWrapper, protocol::NMSProtocol>;
-    } // say goodbye if initialization failed
-    catch(const std::exception& e)
-    {
-        std::cerr<<"ERROR: An exception occured: "<<e.what()<<". Terminating\n";
-        return false;
-    }
-    catch(...)
-    {
-        std::cerr<<"ERROR: An unknown exception occured. Terminating\n";
-        return false;
-    }
-
-    return true;
-}
-
-int MainApp::OnExit()
-    throw()
-{
-
-    delete app_control;
-    return wxApp::OnExit();
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////// Event Tables //////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-
-BEGIN_EVENT_TABLE(MainFrame, wxFrame)
-    EVT_MENU(wxID_EXIT, MainFrame::OnQuit)
-    //EVT_TEXT_ENTER(MainFrame::ID_INPUT_BOX, MainFrame::OnEnter)
-END_EVENT_TABLE()
-
-
-
-IMPLEMENT_APP(MainApp)
-
-
-
 
 
 

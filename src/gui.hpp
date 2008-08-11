@@ -30,18 +30,14 @@
 #ifndef MAIN_HPP_INCLUDED
 #define MAIN_HPP_INCLUDED
 
-#include <boost/function.hpp>
 #include <boost/thread/mutex.hpp>
 
-#include <wx/app.h>
 #include <wx/frame.h>
 #include <wx/menu.h>
 #include <wx/textctrl.h>
 #include <wx/sizer.h>
 
 #include "commands.hpp"
-#include "protocol.hpp"
-
 
 namespace nms
 {
@@ -151,12 +147,6 @@ class MainFrame : public wxFrame
     parseCommand(const std::wstring& str);
 
 public:
-    /** Loophole for MainApp.
-    * opening a hole for MainApp, so it can call OnEnter when the user hit the
-    * enter key.
-    */
-    static boost::function1<void, wxCommandEvent&> OnEnter_callback;
-
     friend class MainFrameWrapper;
 
     /** Constructor.
@@ -226,6 +216,14 @@ public:
     void close() throw()
     {
         main_frame->Close(false);
+    }
+
+    /** Called when the user hits the return key without
+    * holding down the shift or ctrl. key
+    */
+    void OnEnter(wxCommandEvent& event) throw()
+    {
+        main_frame->OnEnter(event);
     }
 
 };

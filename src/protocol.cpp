@@ -21,7 +21,6 @@
 #include <boost/bind.hpp>
 #include <boost/tokenizer.hpp>
 
-
 #include <boost/statechart/asynchronous_state_machine.hpp>
 #include <boost/statechart/simple_state.hpp>
 #include <boost/statechart/transition.hpp>

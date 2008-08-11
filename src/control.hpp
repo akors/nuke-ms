@@ -35,13 +35,11 @@
 #ifndef CONTROL_HPP_INCLUDED
 #define CONTROL_HPP_INCLUDED
 
-
-
+#include <iostream>
 
 #include <stdexcept>
 #include <string>
 
-#include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
 
 #include "notifications.hpp"
@@ -123,6 +121,7 @@ private:
         }
     }
 
+
     /** Shut down the application. */
     void close()
         throw()
@@ -156,6 +155,14 @@ public:
     * @param notification The notification
     */
     void handleNotification(const ProtocolNotification& notification) throw();
+
+    /** Return a pointer to the GUI.
+    * The main Application might need to access the GUI directly. This is
+    * possible by calling this function.
+    */
+    GuiT* getGui()
+        throw()
+    { return &gui; }
 };
 
 

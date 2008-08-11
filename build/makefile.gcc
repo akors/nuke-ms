@@ -26,7 +26,7 @@ WX_CXXFLAGS=`wx-config --cxxflags`
 WX_LIBS= `wx-config --libs`
 
 
-CXXFLAGS=-g
+CXXFLAGS=-g $(WX_CXXFLAGS)
 
 
 all: nms
@@ -35,13 +35,8 @@ doc:
 	doxygen $(DOXYFILE)
 
 
-nms: gui.o protocol.o
-	$(CXX) $(CXXFLAGS) $(WX_CXXFLAGS)  -o $@ $^  -l$(B_LIB_THREAD) -l$(B_LIB_SYSTEM)  $(WX_LIBS)
-
-gui.o: gui.cpp
-	$(CXX) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ $^
-
-
+nms:  main.o gui.o protocol.o
+	$(CXX) $(CXXFLAGS) -o $@ $^  -l$(B_LIB_THREAD) -l$(B_LIB_SYSTEM)  $(WX_LIBS)
 
 clean:
 	rm -f nms *.o *~

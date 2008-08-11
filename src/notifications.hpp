@@ -27,6 +27,7 @@
 #ifndef NOTIFICATIONS_HPP
 #define NOTIFICATIONS_HPP
 
+#include <string>
 
 namespace nms
 {
