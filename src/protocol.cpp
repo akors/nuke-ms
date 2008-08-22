@@ -18,8 +18,15 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <vector>
+
 #include <boost/bind.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <boost/asio.hpp>
+#include <boost/system/error_code.hpp>
+
 
 #include <boost/statechart/asynchronous_state_machine.hpp>
 #include <boost/statechart/simple_state.hpp>
@@ -35,6 +42,59 @@
 using namespace nms;
 using namespace protocol;
 
+
+using boost::asio::ip::tcp;
+
+
+/** This is a class that represents a connection to a remote peer.
+* @ingroup proto
+*
+*/
+class NMSConnection
+{
+    // wait for the thread 3 seconds
+    enum { threadwait_ms = 3000 };
+
+
+    /** The working thread */
+    boost::thread worker;
+
+    /** The IO service object */
+    boost::asio::io_service io_service;
+
+    /** The socket for the connection */
+    tcp::socket socket;
+
+    /** The callback for notifications. */
+    control::notif_callback_t notification_callback;
+
+    void resolveHandler(const boost::system::error_code& error,
+                    tcp::resolver::iterator endpoint_iterator,
+                    const std::wstring& id
+                    );
+
+    void connectHandler(const boost::system::error_code& error);
+
+    void sendHandler(const boost::system::error_code& error,
+                     std::size_t bytes_transferred,
+                     unsigned char* sendbuf);
+
+public:
+
+    NMSConnection(const std::wstring& where,
+                    const control::notif_callback_t& _notification_callback)
+        throw();
+
+    ~NMSConnection()
+    {
+        disconnect();
+    }
+
+    void send(const std::wstring& msg);
+
+
+    void disconnect() throw();
+};
 
 
 /** @todo Insert documenation into the doc of the state reactions */
@@ -61,6 +121,37 @@ struct Parm1Event
     {}
 };
 
+
+
+/** Template for events with two parameters.
+* @ingroup proto_machine
+* This class is to be used for boost::state_machine, to identify events that
+* carry one parameter. It has tags to distinguish the event types.
+*
+* @tparam ParmType The type of the parameter
+* @tparam EventTag The tag to distinguish the events. This can be an arbitary,
+* but distinct type, such as empty structs.
+*/
+template <typename Parm1Type, typename Parm2Type, typename EventTag>
+struct Parm2Event
+    : public boost::statechart::event<Parm2Event<Parm1Type,Parm2Type,EventTag> >
+{
+    /** First parameter. */
+    Parm1Type parm1;
+
+    /** Second parameter. */
+    Parm2Type parm2;
+
+    /** Constructor. Initializes parameter */
+    Parm2Event(const Parm1Type& _parm1, const Parm2Type& _parm2)
+        : parm1(_parm1), parm2(_parm2)
+    {}
+};
+
+
+
+
+
 // Tags for different events with one parameter
 /** Tag for connection requests. @ingroup proto_machine */
 struct EventConnectRequestTag {};
@@ -70,17 +161,21 @@ struct EventConnectReportTag {};
 struct EventRcvdMsgTag {};
 /** Tag for sent messages. @ingroup proto_machine */
 struct EventSendMsgTag {};
+/** Tag for disconnections. @ingroup proto_machine */
+struct EventDisconnectedTag {};
 
 // Typedefs for events with one parameter.
 
 /** Event for connection requests.  @ingroup proto_machine*/
 typedef Parm1Event<std::wstring, EventConnectRequestTag> EventConnectRequest;
 /** Event for connection reports. @ingroup proto_machine */
-typedef Parm1Event<bool, EventConnectReportTag> EventConnectReport;
+typedef Parm1Event<std::wstring, EventConnectReportTag> EventConnectReport;
 /** Event for received messages. @ingroup proto_machine */
 typedef Parm1Event<std::wstring, EventRcvdMsgTag> EventRcvdMsg;
 /** Event for sent messages. @ingroup proto_machine */
 typedef Parm1Event<std::wstring, EventSendMsgTag> EventSendMsg;
+/** Event for disconnections. @ingroup proto_machine */
+typedef Parm1Event<std::wstring, EventDisconnectedTag> EventDisconnected;
 
 /** Event for disconnect requests. @ingroup proto_machine */
 struct EventDisconnectRequest : boost::statechart::event<EventDisconnectRequest>
@@ -107,18 +202,25 @@ struct ProtocolMachine
         >
 {
     /** The callback for notifications. */
-    boost::function1 <void, const control::ProtocolNotification&>
-        notification_callback;
+    control::notif_callback_t notification_callback;
+
+    /** A pointer to a NMSConnection object that is valid when in state
+    TryingToConnect and Connected */
+    boost::shared_ptr<NMSConnection> connection;
 
     /** Constructor. To be used only by Boost.Statechart classes. */
     ProtocolMachine(my_context ctx,
-                    const boost::function1
-                        <void, const control::ProtocolNotification&>&
-                        _notification_callback)
+                    const control::notif_callback_t& _notification_callback)
         throw()
         : my_base(ctx),
             notification_callback(_notification_callback)
     {}
+
+    /** */
+    static void notificationTranslator (
+        outermost_context_type& _this,
+        const control::ProtocolNotification& notification
+    ) throw();
 };
 
 // forward declarations that are needed for transition reactions.
@@ -152,6 +254,7 @@ struct StateConnected
     typedef boost::mpl::list<
         boost::statechart::custom_reaction< EventSendMsg >,
         boost::statechart::custom_reaction< EventRcvdMsg >,
+        boost::statechart::custom_reaction<EventDisconnected>,
         boost::statechart::custom_reaction<EventDisconnectRequest>
     > reactions;
 
@@ -167,6 +270,8 @@ struct StateConnected
     {
         std::cout<<"Sending message: ";
         std::cout<<std::string(msg.parm.begin(), msg.parm.end())<<'\n';
+
+        outermost_context().connection->send(msg.parm);
 
         return discard_event();
     }
@@ -185,22 +290,117 @@ struct StateConnected
         return discard_event();
     }
 
-    /** React to a EventDisconnectRequest Event.
+    /** React to a EventDisconnected Event.
     *
     */
-    boost::statechart::result react(const EventDisconnectRequest&)
+    boost::statechart::result react(const EventDisconnected& evt)
     {
         context<ProtocolMachine>()
             .notification_callback(
-                control::ProtocolNotification
-                    (control::ProtocolNotification::ID_DISCONNECTED)
+                    control::DisconnectedNotification(evt.parm)
                 );
+
+        // delete the Connection object, therefore closing the connection
+        // and terminating the thread
+        outermost_context().connection.reset();
 
         return transit<StateUnconnected>();
     }
 
+    /** React to a EventDisconnected Event.
+    *
+    */
+    boost::statechart::result react(const EventDisconnectRequest&)
+    {
+
+        //ask the Connection object to disconnect itself
+        outermost_context().connection->disconnect();
+    }
+
 };
 
+
+
+/** If the protocol is doing nothing.
+* @ingroup proto_machine
+* Substate of StateUnconnected.
+*
+* Reacting to:
+* EventConnectReport,
+* EventDisconnectRequest
+*/
+struct StateTryingConnect
+    : public boost::statechart::simple_state<StateTryingConnect,
+                                                StateUnconnected>
+{
+    /** State reactions. */
+    typedef boost::mpl::list<
+        boost::statechart::custom_reaction< EventConnectReport >,
+        boost::statechart::custom_reaction< EventDisconnectRequest >,
+        boost::statechart::custom_reaction<EventDisconnected>
+    > reactions;
+
+    /** React to a EventConnectReport Event.
+    *
+    */
+    boost::statechart::result react(const EventConnectReport& rprt)
+    {
+        if (rprt.parm.empty())
+        {
+            context<ProtocolMachine>()
+                .notification_callback(
+                    control::ReportNotification
+                        <control::ProtocolNotification::ID_CONNECT_REPORT>()
+                    );
+
+            return transit<StateConnected>();
+        }
+        else
+        {
+            context<ProtocolMachine>()
+                .notification_callback(
+                    control::ReportNotification
+                        <control::ProtocolNotification::ID_CONNECT_REPORT>
+                        (L"Sorry, connection failed: " + rprt.parm)
+                    );
+
+            // delete the Connection object, therefore closing the connection
+            // and terminating the thread
+            outermost_context().connection.reset();
+
+            return transit<StateUnconnected>();
+        }
+    }
+
+    /** React to a EventDisconnected Event.
+    *
+    */
+    boost::statechart::result react(const EventDisconnected& evt)
+    {
+        context<ProtocolMachine>()
+            .notification_callback(
+                    control::DisconnectedNotification(evt.parm)
+                );
+
+        // delete the Connection object, therefore closing the connection
+        // and terminating the thread
+        outermost_context().connection.reset();
+
+        return transit<StateUnconnected>();
+    }
+
+    /** React to a EventDisconnected Event.
+    *
+    */
+    boost::statechart::result react(const EventDisconnectRequest&)
+    {
+
+        //ask the Connection object to disconnect itself
+        outermost_context().connection->disconnect();
+
+        return transit<StateUnconnected>();
+    }
+};
 
 
 
@@ -224,77 +424,293 @@ struct StateIdle
     */
     boost::statechart::result react(const EventConnectRequest& request)
     {
-        std::cout<<"Trying to connect to "<<std::string(request.parm.begin(), request.parm.end())<<"\n";
+        // create an object of type NMSConnection
+        outermost_context().connection.reset(
+            new NMSConnection(
+                request.parm,
+                boost::bind(&ProtocolMachine::notificationTranslator,
+                    boost::ref(outermost_context()),
+                    _1
+                )
+            )
+        );
+
+
         return transit<StateTryingConnect>();
     }
 };
 
-/** If the protocol is doing nothing.
-* @ingroup proto_machine
-* Substate of StateUnconnected.
-*
-* Reacting to:
-* EventConnectReport,
-* EventDisconnectRequest
-*/
-struct StateTryingConnect
-    : public boost::statechart::simple_state<StateTryingConnect,
-                                                StateUnconnected>
+
+
+
+
+
+NMSConnection::NMSConnection(const std::wstring& where,
+                             const control::notif_callback_t&
+                                _notification_callback)
+    throw()
+    : notification_callback(_notification_callback),
+      socket(io_service)
 {
-    /** State reactions. */
-    typedef boost::mpl::list<
-        boost::statechart::custom_reaction< EventConnectReport >,
-        boost::statechart::custom_reaction<EventDisconnectRequest>
-    > reactions;
 
-    /** React to a EventConnectReport Event.
-    *
-    */
-    boost::statechart::result react(const EventConnectReport& rprt)
-    {
-        if (rprt.parm)
-        {
-            context<ProtocolMachine>()
-                .notification_callback(
-                    control::ReportNotification
-                        <control::ProtocolNotification::ID_CONNECT_REPORT>()
+
+    try {
+        // get ourself a tokenizer
+        typedef boost::tokenizer<boost::char_separator<wchar_t>,
+                                std::wstring::const_iterator, std::wstring>
+            tokenizer;
+
+        // get the part before the colon and the part after the colon
+        boost::char_separator<wchar_t> colons(L":");
+        tokenizer tokens(where, colons);
+
+        tokenizer::iterator tok_iter = tokens.begin();
+
+        // bail out, if there were no tokens
+        if ( tok_iter == tokens.end() )
+            throw ProtocolError("Invalid remote site identifier.");
+
+        // create host from first token
+        std::string host(tok_iter->begin(), tok_iter->end());
+
+        if ( ++tok_iter == tokens.end() )
+            throw ProtocolError("Invalid remote site identifier.");
+
+        // create service from second token
+        std::string service(tok_iter->begin(), tok_iter->end());
+
+        // bail out if there is another colon
+        if ( ++tok_iter != tokens.end() )
+            throw ProtocolError("Invalid remote site identifier.");
+
+
+
+
+
+        tcp::resolver resolver(io_service); // get a resolver
+        tcp::resolver::query query(host, service); // create a query
+
+        // dispatch an asynchronous resolve request
+        resolver.async_resolve(
+            query,
+            boost::bind(
+                    &NMSConnection::resolveHandler, this,
+                    _1 , _2,
+                    where
+                )
+            );
+
+        // start a new thread that processes all asynchronous operations
+        worker = boost::thread(
+                    boost::bind(&boost::asio::io_service::run, &io_service)
                     );
 
-            return transit<StateConnected>();
-        }
-        else
-        {
-            context<ProtocolMachine>()
-                .notification_callback(
-                    control::ReportNotification
-                        <control::ProtocolNotification::ID_CONNECT_REPORT>
-                        (L"Sorry, connection failed.\n")
-                    );
-
-            return transit<StateUnconnected>();
-        }
     }
-
-    /** React to a EventDisconnectRequest Event.
-    *
-    */
-    boost::statechart::result react(const EventDisconnectRequest&)
+    catch (const std::exception& e)
     {
-        context<ProtocolMachine>()
-            .notification_callback(
-                control::ProtocolNotification
-                    (control::ProtocolNotification::ID_DISCONNECTED)
-                );
+        std::string errmsg(e.what());
 
-        return transit<StateUnconnected>();
+        notification_callback(
+            control::ReportNotification<
+                    control::ProtocolNotification::ID_CONNECT_REPORT
+                    >
+                (std::wstring(errmsg.begin(), errmsg.end()))
+            );
     }
 
+}
+
+
+void NMSConnection::resolveHandler(const boost::system::error_code& error,
+                        tcp::resolver::iterator endpoint_iterator,
+                        const std::wstring& id
+                       )
+{
+
+
+    // if there was an error, report it
+    if (error)
+    {
+        std::string errmsg(error.message());
+
+        notification_callback(
+            control::ReportNotification<
+                    control::ProtocolNotification::ID_CONNECT_REPORT
+                    >
+                (std::wstring(errmsg.begin(), errmsg.end()))
+            );
+    }
+
+
+    // otherwise try to connect
+
+
+    // dispatch an asynchronous connect request
+    socket.async_connect(
+        *endpoint_iterator,
+        boost::bind(&NMSConnection::connectHandler, this, _1)
+        );
+
+}
+
+
+
+
+void NMSConnection::connectHandler(const boost::system::error_code& error)
+{
+    if (error)
+    {
+        std::string errmsg(error.message());
+
+        // report failure
+        notification_callback(
+            control::ReportNotification<
+                    control::ProtocolNotification::ID_CONNECT_REPORT
+                    >
+                (std::wstring(errmsg.begin(), errmsg.end()))
+            );
+    }
+
+    notification_callback(
+    control::ReportNotification<
+            control::ProtocolNotification::ID_CONNECT_REPORT
+            >
+        ()
+    );
+}
+
+
+void NMSConnection::sendHandler(const boost::system::error_code& /* error */,
+    std::size_t /* bytes_transferred */,
+    unsigned char* sendbuf
+)
+{
+    // in any case delete the sendbuffer
+    delete[] sendbuf;
+
+    // if there was an error, close the socket
+    disconnect();
+}
+
+void NMSConnection::send(const std::wstring& msg)
+{
+    std::size_t sendbuf_size = msg.size()*sizeof(std::wstring::value_type);
+
+    unsigned char* sendbuf = new unsigned char[sendbuf_size];
+
+    std::copy(msg.begin(), msg.end(),
+        reinterpret_cast<std::wstring::value_type*>(sendbuf)
+    );
+
+    // send the bytes
+    async_write(socket,
+        boost::asio::buffer(sendbuf, sendbuf_size),
+        boost::bind(&NMSConnection::sendHandler, this, _1, _2, sendbuf)
+    );
 };
 
+void NMSConnection::disconnect()
+    throw()
+{
+    boost::system::error_code ec;
+
+    // shutdown receiver and sender end of the socket, ignore errors
+    socket.shutdown(tcp::socket::shutdown_both, ec);
+
+    // stop the io_service object
+    io_service.stop();
+
+    // try to join the thread
+    try {
+        worker.timed_join(boost::posix_time::millisec(threadwait_ms));
+
+    }
+    catch(...)
+    {
+    }
+
+    // if the thread finished, return. otherwise try to kill the thread
+    if (worker.get_id() == boost::thread::id())
+        return;
+
+    // try to interrrupt the thread
+    worker.interrupt();
+
+    // when the thread object goes out of scope, the thread detaches
+
+    // finally notify the caller about the disconnection
+    notification_callback(
+        control::ProtocolNotification(
+            control::ProtocolNotification::ID_DISCONNECTED
+        )
+    );
+
+}
 
 
-NMSProtocol::NMSProtocol(const boost::function1<void, const control::ProtocolNotification&>&
-                            _notification_callback)
+
+#if 1
+
+void ProtocolMachine::notificationTranslator (
+    outermost_context_type& _this,
+    const control::ProtocolNotification& notification
+) throw()
+{
+    using namespace nms::control;
+
+    switch (notification.id)
+    {
+        case ProtocolNotification::ID_DISCONNECTED:
+        {
+            // cast to a Disconnected Notification
+            const DisconnectedNotification& notif =
+                static_cast<const DisconnectedNotification&>(notification);
+
+            // post the event to the State Machine
+            _this.post_event(EventDisconnected(notif.msg));
+
+            break;
+        }
+
+        case ProtocolNotification::ID_RECEIVED_MSG:
+        {
+            const ReceivedMsgNotification& notif =
+                static_cast<const ReceivedMsgNotification&> (notification);
+
+            // post the event to the State Machine
+            _this.post_event(EventRcvdMsg(notif.msg));
+
+
+            break;
+        }
+
+
+        case ProtocolNotification::ID_CONNECT_REPORT:
+        {
+            const RequestReport& rprt =
+                static_cast<
+                    const ReportNotification<
+                                ProtocolNotification::ID_CONNECT_REPORT>&
+                            >
+                            (notification);
+
+            _this.post_event(EventConnectReport(rprt.failure_reason));
+
+            break;
+        }
+
+
+        default:
+            /* nothing */;
+
+    }
+
+
+}
+#endif
+
+
+NMSProtocol::NMSProtocol(const control::notif_callback_t _notification_callback)
             throw()
 
     : notification_callback(_notification_callback),
@@ -312,7 +728,6 @@ NMSProtocol::NMSProtocol(const boost::function1<void, const control::ProtocolNot
     // machine_thread is in state "not-a-thread", so we will use the move
     // semantics provided by boost::thread to create a new thread and assign it
     // the variable
-#if 1
     machine_thread = boost::thread(
         boost::bind(
             &boost::statechart::fifo_scheduler<>::operator(),
@@ -320,8 +735,6 @@ NMSProtocol::NMSProtocol(const boost::function1<void, const control::ProtocolNot
             0
             )
         );
-#endif
-
 }
 
 NMSProtocol::~NMSProtocol()
@@ -349,17 +762,10 @@ NMSProtocol::~NMSProtocol()
 void NMSProtocol::connect_to(const std::wstring& id)
     throw(std::runtime_error, ProtocolError)
 {
-#if 1
     boost::intrusive_ptr<EventConnectRequest>
     connect_request(new EventConnectRequest(id));
 
-    boost::intrusive_ptr<EventConnectReport>
-    connect_reply(new EventConnectReport(true));
-
-
     machine_scheduler.queue_event(event_processor, connect_request);
-    machine_scheduler.queue_event(event_processor, connect_reply);
-#endif
 }
 
 
@@ -377,13 +783,10 @@ void NMSProtocol::send(const std::wstring& msg)
 void NMSProtocol::disconnect()
     throw(std::runtime_error, ProtocolError)
 {
-#if 1
     boost::intrusive_ptr<EventDisconnectRequest>
     disconnect_evt(new EventDisconnectRequest);
 
     machine_scheduler.queue_event(event_processor, disconnect_evt);
-#endif
 }
-
 
 

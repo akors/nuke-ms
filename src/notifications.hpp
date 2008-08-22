@@ -36,6 +36,8 @@
 
 #include <string>
 
+#include <boost/function.hpp>
+
 namespace nms
 {
 namespace control
@@ -69,9 +71,8 @@ struct ProtocolNotification
     {}
 };
 
-/** Notification regarding a received message
-* @ingroup notif*/
-struct ReceivedMsgNotification : public ProtocolNotification
+template <ProtocolNotification::notification_id_t NotificationId>
+struct ProtocolNotificationMessage : public ProtocolNotification
 {
     /** The message that was received */
     const std::wstring msg;
@@ -79,10 +80,22 @@ struct ReceivedMsgNotification : public ProtocolNotification
     /** Constructor.
     * @param _msg The message that was received
     */
-    ReceivedMsgNotification(const std::wstring& _msg)  throw()
-        : msg(_msg), ProtocolNotification(ID_RECEIVED_MSG)
+    ProtocolNotificationMessage(const std::wstring& _msg)  throw()
+        : msg(_msg), ProtocolNotification(NotificationId)
     {}
 };
+
+
+/** Notification regarding a received message
+* @ingroup notif*/
+typedef ProtocolNotificationMessage<ProtocolNotification::ID_RECEIVED_MSG>
+    ReceivedMsgNotification;
+
+
+/** Notification regarding a disconnected socket
+* @ingroup notif*/
+typedef ProtocolNotificationMessage<ProtocolNotification::ID_DISCONNECTED>
+    DisconnectedNotification;
 
 
 /** This class represents a positive or negative reply to a requested operation.
@@ -121,6 +134,11 @@ struct ReportNotification : public ProtocolNotification, public RequestReport
         : ProtocolNotification(NOTIF_ID), RequestReport(reason)
     {}
 };
+
+
+/** A typedef for the notification callback */
+typedef boost::function1 <void, const control::ProtocolNotification&>
+    notif_callback_t;
 
 
 } // namespace control

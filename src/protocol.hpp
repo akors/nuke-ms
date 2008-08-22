@@ -40,7 +40,6 @@
 #include <stdexcept>
 #include <string>
 
-#include <boost/asio.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/statechart/asynchronous_state_machine.hpp>
 #include <boost/function.hpp>
@@ -53,8 +52,6 @@ namespace nms
 {
 namespace protocol
 {
-
-using boost::asio::ip::tcp;
 
 
 /** Class for errors that can be issued by the Communication Protocol.
@@ -111,8 +108,7 @@ class NMSProtocol
     boost::statechart::fifo_scheduler<>::processor_handle event_processor;
 
     /** The function object that will be called, if an event occurs.*/
-    boost::function1<void, const control::ProtocolNotification&>
-        notification_callback;
+    control::notif_callback_t notification_callback;
 
     /** How long to wait for the thread to join */
     enum { threadwait_ms = 3000 };
@@ -123,9 +119,7 @@ public:
     * @param _notification_callback The callback function where the events will
     * be dispatched
     */
-    NMSProtocol(const boost::function1<void,
-                                        const control::ProtocolNotification&>&
-                    _notification_callback) throw();
+    NMSProtocol(const control::notif_callback_t _notification_callback) throw();
 
     /** Destructor.
     * Stops the Network machine and destroys the thread.

@@ -260,7 +260,10 @@ void AppControl<GuiT, ProtocolT>::handleNotification
     {
         case ProtocolNotification::ID_DISCONNECTED:
         {
-            printMessage(L"*  Disconnected.");
+            const DisconnectedNotification& msg =
+                static_cast<const DisconnectedNotification&> (notification);
+
+            printMessage(L"*  Disconnected. Reason: " + msg.msg);
             break;
         }
 
@@ -310,6 +313,8 @@ void AppControl<GuiT, ProtocolT>::handleNotification
             }
             break;
         }
+
+
         default:
             // should not happen
             printMessage(L"ERROR: Invalid Protocol Notification!");
