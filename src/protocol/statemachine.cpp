@@ -18,80 +18,294 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <boost/bind.hpp>
+#include <boost/tokenizer.hpp>
+
+#include "protocol/errors.hpp"
 #include "protocol/statemachine.hpp"
 
 using namespace nms;
 using namespace protocol;
 
-void ProtocolMachine::notificationTranslator (
-    outermost_context_type& _this,
-    const control::ProtocolNotification& notification
-) throw()
+using boost::asio::ip::tcp;
+
+
+StateUnconnected::StateUnconnected( my_context ctx )
+    throw ()
+    : my_base(ctx)
 {
-    using namespace nms::control;
+    // stop the service object if it's running
+    outermost_context().io_service.stop();
 
-    switch (notification.id)
+    // stop the thread
+    catchThread(outermost_context().worker, 3000u);
+
+    // reset the io_service object
+    outermost_context().io_service.reset();
+}
+
+
+boost::statechart::result
+StateUnconnected::react(const EventConnectRequest& request)
+{
+    // set parameter for the StateTryingToConnect transition
+    outermost_context().connect_where = request.parm;
+
+    return transit<StateTryingConnect>();
+}
+
+
+
+
+StateTryingConnect::StateTryingConnect( my_context ctx )
+    throw ()
+    : my_base(ctx)
+{
+    try {
+        // get ourself a tokenizer
+        typedef boost::tokenizer<boost::char_separator<wchar_t>,
+                                std::wstring::const_iterator, std::wstring>
+            tokenizer;
+
+        // get the part before the colon and the part after the colon
+        boost::char_separator<wchar_t> colons(L":");
+        tokenizer tokens(outermost_context().connect_where, colons);
+
+        tokenizer::iterator tok_iter = tokens.begin();
+
+        // bail out, if there were no tokens
+        if ( tok_iter == tokens.end() )
+            throw ProtocolError("Invalid remote site identifier.");
+
+        // create host from first token
+        std::string host(tok_iter->begin(), tok_iter->end());
+
+        if ( ++tok_iter == tokens.end() )
+            throw ProtocolError("Invalid remote site identifier.");
+
+        // create service from second token
+        std::string service(tok_iter->begin(), tok_iter->end());
+
+        // bail out if there is another colon
+        if ( ++tok_iter != tokens.end() )
+            throw ProtocolError("Invalid remote site identifier.");
+
+
+        tcp::resolver resolver(outermost_context().io_service); //get a resolver
+        tcp::resolver::query query(host, service); // create a query
+
+        // dispatch an asynchronous resolve request
+        resolver.async_resolve(
+            query,
+            boost::bind(
+                &StateTryingConnect::resolveHandler,
+                _1 , _2,
+                boost::ref(outermost_context())
+            )
+        );
+
+        // start a new thread that processes all asynchronous operations
+        outermost_context().worker = boost::thread(
+            boost::bind(
+                &boost::asio::io_service::run,
+                &outermost_context().io_service
+            )
+        );
+
+    }
+    catch (const std::exception& e)
     {
-        case ProtocolNotification::ID_DISCONNECTED:
-        {
-            // cast to a Disconnected Notification
-            const DisconnectedNotification& notif =
-                static_cast<const DisconnectedNotification&>(notification);
+        std::string errmsg(e.what());
 
-            // post the event to the State Machine
-            _this.post_event(EventDisconnected(notif.msg));
-
-            break;
-        }
-
-        case ProtocolNotification::ID_RECEIVED_MSG:
-        {
-            const ReceivedMsgNotification& notif =
-                static_cast<const ReceivedMsgNotification&> (notification);
-
-            // post the event to the State Machine
-            _this.post_event(EventRcvdMsg(notif.msg));
+        post_event(
+            EventConnectReport(
+                std::wstring(errmsg.begin(),errmsg.end()),
+                boost::shared_ptr<tcp::socket>()
+            )
+        );
+    }
+}
 
 
-            break;
-        }
+void StateTryingConnect::resolveHandler(
+    const boost::system::error_code& error,
+    tcp::resolver::iterator endpoint_iterator,
+    outermost_context_type& _outermost_context
+)
+{
+    // if there was an error, report it
+    if (error)
+    {
+        std::string errmsg(error.message());
 
-
-        case ProtocolNotification::ID_CONNECT_REPORT:
-        {
-            const RequestReport& rprt =
-                static_cast<
-                    const ReportNotification<
-                                ProtocolNotification::ID_CONNECT_REPORT>&
-                            >
-                            (notification);
-
-            _this.post_event(EventConnectReport(rprt.failure_reason));
-
-            break;
-        }
-
-
-        default:
-            /* nothing */;
-
+        _outermost_context.post_event(
+            EventConnectReport(
+                std::wstring(errmsg.begin(),errmsg.end()),
+                boost::shared_ptr<tcp::socket>()
+            )
+        );
     }
 
 
+    // otherwise try to connect
+
+    boost::shared_ptr<tcp::socket>
+    socket(new tcp::socket(_outermost_context.io_service));
+
+#if 1
+    // dispatch an asynchronous connect request
+    socket->async_connect(
+        *endpoint_iterator,
+        boost::bind(
+            &StateTryingConnect::connectHandler,
+            _1,
+            socket,
+            boost::ref(_outermost_context)
+        )
+    );
+#endif
 }
 
 
-StateConnected::StateConnected()
+void StateTryingConnect::connectHandler(
+    const boost::system::error_code& error,
+    boost::shared_ptr<tcp::socket> socket,
+    outermost_context_type& _outermost_context
+)
+{
+    // if there was an error, report it
+    if (error)
+    {
+        std::string errmsg(error.message());
+
+        _outermost_context.post_event(
+            EventConnectReport(
+                std::wstring(errmsg.begin(),errmsg.end()),
+                boost::shared_ptr<tcp::socket>()
+            )
+        );
+    }
+
+
+    // post the event, attach the socket to it
+    _outermost_context.post_event(
+        EventConnectReport(
+            std::wstring(),
+            socket
+        )
+    );
+
+}
+
+
+
+
+boost::statechart::result
+StateTryingConnect::react(const EventConnectReport& rprt)
+{
+    if (rprt.parm2 && rprt.parm2->is_open())
+    {
+        context<ProtocolMachine>()
+            .notification_callback(
+                control::ReportNotification
+                    <control::ProtocolNotification::ID_CONNECT_REPORT>()
+                );
+
+        outermost_context().socket_ptr = rprt.parm2;
+
+        return transit<StateConnected>();
+    }
+    else
+    {
+        context<ProtocolMachine>()
+            .notification_callback(
+                control::ReportNotification
+                    <control::ProtocolNotification::ID_CONNECT_REPORT>
+                    (rprt.parm1)
+                );
+
+        // reset the pointer to the socket in the state machine,
+        // since there should not be a socket, if the connection failed
+        outermost_context().socket_ptr.reset();
+
+        return transit<StateUnconnected>();
+    }
+}
+
+
+boost::statechart::result
+StateTryingConnect::react(const EventDisconnected& evt)
+{
+    context<ProtocolMachine>()
+        .notification_callback(
+                control::DisconnectedNotification(evt.parm)
+            );
+
+    return transit<StateUnconnected>();
+}
+
+
+boost::statechart::result
+StateTryingConnect::react(const EventDisconnectRequest&)
+{
+
+    return transit<StateUnconnected>();
+}
+
+
+
+
+
+
+
+
+
+
+
+StateConnected::StateConnected( my_context ctx )
+    : my_base(ctx), socket_ptr(outermost_context().socket_ptr)
 {
     std::cout<<"We are connected!\n";
+
+    //
 }
+
+StateConnected::~StateConnected()
+{
+    boost::system::error_code ec;
+
+    // shutdown receiver and sender end of the socket, ignore errors
+    socket_ptr->shutdown(tcp::socket::shutdown_both, ec);
+
+    socket_ptr.reset();
+}
+
+
 
 boost::statechart::result StateConnected::react(const EventSendMsg& msg)
 {
     std::cout<<"Sending message: ";
     std::cout<<std::string(msg.parm.begin(), msg.parm.end())<<'\n';
 
-    outermost_context().connection->send(msg.parm);
+    // determine size of the message to be sent
+    std::size_t sendbuf_size = msg.parm.size()*sizeof(std::wstring::value_type);
+
+    // allocate a buffer for the message, and copy it over
+    unsigned char* sendbuf = new unsigned char[sendbuf_size];
+
+    std::copy(msg.parm.begin(), msg.parm.end(),
+        reinterpret_cast<std::wstring::value_type*>(sendbuf)
+    );
+
+    // send the bytes
+    async_write(*socket_ptr,
+        boost::asio::buffer(sendbuf, sendbuf_size),
+        boost::bind(
+            &StateConnected::sendHandler,
+            _1, _2,
+            sendbuf, boost::ref(outermost_context()))
+    );
+
 
     return discard_event();
 }
@@ -115,94 +329,46 @@ boost::statechart::result StateConnected::react(const EventDisconnected& evt)
                 control::DisconnectedNotification(evt.parm)
             );
 
-    // delete the Connection object, therefore closing the connection
-    // and terminating the thread
-    outermost_context().connection.reset();
-
     return transit<StateUnconnected>();
 }
+
 
 boost::statechart::result StateConnected::react(const EventDisconnectRequest&)
 {
+    post_event(EventDisconnected(L"User requested disconnection."));
 
-    //ask the Connection object to disconnect itself
-    outermost_context().connection->disconnect();
+    return discard_event();
 }
 
+#if 0
+static void receiveHandler(
+    const boost::system::error_code& error,
+    std::size_t bytes_transferred,
+    unsigned char* rcvbuf,
+    outermost_context_type& _outermost_context
+);
+#endif
 
-boost::statechart::result
-StateTryingConnect::react(const EventConnectReport& rprt)
+void StateConnected::sendHandler(
+    const boost::system::error_code& error,
+    std::size_t bytes_transferred,
+    unsigned char* sendbuf,
+    outermost_context_type& _outermost_context
+)
 {
-    if (rprt.parm.empty())
-    {
-        context<ProtocolMachine>()
-            .notification_callback(
-                control::ReportNotification
-                    <control::ProtocolNotification::ID_CONNECT_REPORT>()
-                );
+    // in any case delete the sendbuffer
+    delete[] sendbuf;
 
-        return transit<StateConnected>();
-    }
-    else
-    {
-        context<ProtocolMachine>()
-            .notification_callback(
-                control::ReportNotification
-                    <control::ProtocolNotification::ID_CONNECT_REPORT>
-                    (L"Sorry, connection failed: " + rprt.parm)
-                );
+    // if there was no error, return
+    if (!error)
+        return;
 
-        // delete the Connection object, therefore closing the connection
-        // and terminating the thread
-        outermost_context().connection.reset();
+    // otherwise disconnect
+    std::string errmsg(error.message());
 
-        return transit<StateUnconnected>();
-    }
-}
-
-
-boost::statechart::result
-StateTryingConnect::react(const EventDisconnected& evt)
-{
-    context<ProtocolMachine>()
-        .notification_callback(
-                control::DisconnectedNotification(evt.parm)
-            );
-
-    // delete the Connection object, therefore closing the connection
-    // and terminating the thread
-    outermost_context().connection.reset();
-
-    return transit<StateUnconnected>();
-}
-
-
-boost::statechart::result
-StateTryingConnect::react(const EventDisconnectRequest&)
-{
-
-    //ask the Connection object to disconnect itself
-    outermost_context().connection->disconnect();
-
-    return transit<StateUnconnected>();
-}
-
-
-
-boost::statechart::result StateIdle::react(const EventConnectRequest& request)
-{
-    // create an object of type NMSConnection
-    outermost_context().connection.reset(
-        new NMSConnection(
-            request.parm,
-            boost::bind(&ProtocolMachine::notificationTranslator,
-                boost::ref(outermost_context()),
-                _1
-            )
+    _outermost_context.post_event(
+        EventDisconnected(
+            std::wstring(errmsg.begin(), errmsg.end())
         )
     );
-
-
-    return transit<StateTryingConnect>();
 }
-

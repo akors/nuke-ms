@@ -124,6 +124,24 @@ public:
 
 };
 
+
+
+/** Catch a running thread.
+ * This function tries to catch a running thread, by waiting for him
+ * threadwait_ms milliseconds to join. If it doesnt join, it is interrupted.
+ * If the thread is then still running, the thread is detached.
+ *
+ * @param thread A reference to the thread you want to catch.
+ * @param threadwait_ms The number of milliseconds you want to wait for the
+ * thread.
+ * @throws Nothing.
+ * @post thread does not refer to a thread anymore.
+ *
+*/
+void catchThread(boost::thread& thread, unsigned threadwait_ms) throw();
+
+
+
 } // namespace protocol
 } // namespace nms
 

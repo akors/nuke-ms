@@ -67,20 +67,8 @@ NMSProtocol::~NMSProtocol()
     // stop the network machine
     machine_scheduler.terminate();
 
-    try {
-        // give the thread a few seconds time to join
-        machine_thread.timed_join(boost::posix_time::millisec(threadwait_ms));
-    }
-    catch(...)
-    {}
-
-    // if the thread finished, return. otherwise try to kill the thread
-    if (machine_thread.get_id() == boost::thread::id())
-        return;
-
-    machine_thread.interrupt();
-
-    // if interruption failed, let the thread detach
+    // catch the running thread
+    catchThread(machine_thread, threadwait_ms);
 }
 
 
@@ -115,3 +103,30 @@ void NMSProtocol::disconnect()
 }
 
 
+
+
+void nms::protocol::catchThread(boost::thread& thread, unsigned threadwait_ms)
+    throw()
+{
+    // a thread id that compares equal to "not-a-thread"
+    boost::thread::id not_a_thread;
+
+    try {
+        // give the thread a few seconds time to join
+        thread.timed_join(boost::posix_time::millisec(threadwait_ms));
+    }
+    catch(...)
+    {}
+
+    // if the thread finished, return. otherwise try to kill the thread
+    if (thread.get_id() == not_a_thread)
+        return;
+
+    thread.interrupt();
+
+    // if it is still running, let it go
+    if (thread.get_id() == not_a_thread)
+        return;
+
+    thread.detach();
+}

@@ -21,22 +21,27 @@
 #ifndef STATEMACHINE_HPP
 #define STATEMACHINE_HPP
 
+#include <boost/thread/thread.hpp>
+#include <boost/asio.hpp>
+#include <boost/system/error_code.hpp>
+
 #include <boost/shared_ptr.hpp>
 
 #include <boost/statechart/asynchronous_state_machine.hpp>
-#include <boost/statechart/simple_state.hpp>
+#include <boost/statechart/state.hpp>
 #include <boost/statechart/transition.hpp>
 #include <boost/statechart/event.hpp>
 #include <boost/statechart/custom_reaction.hpp>
 
-#include "protocol/connection.hpp"
-
+#include "control/notifications.hpp"
 
 namespace nms
 {
 namespace protocol
 {
 
+void catchThread(boost::thread& thread, unsigned threadwait_ms)
+    throw();
 
 /** @todo Insert documenation into the doc of the state reactions */
 
@@ -62,7 +67,6 @@ struct Parm1Event
     {}
 };
 
-# if 0
 
 /** Template for events with two parameters.
 * @ingroup proto_machine
@@ -90,7 +94,6 @@ struct Parm2Event
 };
 
 
-#endif
 
 
 // Tags for different events with one parameter
@@ -108,15 +111,24 @@ struct EventDisconnectedTag {};
 // Typedefs for events with one parameter.
 
 /** Event for connection requests.  @ingroup proto_machine*/
-typedef Parm1Event<std::wstring, EventConnectRequestTag> EventConnectRequest;
+typedef Parm1Event<std::wstring, EventConnectRequestTag>
+    EventConnectRequest;
 /** Event for connection reports. @ingroup proto_machine */
-typedef Parm1Event<std::wstring, EventConnectReportTag> EventConnectReport;
+typedef Parm2Event<
+    std::wstring,
+    boost::shared_ptr<boost::asio::ip::tcp::socket>,
+    EventConnectReportTag
+>
+    EventConnectReport;
 /** Event for received messages. @ingroup proto_machine */
-typedef Parm1Event<std::wstring, EventRcvdMsgTag> EventRcvdMsg;
+typedef Parm1Event<std::wstring, EventRcvdMsgTag>
+    EventRcvdMsg;
 /** Event for sent messages. @ingroup proto_machine */
-typedef Parm1Event<std::wstring, EventSendMsgTag> EventSendMsg;
+typedef Parm1Event<std::wstring, EventSendMsgTag>
+    EventSendMsg;
 /** Event for disconnections. @ingroup proto_machine */
-typedef Parm1Event<std::wstring, EventDisconnectedTag> EventDisconnected;
+typedef Parm1Event<std::wstring, EventDisconnectedTag>
+    EventDisconnected;
 
 /** Event for disconnect requests. @ingroup proto_machine */
 struct EventDisconnectRequest : boost::statechart::event<EventDisconnectRequest>
@@ -145,9 +157,15 @@ struct ProtocolMachine
     /** The callback for notifications. */
     control::notif_callback_t notification_callback;
 
-    /** A pointer to a NMSConnection object that is valid when in state
-    TryingToConnect and Connected */
-    boost::shared_ptr<NMSConnection> connection;
+    /** The IO Service object used by the protocol machine */
+    boost::asio::io_service io_service;
+
+    /** The thread processing IO Operations.
+     * "Not-a-thread" in StateUnconnected.
+    */
+    boost::thread worker;
+
+
 
     /** Constructor. To be used only by Boost.Statechart classes. */
     ProtocolMachine(my_context ctx,
@@ -157,27 +175,99 @@ struct ProtocolMachine
             notification_callback(_notification_callback)
     {}
 
-    /** */
-    static void notificationTranslator (
-        outermost_context_type& _this,
-        const control::ProtocolNotification& notification
-    ) throw();
+    /** Pointer to a socket.
+        * This must be set before entering the state StateConnected
+    */
+    boost::shared_ptr<boost::asio::ip::tcp::socket> socket_ptr;
+
+    /** A string that identifies where to connect
+     * This must be set before entering the state StateTryingToConnect
+    */
+    std::wstring connect_where;
 };
 
-// forward declarations that are needed for transition reactions.
-struct StateIdle;
-struct StateTryingConnect;
 
-/** If the Protocol is unconnected.
+/** If the protocol  is unconnected.
 * @ingroup proto_machine
+* Substate of StateUnconnected.
+*
 * Reacting to:
-* Nothing. (defer to substates)
+* EventConnectRequest
 */
 struct StateUnconnected
-    : public boost::statechart::simple_state<StateUnconnected,
-                                                ProtocolMachine,
-                                                StateIdle>
-{ };
+    : public boost::statechart::state<StateUnconnected,
+                                                ProtocolMachine>
+{
+    /** State reactions. */
+    typedef boost::statechart::custom_reaction< EventConnectRequest > reactions;
+
+    /** Constructor.
+     * Stops the worker thread in the Protocol Machine.
+    */
+    StateUnconnected( my_context ctx ) throw();
+
+
+    /** React to a EventConnectRequest Event.
+    *
+    */
+    boost::statechart::result react(const EventConnectRequest& request);
+};
+
+
+/** If the protocol is trying to connect to a host
+* @ingroup proto_machine
+* Substate of StateUnconnected.
+*
+* Reacting to:
+* EventConnectReport,
+* EventDisconnectRequest
+*/
+struct StateTryingConnect
+    : public boost::statechart::state<StateTryingConnect,
+                                                ProtocolMachine>
+{
+
+    /** State reactions. */
+    typedef boost::mpl::list<
+        boost::statechart::custom_reaction< EventConnectReport >,
+        boost::statechart::custom_reaction< EventDisconnectRequest >,
+        boost::statechart::custom_reaction <EventDisconnected >
+    > reactions;
+
+
+    StateTryingConnect( my_context ctx ) throw();
+
+
+    /** React to a EventConnectReport Event.
+    *
+    */
+    boost::statechart::result react(const EventConnectReport& rprt);
+
+    /** React to a EventDisconnected Event.
+    *
+    */
+    boost::statechart::result react(const EventDisconnected& evt);
+
+    /** React to a EventDisconnected Event.
+    *
+    */
+    boost::statechart::result react(const EventDisconnectRequest&);
+
+private:
+    static void resolveHandler(
+        const boost::system::error_code& error,
+        boost::asio::ip::tcp::resolver::iterator endpoint_iterator,
+        outermost_context_type& _outermost_context
+    );
+
+    static void connectHandler(
+        const boost::system::error_code& error,
+        boost::shared_ptr<boost::asio::ip::tcp::socket> socket,
+        outermost_context_type& _outermost_context
+    );
+
+};
+
 
 /** If the protocol is in a connected state.
 * @ingroup proto_machine
@@ -188,8 +278,10 @@ struct StateUnconnected
 * EventDisconnectRequest
 */
 struct StateConnected
-    : public boost::statechart::simple_state<StateConnected,
-                                                ProtocolMachine>
+    : public boost::statechart::state<
+        StateConnected,
+        ProtocolMachine
+    >
 {
     /** State reactions. */
     typedef boost::mpl::list<
@@ -199,7 +291,10 @@ struct StateConnected
         boost::statechart::custom_reaction< EventDisconnectRequest >
     > reactions;
 
-    StateConnected();
+    StateConnected(my_context ctx);
+
+    ~StateConnected();
+
 
     /** React to a EventSendMsg Event.
     *
@@ -221,67 +316,25 @@ struct StateConnected
     */
     boost::statechart::result react(const EventDisconnectRequest&);
 
+private:
+    boost::shared_ptr<boost::asio::ip::tcp::socket>& socket_ptr;
+
+    static void receiveHandler(
+        const boost::system::error_code& error,
+        std::size_t bytes_transferred,
+        unsigned char* rcvbuf,
+        outermost_context_type& _outermost_context
+    );
+
+    static void sendHandler(
+        const boost::system::error_code& error,
+        std::size_t bytes_transferred,
+        unsigned char* sendbuf,
+        outermost_context_type& _outermost_context
+    );
+
 };
 
-
-
-/** If the protocol is doing nothing.
-* @ingroup proto_machine
-* Substate of StateUnconnected.
-*
-* Reacting to:
-* EventConnectReport,
-* EventDisconnectRequest
-*/
-struct StateTryingConnect
-    : public boost::statechart::simple_state<StateTryingConnect,
-                                                StateUnconnected>
-{
-    /** State reactions. */
-    typedef boost::mpl::list<
-        boost::statechart::custom_reaction< EventConnectReport >,
-        boost::statechart::custom_reaction< EventDisconnectRequest >,
-        boost::statechart::custom_reaction <EventDisconnected >
-    > reactions;
-
-    /** React to a EventConnectReport Event.
-    *
-    */
-    boost::statechart::result react(const EventConnectReport& rprt);
-
-    /** React to a EventDisconnected Event.
-    *
-    */
-    boost::statechart::result react(const EventDisconnected& evt);
-
-    /** React to a EventDisconnected Event.
-    *
-    */
-    boost::statechart::result react(const EventDisconnectRequest&);
-};
-
-
-
-
-/** If the protocol is doing nothing.
-* @ingroup proto_machine
-* Substate of StateUnconnected.
-*
-* Reacting to:
-* EventConnectRequest
-*/
-struct StateIdle
-    : public boost::statechart::simple_state<StateIdle,
-                                                StateUnconnected>
-{
-    /** State reactions. */
-    typedef boost::statechart::custom_reaction< EventConnectRequest > reactions;
-
-    /** React to a EventConnectRequest Event.
-    *
-    */
-    boost::statechart::result react(const EventConnectRequest& request);
-};
 
 
 
