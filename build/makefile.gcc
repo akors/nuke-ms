@@ -1,51 +1,45 @@
 
-# directory stuff
-DOXYFILE=../doc/Doxyfile
+# include configuration file
+include ../build/config.gcc
 
 
-# boost library names follow a certain pattern
-
-B_TOOLSET=-gcc42
-B_THREADING=-mt
-B_ABI=
-B_VERSION=-1_35
-B_EXT=.a
-B_PREF=lib
+DOXYFILE := ../doc/Doxyfile
+DOCDIR := ../doc/html
 
 
-B_SUFFIX=-gcc42-mt-1_35
+# the list of the components of the application
+COMPONENTS := gui protocol control
 
 
-#now composing all boost libraries used
-B_LIB_SYSTEM=boost_system$(B_SUFFIX)
-B_LIB_THREAD=boost_thread$(B_SUFFIX)
+# create a variable that contains all source files
+# first expand the wildcard in the working directory
+SOURCES := $(wildcard *.cpp)
+# then expand the wildcards in the components directories
+SOURCES += $(foreach comp,$(COMPONENTS),$(wildcard $(comp)/*.cpp))
+# finally create the names for the object file
+OBJECTS := $(patsubst %.cpp,%.o,$(SOURCES))
 
 
-# wxWidgets stuff
-WX_CXXFLAGS=`wx-config --cxxflags`
-WX_LIBS= `wx-config --libs`
+# now compose all boost libraries used
+B_LIB_SYSTEM := $(BOOST_PREFIX)boost_system$(BOOST_SUFFIX)
+B_LIB_THREAD := $(BOOST_PREFIX)boost_thread$(BOOST_SUFFIX)
 
 
-CXXFLAGS=-g $(WX_CXXFLAGS) -I$(PWD)
-
-
-SOURCES = $(wildcard *.cpp gui/*.cpp protocol/*.cpp control/*.cpp)
-OBJECTS = $(patsubst %.cpp,%.o,$(SOURCES))
+CXXFLAGS += $(DEBUGFLAG) $(OPTFLAGS) $(WX_FLAGS) -I$(PWD) $(INCLUDEDIRS)
 
 
 all: nms
 
-
 doc:
-	doxygen $(DOXYFILE)
+	$(DOCGEN) $(DOXYFILE)
 
 
 nms: $(OBJECTS)
-	$(CXX) $(CXXFLAGS) -o $@ $^  -l$(B_LIB_THREAD) -l$(B_LIB_SYSTEM)  $(WX_LIBS)
+	$(CXX) $(CXXFLAGS) $(LIBDIRS) -o $@ $^ -l$(B_LIB_THREAD) -l$(B_LIB_SYSTEM) $(WX_LIBS)
 
 
 clean:
-	rm -f nms $(OBJECTS)
+	$(RM) nms $(OBJECTS)
 
 doc_clean:
-	rm -r ../doc/html
+	$(RMDIR) $(DOCDIR)

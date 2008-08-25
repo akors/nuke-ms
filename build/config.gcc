@@ -1,0 +1,32 @@
+
+# --- commands section ---
+RM := rm -f
+RMDIR := rm -rf
+DOCGEN := doxygen
+
+# --- directory section ---
+
+# this is a list of directories preceded with "-I", that contains the include
+# directories
+INCLUDEDIRS :=
+
+# this is a list of directories preceded with "-L" that contains the Library
+# directories
+LIBDIRS :=
+
+
+# configuration section
+
+# boost library names follow a certain pattern
+BOOST_PREFIX :=
+BOOST_SUFFIX := -gcc42-mt-1_35
+
+# wxWidgets flags and libraries
+WX_FLAGS := `wx-config --cxxflags`
+WX_LIBS := `wx-config --libs`
+
+# set to "-g", if you want to activate debugging
+DEBUGFLAG := -g
+
+# set optimization flags.
+OPTFLAGS :=
