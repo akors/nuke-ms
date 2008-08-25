@@ -42,9 +42,9 @@
 
 #include <boost/thread/thread.hpp>
 #include <boost/statechart/asynchronous_state_machine.hpp>
-#include <boost/function.hpp>
 
-#include "notifications.hpp"
+#include "protocol/errors.hpp"
+#include "control/notifications.hpp"
 
 
 
@@ -52,39 +52,6 @@ namespace nms
 {
 namespace protocol
 {
-
-
-/** Class for errors that can be issued by the Communication Protocol.
-* @ingroup proto
-*/
-class ProtocolError : public std::runtime_error
-{
-    /** The error message */
-    const char* msg;
-public:
-    /** Default Constructor */
-    ProtocolError() throw()
-        : std::runtime_error("Unknown Communication Protocol Error")
-    { }
-
-    /** Constructor.
-    * @param str The error message
-    */
-    ProtocolError(const char* str) throw()
-        : std::runtime_error(str)
-    {}
-
-    /** Return error message as char array.
-    * @return A null- terminated character array containg the error message
-    */
-    virtual const char* what() const throw()
-    { return std::runtime_error::what(); }
-
-    virtual ~ProtocolError() throw()
-    { }
-};
-
-
 
 
 

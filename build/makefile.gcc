@@ -26,20 +26,26 @@ WX_CXXFLAGS=`wx-config --cxxflags`
 WX_LIBS= `wx-config --libs`
 
 
-CXXFLAGS=-g $(WX_CXXFLAGS)
+CXXFLAGS=-g $(WX_CXXFLAGS) -I$(PWD)
+
+
+SOURCES = $(wildcard *.cpp gui/*.cpp protocol/*.cpp control/*.cpp)
+OBJECTS = $(patsubst %.cpp,%.o,$(SOURCES))
 
 
 all: nms
+
 
 doc:
 	doxygen $(DOXYFILE)
 
 
-nms:  main.o gui.o protocol.o
+nms: $(OBJECTS)
 	$(CXX) $(CXXFLAGS) -o $@ $^  -l$(B_LIB_THREAD) -l$(B_LIB_SYSTEM)  $(WX_LIBS)
 
+
 clean:
-	rm -f nms *.o *~
+	rm -f nms $(OBJECTS)
 
 doc_clean:
 	rm -r ../doc/html

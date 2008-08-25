@@ -40,7 +40,7 @@
 #include <wx/textctrl.h>
 #include <wx/sizer.h>
 
-#include "commands.hpp"
+#include "control/commands.hpp"
 
 namespace nms
 {

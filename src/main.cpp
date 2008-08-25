@@ -29,9 +29,9 @@
 
 #include <wx/app.h>
 
-#include "control.hpp"
-#include "gui.hpp"
-#include "protocol.hpp"
+#include "control/control.hpp"
+#include "gui/gui.hpp"
+#include "protocol/protocol.hpp"
 
 
 using namespace nms;

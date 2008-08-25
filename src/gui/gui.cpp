@@ -22,9 +22,9 @@
 #include <boost/bind.hpp>
 #include <boost/tokenizer.hpp>
 
-#include "gui.hpp"
+#include "gui/gui.hpp"
 
-#include "control.hpp"
+#include "control/control.hpp"
 
 using namespace nms;
 using namespace gui;

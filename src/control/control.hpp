@@ -45,8 +45,8 @@
 
 #include <boost/bind.hpp>
 
-#include "notifications.hpp"
-#include "commands.hpp"
+#include "control/notifications.hpp"
+#include "control/commands.hpp"
 
 namespace nms
 {
