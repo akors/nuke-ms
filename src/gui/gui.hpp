@@ -69,6 +69,8 @@ struct WindowScales
 };
 
 
+
+
 // Forward Declaration for friend declaration
 class MainFrameWrapper;
 
@@ -171,6 +173,9 @@ public:
     */
     void OnEnter(wxCommandEvent& event) throw();
 
+    /** Called internally, if there is a message to be printed */
+    void OnPrintMessage(wxCommandEvent& event) throw();
+
     DECLARE_EVENT_TABLE()
 };
 
@@ -231,6 +236,9 @@ public:
 
 };
 
+
+// declare the new event type for printing messages
+DECLARE_EVENT_TYPE( nmsEVT_PRINT_MESSAGE, -1 )
 
 
 

@@ -26,9 +26,10 @@
 
 #include "control/control.hpp"
 
-using namespace nms;
-using namespace gui;
-
+namespace nms
+{
+namespace gui
+{
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -36,6 +37,8 @@ using namespace gui;
 ////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////// MainFrame Private //////////////////////////////
+
+
 
 
 void MainFrame::createMenuBar()
@@ -165,10 +168,23 @@ catch(...) {}
 void MainFrame::printMessage(const std::wstring& str)
     throw (std::runtime_error)
 {
-    // lock the printer mutex while printing
-    boost::lock_guard<boost::mutex> printlock(print_mutex);
+    // wxEvtHandler::AddPendingEvent is explicitly thread-safe, so we don't
+    // need any mutexes and locking here.
 
-    text_display_box->AppendText( (str + L'\n').c_str() );
+    // create an event to be sent to the event processor
+    wxCommandEvent event( nmsEVT_PRINT_MESSAGE, this->GetId() );
+
+    // set the event object that shall receive the event
+    event.SetEventObject( this );
+
+    // create the wxString from std::wstring, and perform conversion
+    wxString msg(str.c_str(), wxConvLocal);
+
+    // attach the string to the event object
+    event.SetString(msg);
+
+    // send the event to the event processor
+    GetEventHandler()->AddPendingEvent( event );
 }
 
 
@@ -245,5 +261,14 @@ void MainFrame::OnEnter(wxCommandEvent& event)
 
 }
 
+void MainFrame::OnPrintMessage(wxCommandEvent& event) throw()
+{
+    text_display_box->AppendText( event.GetString() + wxT('\n') );
+}
 
 
+// define the new event type for printing messages
+DEFINE_EVENT_TYPE( nmsEVT_PRINT_MESSAGE )
+
+} // namespace gui
+} // namespace nms
