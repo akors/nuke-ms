@@ -133,6 +133,8 @@ void StateTryingConnect::resolveHandler(
     outermost_context_type& _outermost_context
 )
 {
+    std::cout<<"resolveHandler invoked.\n";
+
     // if there was an error, report it
     if (error)
     {
@@ -152,10 +154,11 @@ void StateTryingConnect::resolveHandler(
     boost::shared_ptr<tcp::socket>
     socket(new tcp::socket(_outermost_context.io_service));
 
-#if 1
+    tcp::endpoint endpoint(*endpoint_iterator);
+
     // dispatch an asynchronous connect request
     socket->async_connect(
-        *endpoint_iterator,
+        endpoint,
         boost::bind(
             &StateTryingConnect::connectHandler,
             _1,
@@ -163,7 +166,6 @@ void StateTryingConnect::resolveHandler(
             boost::ref(_outermost_context)
         )
     );
-#endif
 }
 
 
@@ -173,6 +175,8 @@ void StateTryingConnect::connectHandler(
     outermost_context_type& _outermost_context
 )
 {
+    std::cout<<"connectHandler invoked.\n";
+
     // if there was an error, report it
     if (error)
     {
@@ -372,3 +376,5 @@ void StateConnected::sendHandler(
         )
     );
 }
+
+// /connect localhost:34443
