@@ -2,7 +2,7 @@
 # include configuration file
 include ../build/config.gcc
 
-
+DEPFILE := ../build/dependencies.gcc
 DOXYFILE := ../doc/Doxyfile
 DOCDIR := ../doc/html
 
@@ -26,6 +26,8 @@ B_LIB_THREAD := $(BOOST_PREFIX)boost_thread$(BOOST_SUFFIX)
 
 
 CXXFLAGS += $(WX_FLAGS) -I$(PWD) $(INCLUDEDIRS)
+LIBS :=  -l$(B_LIB_THREAD) -l$(B_LIB_SYSTEM) $(WX_LIBS)
+
 
 
 all: nms
@@ -35,11 +37,17 @@ doc:
 
 
 nms: $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $(LIBDIRS) -o $@ $^ -l$(B_LIB_THREAD) -l$(B_LIB_SYSTEM) $(WX_LIBS)
+	$(CXX) $(CXXFLAGS) $(LIBDIRS) -o $@ $^ $(LIBS)
+
+# include header dependencies file
+include $(DEPFILE)
+
+$(DEPFILE):
+	$(CXX) -I$(PWD) -MM $(SOURCES) > $@
 
 
 clean:
-	$(RM) nms $(OBJECTS)
+	$(RM) nms $(OBJECTS) $(DEPFILE)
 
 doc_clean:
 	$(RMDIR) $(DOCDIR)
