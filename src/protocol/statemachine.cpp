@@ -34,6 +34,8 @@ StateUnconnected::StateUnconnected( my_context ctx )
     throw ()
     : my_base(ctx)
 {
+    std::cout<<"Protocol unconnected.\n";
+
     // stop the service object if it's running
     outermost_context().io_service.stop();
 
@@ -99,7 +101,8 @@ StateTryingConnect::StateTryingConnect( my_context ctx )
             query,
             boost::bind(
                 &StateTryingConnect::resolveHandler,
-                _1 , _2,
+                boost::asio::placeholders::error,
+                boost::asio::placeholders::iterator,
                 boost::ref(outermost_context())
             )
         );
@@ -136,16 +139,26 @@ void StateTryingConnect::resolveHandler(
     std::cout<<"resolveHandler invoked.\n";
 
     // if there was an error, report it
-    if (error)
+    if (endpoint_iterator == tcp::resolver::iterator() )
     {
-        std::string errmsg(error.message());
+        std::string errmsg;
 
-        _outermost_context.post_event(
-            EventConnectReport(
-                std::wstring(errmsg.begin(),errmsg.end()),
-                boost::shared_ptr<tcp::socket>()
+        if (error)
+            errmsg = error.message();
+        else
+            errmsg = "No hosts found.";
+
+        _outermost_context.my_scheduler().queue_event(
+            _outermost_context.my_handle(),
+            boost::intrusive_ptr<EventConnectReport> (
+                new EventConnectReport(
+                    std::wstring(errmsg.begin(),errmsg.end()),
+                    boost::shared_ptr<tcp::socket>()
+                )
             )
         );
+
+        return;
     }
 
 
@@ -154,11 +167,10 @@ void StateTryingConnect::resolveHandler(
     boost::shared_ptr<tcp::socket>
     socket(new tcp::socket(_outermost_context.io_service));
 
-    tcp::endpoint endpoint(*endpoint_iterator);
 
     // dispatch an asynchronous connect request
     socket->async_connect(
-        endpoint,
+        *endpoint_iterator,
         boost::bind(
             &StateTryingConnect::connectHandler,
             _1,
@@ -177,28 +189,28 @@ void StateTryingConnect::connectHandler(
 {
     std::cout<<"connectHandler invoked.\n";
 
-    // if there was an error, report it
+    boost::intrusive_ptr<EventConnectReport> evt_rprt;
+
+    // if there was an error, create a negative reply
     if (error)
     {
         std::string errmsg(error.message());
 
-        _outermost_context.post_event(
-            EventConnectReport(
-                std::wstring(errmsg.begin(),errmsg.end()),
-                boost::shared_ptr<tcp::socket>()
-            )
+        evt_rprt = new EventConnectReport(
+            std::wstring(errmsg.begin(),errmsg.end()),
+            boost::shared_ptr<tcp::socket>()
+        );
+    }
+    else // if there was no error, create a positive reply
+    {
+        evt_rprt = new EventConnectReport(
+            std::wstring(),
+            socket
         );
     }
 
-
-    // post the event, attach the socket to it
-    _outermost_context.post_event(
-        EventConnectReport(
-            std::wstring(),
-            socket
-        )
-    );
-
+    _outermost_context.my_scheduler().
+        queue_event(_outermost_context.my_handle(), evt_rprt);
 }
 
 
@@ -207,6 +219,8 @@ void StateTryingConnect::connectHandler(
 boost::statechart::result
 StateTryingConnect::react(const EventConnectReport& rprt)
 {
+    std::cout<<"Reacting to EventConnectReport.\n";
+
     if (rprt.parm2 && rprt.parm2->is_open())
     {
         context<ProtocolMachine>()
@@ -306,7 +320,8 @@ boost::statechart::result StateConnected::react(const EventSendMsg& msg)
         boost::asio::buffer(sendbuf, sendbuf_size),
         boost::bind(
             &StateConnected::sendHandler,
-            _1, _2,
+            boost::asio::placeholders::error,
+            boost::asio::placeholders::bytes_transferred,
             sendbuf, boost::ref(outermost_context()))
     );
 
@@ -370,9 +385,12 @@ void StateConnected::sendHandler(
     // otherwise disconnect
     std::string errmsg(error.message());
 
-    _outermost_context.post_event(
-        EventDisconnected(
-            std::wstring(errmsg.begin(), errmsg.end())
+    _outermost_context.my_scheduler().queue_event(
+        _outermost_context.my_handle(),
+        boost::intrusive_ptr<EventDisconnected> (
+            new EventDisconnected(
+                std::wstring(errmsg.begin(), errmsg.end())
+            )
         )
     );
 }

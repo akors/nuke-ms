@@ -319,12 +319,14 @@ struct StateConnected
 private:
     boost::shared_ptr<boost::asio::ip::tcp::socket>& socket_ptr;
 
+#if 0
     static void receiveHandler(
         const boost::system::error_code& error,
         std::size_t bytes_transferred,
         unsigned char* rcvbuf,
         outermost_context_type& _outermost_context
     );
+#endif
 
     static void sendHandler(
         const boost::system::error_code& error,
