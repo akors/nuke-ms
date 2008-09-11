@@ -22,10 +22,10 @@
 #ifndef BYTES_HPP_INCLUDED
 #define BYTES_HPP_INCLUDED
 
+#include <algorithm>
+#include <string>
 #include <vector>
 #include <boost/cstdint.hpp>
-#include <climits>
-#include <limits>
 
 namespace nms
 {
@@ -42,42 +42,55 @@ struct byte_traits
     /** The type of a signed integer with the width of two bytes*/
     typedef boost::int16_t int2b_t;
 
-
     /** The type for a sequence of bye*/
-    typedef std::vector<byte_t> bytes_sequence;
+    typedef std::vector<byte_t> byte_sequence;
+
 };
 
 
 template <typename T>
-T reversebytes(T x)
+inline T reversebytes(T x)
 {
-    T result;
+	std::reverse(
+		reinterpret_cast<byte_traits::byte_t*>(&x),
+		reinterpret_cast<byte_traits::byte_t*>(&x) + sizeof(x)
+	);
 
-    byte_traits::byte_t* outptr =
-            reinterpret_cast<byte_traits::byte_t*>(&result) + sizeof(result);
-
-    const byte_traits::byte_t* inptr =
-            reinterpret_cast<byte_traits::byte_t*>(&x);
-
-    while (outptr != reinterpret_cast<byte_traits::byte_t*>(&result))
-        *(--outptr) = *(inptr++);
-
-    return result;
+    return x;
 }
 
-#ifdef NMS_LITTLE_ENDIAN
 
-#   define nms_htonx(x) reversebytes(x)
-#   define nms_ntohx(x) reversebytes(x)
+template <typename T> inline
+byte_traits::byte_sequence::iterator
+writebytes(byte_traits::byte_sequence::iterator it, T value)
+{
+	return std::copy(
+		reinterpret_cast<byte_traits::byte_t*>(&value),
+		reinterpret_cast<byte_traits::byte_t*>(&value) + sizeof(value),
+		it);
+
+}
+
+#ifndef NMS_BIG_ENDIAN
+
+template <typename T>
+inline T htonx(T x) { return reversebytes(x); }
+
+template <typename T>
+inline T nms_ntohx(T x) { return reversebytes(x); }
+
 
 #else
 
-#   define nms_htonx(x) (x)
-#   define nms_ntohx(x) (x)
+template <typename T>
+inline T htonx(T x) { return x; }
+
+template <typename T>
+inline T nms_ntohx(T x) { return x; }
 
 #endif
 
-}; // nms
+} // nms
 
 
 
