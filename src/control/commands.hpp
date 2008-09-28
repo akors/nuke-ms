@@ -94,7 +94,7 @@ struct MessageCommand : public ControlCommand
     * @param str The message you want to transport
     */
     MessageCommand(const std::wstring& str)  throw()
-        : msg(str), ControlCommand(CMD_ID)
+        : ControlCommand(CMD_ID), msg(str)
     { }
 };
 

@@ -25,6 +25,10 @@ BOOST_SUFFIX := -gcc42-mt-1_35
 WX_FLAGS := `wx-config --cxxflags`
 WX_LIBS := `wx-config --libs`
 
+# Warning flags
+WARNFLAGS = -Wall -pedantic -ansi -Wno-long-long
+# -Wno-long-long needed for wxWidget headers that use long long in ANSI C++
+
 # Set additional Compiler flags, such as optimization or debuging
 CXXFLAGS += -g
 

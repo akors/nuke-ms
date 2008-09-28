@@ -81,7 +81,7 @@ struct ProtocolNotificationMessage : public ProtocolNotification
     * @param _msg The message that was received
     */
     ProtocolNotificationMessage(const std::wstring& _msg)  throw()
-        : msg(_msg), ProtocolNotification(NotificationId)
+        :  ProtocolNotification(NotificationId), msg(_msg)
     {}
 };
 

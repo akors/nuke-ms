@@ -139,8 +139,8 @@ public:
     * Throws the same exceptions the constructors of the template arguments throw.
     */
     AppControl()
-    : protocol(boost::bind(&AppControl::handleNotification, this, _1)),
-        gui(boost::bind(&AppControl::handleCommand, this, _1))
+    :  gui(boost::bind(&AppControl::handleCommand, this, _1)),
+       protocol(boost::bind(&AppControl::handleNotification, this, _1))
     { }
 
     /** Handle a command.
