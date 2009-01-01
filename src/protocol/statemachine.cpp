@@ -292,7 +292,9 @@ StateConnected::StateConnected( my_context ctx )
 {
     std::cout<<"We are connected!\n";
 
-    //
+    // start receiving
+    startReceive();
+
 }
 
 StateConnected::~StateConnected()
@@ -309,22 +311,12 @@ StateConnected::~StateConnected()
 
 boost::statechart::result StateConnected::react(const EventSendMsg& msg)
 {
-    std::cout<<"Sending message: ";
-    std::cout<<std::string(msg.parm.begin(), msg.parm.end())<<'\n';
-
-    // determine size of the message to be sent
-    std::size_t sendbuf_size = msg.parm.size()*sizeof(std::wstring::value_type);
-
-    // allocate a buffer for the message, and copy it over
-    unsigned char* sendbuf = new unsigned char[sendbuf_size];
-
-    std::copy(msg.parm.begin(), msg.parm.end(),
-        reinterpret_cast<std::wstring::value_type*>(sendbuf)
-    );
+    // serialize the message and store a pointer to the data
+    boost::shared_ptr<byte_traits::byte_sequence> sendbuf(msg.parm.serialize());
 
     // send the bytes
     async_write(*socket_ptr,
-        boost::asio::buffer(sendbuf, sendbuf_size),
+        boost::asio::buffer(*sendbuf),
         boost::bind(
             &StateConnected::sendHandler,
             boost::asio::placeholders::error,
@@ -338,10 +330,12 @@ boost::statechart::result StateConnected::react(const EventSendMsg& msg)
 
 boost::statechart::result StateConnected::react(const EventRcvdMsg& msg)
 {
+    StringwrapLayer stringlayer(*msg.parm.serialize());
+
     context<ProtocolMachine>()
         .notification_callback(
             control::ReceivedMsgNotification
-                (msg.parm)
+                (stringlayer.getString())
             );
 
     return discard_event();
@@ -366,24 +360,134 @@ boost::statechart::result StateConnected::react(const EventDisconnectRequest&)
     return discard_event();
 }
 
+
+boost::statechart::result StateConnected::react(const EventMalformedPacket&)
+{
+    post_event(EventDisconnected(L"Malformed Packet"));
+
+    return discard_event();
+}
+
+void timer_response(const boost::system::error_code& /*e*/)
+{
+    std::cout<<"Timer went off.\n";
+}
+
+
+
+void StateConnected::startReceive()
+    throw()
+{
+    std::cout<<"Starting to receive message\n";
+
+
+    // create a buffer for the message header
+    byte_traits::byte_t* message_header =
+        new byte_traits::byte_t[SegmentationLayer::header_length];
+
+
+    boost::asio::deadline_timer t(
+        socket_ptr->get_io_service(),
+        boost::posix_time::seconds(4)
+    );
+
+    t.async_wait(timer_response);
+
 #if 0
-static void receiveHandler(
+    // dispatch an asynchronous read request for the message header
+    async_read(
+        *socket_ptr,
+        boost::asio::buffer(
+            message_header,
+            SegmentationLayer::header_length
+        ),
+        boost::bind(
+            &StateConnected::headerReceiveHandler,
+            boost::asio::placeholders::error,
+            boost::asio::placeholders::bytes_transferred,
+            message_header, boost::ref(outermost_context())
+        )
+    );
+#endif
+
+
+
+}
+
+
+void StateConnected::headerReceiveHandler(
     const boost::system::error_code& error,
     std::size_t bytes_transferred,
-    unsigned char* rcvbuf,
+    byte_traits::byte_t* header,
     outermost_context_type& _outermost_context
-);
-#endif
+)
+{
+    std::cout<<"headerReceiveHandler invoked\n";
+
+    // if there was an error,
+    // tear down the connection by posting a disconnection request
+    if (error)
+    {
+        std::string errmsg(error.message());
+
+        boost::intrusive_ptr<EventDisconnected>
+        evt_rprt(
+            new EventDisconnected(std::wstring(errmsg.begin(),errmsg.end()))
+        );
+
+        _outermost_context.my_scheduler().queue_event(
+                _outermost_context.my_handle(), evt_rprt
+        );
+    }
+
+
+
+    // try to decode the header
+    try {
+        // check first byte to be the correct layer identifier
+        if ( header[0] != SegmentationLayer::LAYER_ID )
+            throw L"Invalid packet header";
+
+
+        byte_traits::uint2b_t packetsize;
+
+        *reinterpret_cast<byte_traits::byte_t*>(&packetsize) = header[1];
+        *(reinterpret_cast<byte_traits::byte_t*>(&packetsize)+1) = header[2];
+
+        packetsize = ntohx(packetsize);
+
+
+const byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
+
+        if (packetsize > MAX_PACKETSIZE)
+            throw L"Invalid packet header";
+
+        if (header[3] != 0)
+            throw L"Invalid packet header";
+
+    }
+    // on failure, report a malformed packet
+    catch (const std::wstring& e)
+    {
+        boost::intrusive_ptr<EventDisconnected>
+        evt_rprt(
+            new EventDisconnected(std::wstring(e.begin(),e.end()))
+        );
+    }
+
+    delete header;
+
+}
+
+
 
 void StateConnected::sendHandler(
     const boost::system::error_code& error,
     std::size_t bytes_transferred,
-    unsigned char* sendbuf,
+    boost::shared_ptr<byte_traits::byte_sequence> /* sendbuf */,
     outermost_context_type& _outermost_context
 )
 {
-    // in any case delete the sendbuffer
-    delete[] sendbuf;
 
     // if there was no error, return
     if (!error)

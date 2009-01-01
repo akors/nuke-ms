@@ -64,11 +64,89 @@ BasicMessageLayer::dataptr_type SegmentationLayer::serialize() const throw()
 
 BasicMessageLayer::dataptr_type SegmentationLayer::getPayload() const throw()
 {
+    // create new buffer, copy payload into it
     BasicMessageLayer::dataptr_type data(
         new byte_traits::byte_sequence(payload)
     );
 
     return data;
+}
+
+
+
+
+BasicMessageLayer::dataptr_type StringwrapLayer::serialize() const throw()
+{
+    // create new buffer, copy payload into it
+    BasicMessageLayer::dataptr_type data(
+        new byte_traits::byte_sequence(payload)
+    );
+
+    return data;
+}
+
+BasicMessageLayer::dataptr_type StringwrapLayer::getPayload() const throw()
+{
+    return this->serialize();
+}
+
+
+
+
+
+StringwrapLayer::StringwrapLayer(const std::wstring& msg) throw ()
+    : payload(msg.length()*sizeof(std::wstring::value_type))
+{
+    // initialize payload to be as big as sizeof(std::wstring::value_type)
+    // times the message length
+
+    // one iterator for input, one for output
+    byte_traits::byte_sequence::iterator out_iter = payload.begin();
+    std::wstring::const_iterator in_iter = msg.begin();
+
+    // write all bytes of one character into the buffer, advance the output
+    // iterator
+    for (; in_iter < msg.end(); in_iter++)
+        out_iter = writebytes(out_iter, *in_iter);
+}
+
+
+
+std::wstring StringwrapLayer::getString() const throw()
+{
+    // assure that the payload length is a multiple of the
+    // size of the character type (granted by the constructor)
+    assert(!(payload.size() % sizeof(std::wstring::value_type)));
+
+    // creat a string, initialize with the right size
+    // and create iterator pointing at it
+    std::wstring str((payload.size()/sizeof(std::wstring::value_type)), 'a');
+    std::wstring::iterator out_iter = str.begin();
+
+    // create a temporary value to store one wide character
+    std::wstring::value_type tmpval;
+
+    // pointer to the temporary value where the bytes will be written
+    byte_traits::byte_t* tmpval_ptr;
+
+    // iterate through all bytes in the sequence
+    for (byte_traits::byte_sequence::const_iterator in_iter = payload.begin();
+        in_iter < payload.end();)
+    {
+        // fill up the temporary character.
+        // when the character is full, write it to the string.
+        // move the byte pointer forward in each iteration
+        for (tmpval_ptr = reinterpret_cast<byte_traits::byte_t*>(&tmpval);
+            tmpval_ptr < reinterpret_cast<byte_traits::byte_t*>(&tmpval) + sizeof(tmpval);
+            tmpval_ptr++, in_iter++)
+        {
+            *tmpval_ptr = *in_iter;
+        }
+
+        *out_iter++ = tmpval;
+    }
+
+    return str;
 }
 
 

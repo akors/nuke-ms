@@ -50,7 +50,7 @@ public:
     {}
 
     /** Retrieve payload.
-     * Returns a pointer to the byte sequence holding making up the payload of
+     * Returns a pointer to the byte sequence holding the payload of
      * the packet.
      *
      * @return A pointer to the payload of the packet.
@@ -104,9 +104,11 @@ public:
     SegmentationLayer(const byte_traits::byte_sequence& _payload)
         throw (ProtocolError)
     {
+        // throw an error on oversized packets
         if (_payload.size() > getMaxDataLength())
             throw ProtocolError("Oversized Packet");
 
+        // copy byte sequence into the local buffer
         payload = _payload;
     }
 
@@ -125,6 +127,41 @@ public:
 };
 
 
+/** Class that is used to wrap Strings into a Message Layer.
+* This Class can be used to translate strings into byte sequences and vice
+* versa.
+*/
+class StringwrapLayer : public BasicMessageLayer
+{
+    byte_traits::byte_sequence payload;
+
+public:
+
+    /** Construct from a a std::wstring.
+    * Of copies each byte of each character into the payload of the layer.
+    * @param msg The msg that you want to wrap
+    */
+    StringwrapLayer(const std::wstring& msg) throw ();
+
+    /** Construct from a message coming from the network. */
+    StringwrapLayer(const byte_traits::byte_sequence& _payload)
+        : payload(_payload)
+    { }
+
+
+    std::wstring getString() const throw();
+
+
+    virtual std::size_t getSerializedSize() const throw()
+    {
+        return payload.size();
+    }
+
+
+    virtual BasicMessageLayer::dataptr_type serialize() const throw();
+
+    virtual BasicMessageLayer::dataptr_type getPayload() const  throw();
+};
 
 
 

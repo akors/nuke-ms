@@ -68,7 +68,18 @@ writebytes(byte_traits::byte_sequence::iterator it, T value)
 		reinterpret_cast<byte_traits::byte_t*>(&value),
 		reinterpret_cast<byte_traits::byte_t*>(&value) + sizeof(value),
 		it);
+}
 
+template <typename T> inline
+T readbytes(byte_traits::byte_sequence::iterator it)
+{
+    T tmpval;
+
+    std::copy(
+        it,
+        it + sizeof(T),
+        reinterpret_cast<byte_traits::byte_sequence::value_type>(&tmpval)
+    );
 }
 
 #ifndef NMS_BIG_ENDIAN
@@ -77,7 +88,7 @@ template <typename T>
 inline T htonx(T x) { return reversebytes(x); }
 
 template <typename T>
-inline T nms_ntohx(T x) { return reversebytes(x); }
+inline T ntohx(T x) { return reversebytes(x); }
 
 
 #else
@@ -86,7 +97,7 @@ template <typename T>
 inline T htonx(T x) { return x; }
 
 template <typename T>
-inline T nms_ntohx(T x) { return x; }
+inline T ntohx(T x) { return x; }
 
 #endif
 

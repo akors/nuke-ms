@@ -26,6 +26,7 @@
 #include <boost/system/error_code.hpp>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/shared_array.hpp>
 
 #include <boost/statechart/asynchronous_state_machine.hpp>
 #include <boost/statechart/state.hpp>
@@ -34,6 +35,7 @@
 #include <boost/statechart/custom_reaction.hpp>
 
 #include "control/notifications.hpp"
+#include "msglayer.hpp"
 
 namespace nms
 {
@@ -121,17 +123,23 @@ typedef Parm2Event<
 >
     EventConnectReport;
 /** Event for received messages. @ingroup proto_machine */
-typedef Parm1Event<std::wstring, EventRcvdMsgTag>
+typedef Parm1Event<SegmentationLayer, EventRcvdMsgTag>
     EventRcvdMsg;
+
 /** Event for sent messages. @ingroup proto_machine */
-typedef Parm1Event<std::wstring, EventSendMsgTag>
+typedef Parm1Event<SegmentationLayer, EventSendMsgTag>
     EventSendMsg;
+
 /** Event for disconnections. @ingroup proto_machine */
 typedef Parm1Event<std::wstring, EventDisconnectedTag>
     EventDisconnected;
 
 /** Event for disconnect requests. @ingroup proto_machine */
 struct EventDisconnectRequest : boost::statechart::event<EventDisconnectRequest>
+{};
+
+/** Event for malformed packets */
+struct EventMalformedPacket : boost::statechart::event<EventMalformedPacket>
 {};
 
 
@@ -288,7 +296,8 @@ struct StateConnected
         boost::statechart::custom_reaction< EventSendMsg >,
         boost::statechart::custom_reaction< EventRcvdMsg >,
         boost::statechart::custom_reaction< EventDisconnected >,
-        boost::statechart::custom_reaction< EventDisconnectRequest >
+        boost::statechart::custom_reaction< EventDisconnectRequest >,
+        boost::statechart::custom_reaction< EventMalformedPacket >
     > reactions;
 
     StateConnected(my_context ctx);
@@ -311,16 +320,31 @@ struct StateConnected
     */
     boost::statechart::result react(const EventDisconnected& evt);
 
-    /** React to a EventDisconnected Event.
+    /** React to a EventDisconnectRequest Event.
     *
     */
     boost::statechart::result react(const EventDisconnectRequest&);
 
+    /** React to a EventMalformedPacket Event.
+    *
+    */
+    boost::statechart::result react(const EventMalformedPacket&);
+
 private:
     boost::shared_ptr<boost::asio::ip::tcp::socket>& socket_ptr;
 
+    void startReceive() throw();
+
+
+    static void headerReceiveHandler(
+        const boost::system::error_code& error,
+        std::size_t bytes_transferred,
+        byte_traits::byte_t* header,
+        outermost_context_type& _outermost_context
+    );
+
 #if 0
-    static void receiveHandler(
+    static void bodyReceiveHandler(
         const boost::system::error_code& error,
         std::size_t bytes_transferred,
         unsigned char* rcvbuf,
@@ -331,7 +355,7 @@ private:
     static void sendHandler(
         const boost::system::error_code& error,
         std::size_t bytes_transferred,
-        unsigned char* sendbuf,
+        boost::shared_ptr<byte_traits::byte_sequence>,
         outermost_context_type& _outermost_context
     );
 
