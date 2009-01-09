@@ -2,7 +2,7 @@
 
 /*
  *   NMS - Nuclear Messaging System
- *   Copyright (C) 2008  Alexander Korsunsky
+ *   Copyright (C) 2008, 2009  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -135,6 +135,33 @@ struct ReportNotification : public ProtocolNotification, public RequestReport
     {}
 };
 
+#if 1
+/** Report about the status of a sent Message.*/
+struct SendReport :
+    public ReportNotification<ProtocolNotification::ID_SEND_REPORT>
+{
+    /** The message that was supposed to be sent. */
+    std::wstring message;
+
+    /** Generate a successful report.
+     * @param _message The message that was supposed to be sent.
+     */
+    SendReport(std::wstring _message)  throw()
+        : ReportNotification<ProtocolNotification::ID_SEND_REPORT>(),
+            message(_message)
+    {}
+
+    /** Generate a negative report
+     * @param _message The message that was supposed to be sent.
+     * @param _failure_reason The reason why the sending failed.
+     */
+    SendReport(std::wstring _message, std::wstring _failure_reason)  throw()
+        : ReportNotification<ProtocolNotification::ID_SEND_REPORT>(
+            _failure_reason),
+        message(_message)
+    {}
+};
+#endif
 
 /** A typedef for the notification callback */
 typedef boost::function1 <void, const control::ProtocolNotification&>

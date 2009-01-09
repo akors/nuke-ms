@@ -297,19 +297,15 @@ void AppControl<GuiT, ProtocolT>::handleNotification
 
         case ProtocolNotification::ID_SEND_REPORT:
         {
-            const RequestReport& rprt =
-                static_cast<
-                    const ReportNotification<
-                                ProtocolNotification::ID_SEND_REPORT>&
-                            >
-                            (notification);
+            const SendReport& rprt =
+                static_cast<const SendReport&>(notification);
 
             if (rprt.successful)
                 ;// nothing ...
             else
             {
-                printMessage(L"*  Failed to send message: " +
-                                rprt.failure_reason);
+                printMessage(L"*  Failed to send message \"" +
+                                rprt.message + L"\": " + rprt.failure_reason);
             }
             break;
         }

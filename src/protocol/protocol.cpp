@@ -2,7 +2,7 @@
 
 /*
  *   NMS - Nuclear Messaging System
- *   Copyright (C) 2008  Alexander Korsunsky
+ *   Copyright (C) 2008, 2009  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -32,12 +32,8 @@
 * @ingroup proto */
 
 
-
 using namespace nms;
 using namespace protocol;
-
-
-
 
 
 
@@ -46,11 +42,25 @@ NMSProtocol::NMSProtocol(const control::notif_callback_t _notification_callback)
 
     : machine_scheduler(true), notification_callback(_notification_callback)
 {
+
+    std::cout<<"Protocol constructed.\n";
+
+#if 0
     // create an event processor for our state machine
     event_processor =
-        machine_scheduler.create_processor<ProtocolMachine>(
-            _notification_callback
-            );
+        machine_scheduler.create_processor<
+            ProtocolMachine,
+            control::notif_callback_t,
+            boost::asio::io_service&
+        >(notification_callback, io_service);
+#else
+    // create an event processor for our state machine
+    event_processor =
+        machine_scheduler.create_processor<
+            ProtocolMachine,
+            control::notif_callback_t
+        >(notification_callback);
+#endif
 
     // initiate the event processor
     machine_scheduler.initiate_processor(event_processor);
@@ -65,6 +75,7 @@ NMSProtocol::NMSProtocol(const control::notif_callback_t _notification_callback)
             0
             )
         );
+
 }
 
 NMSProtocol::~NMSProtocol()
@@ -80,8 +91,9 @@ NMSProtocol::~NMSProtocol()
 void NMSProtocol::connect_to(const std::wstring& id)
     throw(std::runtime_error, ProtocolError)
 {
-    boost::intrusive_ptr<EventConnectRequest>
-    connect_request(new EventConnectRequest(id));
+    // Create new Connection request event and dispatch it to the statemachine
+    boost::intrusive_ptr<EvtConnectRequest>
+    connect_request(new EvtConnectRequest(id));
 
     machine_scheduler.queue_event(event_processor, connect_request);
 }
@@ -91,11 +103,10 @@ void NMSProtocol::connect_to(const std::wstring& id)
 void NMSProtocol::send(const std::wstring& msg)
     throw(std::runtime_error, ProtocolError)
 {
-    StringwrapLayer stringlayer_msg(msg);
-
-    boost::intrusive_ptr<EventSendMsg>
+    // Create new Connection request event and dispatch it to the statemachine
+    boost::intrusive_ptr<EvtSendMsg>
     send_evt(
-        new EventSendMsg(SegmentationLayer(stringlayer_msg))
+        new EvtSendMsg(msg)
     );
 
     machine_scheduler.queue_event(event_processor, send_evt);
@@ -105,8 +116,9 @@ void NMSProtocol::send(const std::wstring& msg)
 void NMSProtocol::disconnect()
     throw(std::runtime_error, ProtocolError)
 {
-    boost::intrusive_ptr<EventDisconnectRequest>
-    disconnect_evt(new EventDisconnectRequest);
+    // Create new Disconnect request event and dispatch it to the statemachine
+    boost::intrusive_ptr<EvtDisconnectRequest>
+    disconnect_evt(new EvtDisconnectRequest);
 
     machine_scheduler.queue_event(event_processor, disconnect_evt);
 }

@@ -2,7 +2,7 @@
 
 /*
  *   NMS - Nuclear Messaging System
- *   Copyright (C) 2008  Alexander Korsunsky
+ *   Copyright (C) 2008, 2009  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -119,11 +119,12 @@ public:
     }
 
 
+
+    // overriden Methods of Base class
     virtual std::size_t getSerializedSize() const throw();
-
     virtual dataptr_type serialize() const throw ();
-
     virtual dataptr_type getPayload() const  throw();
+
 };
 
 

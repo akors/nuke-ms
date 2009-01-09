@@ -60,9 +60,9 @@ inline T reversebytes(T x)
 }
 
 
-template <typename T> inline
-byte_traits::byte_sequence::iterator
-writebytes(byte_traits::byte_sequence::iterator it, T value)
+template <typename T, typename ByteSequenceIterator> inline
+ByteSequenceIterator
+writebytes(ByteSequenceIterator it, T value)
 {
 	return std::copy(
 		reinterpret_cast<byte_traits::byte_t*>(&value),
@@ -70,16 +70,18 @@ writebytes(byte_traits::byte_sequence::iterator it, T value)
 		it);
 }
 
-template <typename T> inline
-T readbytes(byte_traits::byte_sequence::iterator it)
+template <typename T, typename ByteSequenceIterator> inline
+T readbytes(ByteSequenceIterator it)
 {
     T tmpval;
 
     std::copy(
         it,
         it + sizeof(T),
-        reinterpret_cast<byte_traits::byte_sequence::value_type>(&tmpval)
+        reinterpret_cast<byte_traits::byte_t*>(&tmpval)
     );
+
+    return tmpval;
 }
 
 #ifndef NMS_BIG_ENDIAN

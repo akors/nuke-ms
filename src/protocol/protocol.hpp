@@ -2,7 +2,7 @@
 
 /*
  *   NMS - Nuclear Messaging System
- *   Copyright (C) 2008  Alexander Korsunsky
+ *   Copyright (C) 2008, 2009  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -40,6 +40,8 @@
 #include <stdexcept>
 #include <string>
 
+#include <boost/asio.hpp>
+
 #include <boost/thread/thread.hpp>
 #include <boost/statechart/asynchronous_state_machine.hpp>
 
@@ -76,6 +78,9 @@ class NMSProtocol
 
     /** The function object that will be called, if an event occurs.*/
     control::notif_callback_t notification_callback;
+
+    /** The I/O Service object used by all network operations */
+    boost::asio::io_service io_service;
 
     /** How long to wait for the thread to join */
     enum { threadwait_ms = 3000 };
