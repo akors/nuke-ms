@@ -18,8 +18,10 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #include <boost/bind.hpp>
+#include <boost/ref.hpp>
+#include<boost/tokenizer.hpp>
+
 
 #include "protocol/statemachine.hpp"
 #include "protocol/protocol.hpp"
@@ -36,6 +38,12 @@ using namespace nms;
 using namespace protocol;
 
 
+static bool parseDestinationString(
+    std::string& host,
+    std::string& service,
+    const std::wstring& where
+);
+
 
 NMSProtocol::NMSProtocol(const control::notif_callback_t _notification_callback)
             throw()
@@ -45,22 +53,17 @@ NMSProtocol::NMSProtocol(const control::notif_callback_t _notification_callback)
 
     std::cout<<"Protocol constructed.\n";
 
-#if 0
+
     // create an event processor for our state machine
-    event_processor =
-        machine_scheduler.create_processor<
-            ProtocolMachine,
-            control::notif_callback_t,
-            boost::asio::io_service&
-        >(notification_callback, io_service);
-#else
-    // create an event processor for our state machine
+
+    // Passing _io_service by pointer, because passing references to
+    // create_processor does not work.
     event_processor =
         machine_scheduler.create_processor<
             ProtocolMachine,
             control::notif_callback_t
         >(notification_callback);
-#endif
+
 
     // initiate the event processor
     machine_scheduler.initiate_processor(event_processor);
@@ -91,11 +94,27 @@ NMSProtocol::~NMSProtocol()
 void NMSProtocol::connect_to(const std::wstring& id)
     throw(std::runtime_error, ProtocolError)
 {
-    // Create new Connection request event and dispatch it to the statemachine
-    boost::intrusive_ptr<EvtConnectRequest>
-    connect_request(new EvtConnectRequest(id));
+    // Get Host/Service pair from the destination string
+    std::string host, service;
+    if (parseDestinationString(host, service, id)) // on success, pass on event
+    {
+        // Create new Connection request event
+        // and dispatch it to the statemachine
+        boost::intrusive_ptr<EvtConnectRequest>
+        connect_request(new EvtConnectRequest(host, service));
 
-    machine_scheduler.queue_event(event_processor, connect_request);
+        machine_scheduler.queue_event(event_processor, connect_request);
+    }
+    else // on failure, report back to application
+    {
+        notification_callback(
+            control::ReportNotification
+                <control::ProtocolNotification::ID_CONNECT_REPORT>(
+                    L"Invalid remote site identifier"
+            )
+        );
+    }
+
 }
 
 
@@ -123,6 +142,58 @@ void NMSProtocol::disconnect()
     machine_scheduler.queue_event(event_processor, disconnect_evt);
 }
 
+
+/** Get host and service pair from a single destination string.
+* Parses the string containing the destination into a host/service pair.
+* The part before the column is the host, the part after the column is the
+* service.
+* If there is not exactly one column, the function returns false, indicating
+* failure.
+*
+* @param host A reference to a string where the host will be stored.
+* Any content will be overwritten.
+* @param service A reference to a string where the service will be stored.
+* Any content will be overwritten.
+* @param where A string containing a destination.
+*
+* @return true on success, false on failure.
+*/
+static bool parseDestinationString(
+    std::string& host,
+    std::string& service,
+    const std::wstring& where
+)
+{
+    // get ourself a tokenizer
+    typedef boost::tokenizer<boost::char_separator<wchar_t>,
+                            std::wstring::const_iterator, std::wstring>
+        tokenizer;
+
+    // get the part before the colon and the part after the colon
+    boost::char_separator<wchar_t> colons(L":");
+    tokenizer tokens(where, colons);
+
+    tokenizer::iterator tok_iter = tokens.begin();
+
+    // bail out, if there were no tokens
+    if ( tok_iter == tokens.end() )
+        return false;
+
+    // create host from first token
+    host.assign(tok_iter->begin(), tok_iter->end());
+
+    if ( ++tok_iter == tokens.end() )
+        return false;
+
+    // create service from second token
+    service.assign(tok_iter->begin(), tok_iter->end());
+
+    // bail out if there is another colon
+    if ( ++tok_iter != tokens.end() )
+        return false;
+
+    return true;
+}
 
 
 

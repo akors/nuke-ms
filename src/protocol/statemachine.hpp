@@ -22,14 +22,18 @@
 #ifndef STATEMACHINE_HPP
 #define STATEMACHINE_HPP
 
+#include <boost/thread/thread.hpp>
 #include <boost/asio.hpp>
 #include <boost/statechart/asynchronous_state_machine.hpp>
 #include <boost/statechart/state.hpp>
 #include <boost/statechart/custom_reaction.hpp>
 #include <boost/mpl/list.hpp>
+#include <boost/ref.hpp>
 
 #include "protocol/msglayer.hpp"
 #include "control/notifications.hpp"
+
+
 
 namespace nms
 {
@@ -44,12 +48,13 @@ namespace protocol
 struct EvtConnectRequest : public boost::statechart::event<EvtConnectRequest>
 {
     /** Where to connect to. */
-    std::wstring where;
+    std::string host;
+    std::string service;
 
     /** Constructor.
     * @param _where Where to connect to. */
-    EvtConnectRequest(const std::wstring& _where)
-        : where (_where)
+    EvtConnectRequest(const std::string& _host, const std::string& _service)
+        : host (_host), service(_service)
     {}
 };
 
@@ -99,6 +104,7 @@ struct EvtSendMsg : public boost::statechart::event<EvtSendMsg>
 struct StateWaiting;
 
 
+
 /** The Protoc State Machine.
 * @ingroup proto_machine
 * This class represents the Overall State of the Protocol.
@@ -115,22 +121,49 @@ struct ProtocolMachine :
         StateWaiting
     >
 {
+    enum {thread_timeout = 3000u};
+
     /** Callback that will be used to inform the application */
     nms::control::notif_callback_t notification_callback;
 
     /** I/O Service Object */
-    //boost::asio::io_service& io_service;
+    boost::asio::io_service io_service;
 
-#if 0
-    /** Constructor. To be used only by Boost.Statechart classes. */
-    ProtocolMachine(my_context ctx,
-                    nms::control::notif_callback_t _notification_callback,
-                    boost::asio::io_service& _io_service);
-#else
-    /** Constructor. To be used only by Boost.Statechart classes. */
+    /** Socket used for the connection */
+    boost::asio::ip::tcp::socket socket;
+    //boost::asio::deadline_timer timer;
+    // int bigarray[5000];
+
+    /** A thread object for all asynchronouy I/O operations. It will start in
+    not-a-thread state. */
+    boost::thread io_thread;
+
+
+    /** Constructor. To be used only by Boost.Statechart classes.
+    * Passing _io_service by pointer, because passing references to
+    * create_processor does not work.
+    */
     ProtocolMachine(my_context ctx,
                     nms::control::notif_callback_t _notification_callback);
-#endif
+
+
+    /** Destructor. Stops all I/O operations and threads as cleanly as possible.
+    */
+    ~ProtocolMachine();
+
+    /** Starts the I/O service object and thread to process I/O operations.
+    * @pre io_service object must have some work to do before calling this
+    * function.
+    *
+    * @throws std::exception if an error creating the thread occurs.
+    */
+    void startIOOperations() throw(std::exception);
+
+    /** Stops I/O Operations.
+    * This function stops the IO- Service Object and joins the thread if
+    * they are running.
+    */
+    void stopIOOperations() throw();
 };
 
 
@@ -180,6 +213,20 @@ struct StateNegotiating :
     /** Constructor. To be used only by Boost.Statechart classes. */
     StateNegotiating(my_context ctx);
 
+    static void tiktakHandler(
+        const boost::system::error_code& error,
+        boost::shared_ptr<boost::asio::deadline_timer> timer,
+        outermost_context_type& _outermost_context
+    );
+
+    static void resolveHandler(
+        const boost::system::error_code& error,
+        boost::asio::ip::tcp::resolver::iterator endpoint_iterator,
+        outermost_context_type& _outermost_context,
+        boost::shared_ptr<boost::asio::ip::tcp::resolver> /* resolver */,
+        boost::shared_ptr<boost::asio::ip::tcp::resolver::query> /* query */
+    );
+
     boost::statechart::result react(const EvtConnectReport& evt);
     boost::statechart::result react(const EvtDisconnectRequest&);
     boost::statechart::result react(const EvtSendMsg& evt);
@@ -201,6 +248,9 @@ struct StateConnected :
     boost::statechart::result react(const EvtDisconnectRequest&);
     boost::statechart::result react(const EvtSendMsg& evt);
 };
+
+// this function is declared in protocol.hpp and defined in protocol.hpp
+extern void catchThread(boost::thread& thread, unsigned threadwait_ms) throw();
 
 
 } // namespace protocol

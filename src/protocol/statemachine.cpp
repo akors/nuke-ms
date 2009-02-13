@@ -21,22 +21,151 @@
 #include "protocol/statemachine.hpp"
 
 using namespace nms::protocol;
+using namespace boost::asio::ip;
 
 ProtocolMachine::ProtocolMachine(my_context ctx,
-                nms::control::notif_callback_t _notification_callback)
-    : my_base(ctx), notification_callback(_notification_callback)
+                    nms::control::notif_callback_t _notification_callback)
+    : my_base(ctx),
+    notification_callback(_notification_callback)
+    ,socket(io_service)
 {}
 
+ProtocolMachine::~ProtocolMachine()
+{
+    stopIOOperations();
+}
+
+void ProtocolMachine::startIOOperations()
+    throw(std::exception)
+{
+    // start a new thread that processes all asynchronous operations
+    io_thread = boost::thread(
+        boost::bind(
+            &boost::asio::io_service::run,
+            &outermost_context().io_service
+        )
+    );
+}
+
+void ProtocolMachine::stopIOOperations() throw()
+{
+    boost::system::error_code dontcare;
+
+    // cancel all operations and close the socket
+    // socket.close(dontcare);
+
+    // stop the service object if it's running
+    io_service.stop();
+
+    // stop the thread
+    catchThread(io_thread, thread_timeout);
+
+    // reset the io_service object so it can continue its work afterwards
+    io_service.reset();
+}
 
 
 StateWaiting::StateWaiting(my_context ctx)
     : my_base(ctx)
 {
-    std::cout<<"Waiting to be connected\n";
+    std::cout<<"Entering StateWaiting\n";
+
+    // when we are waiting, we don't need the io_service object and the thread
+    outermost_context().stopIOOperations();
 }
 
-boost::statechart::result StateWaiting::react(const EvtConnectRequest & evt)
+
+void StateNegotiating::tiktakHandler(
+    const boost::system::error_code& error,
+    boost::shared_ptr<boost::asio::deadline_timer> timer,
+    outermost_context_type& _outermost_context
+)
 {
+    std::cout<<"Timer went off: "<<error.message()<<'\n';
+}
+
+void StateNegotiating::resolveHandler(
+    const boost::system::error_code& error,
+    tcp::resolver::iterator endpoint_iterator,
+    outermost_context_type& _outermost_context,
+    boost::shared_ptr<tcp::resolver> /* resolver */,
+    boost::shared_ptr<tcp::resolver::query> /* query */
+)
+{
+    std::cout<<"resolveHandler invoked.\n";
+
+    // if there was an error, report it
+    if (endpoint_iterator == tcp::resolver::iterator() )
+    {
+        std::string errmsg;
+
+        if (error)
+            errmsg = error.message();
+        else
+            errmsg = "No hosts found.";
+
+        _outermost_context.my_scheduler().queue_event(
+            _outermost_context.my_handle(),
+            boost::intrusive_ptr<EvtConnectReport> (
+                new EvtConnectReport(
+                    false,
+                    std::wstring(errmsg.begin(),errmsg.end())
+                )
+            )
+        );
+
+        std::cout<<"Connecting failed: "<<errmsg<<'\n';
+        return;
+    }
+
+    std::cout<<"Resolving finished. Host: "<<
+        endpoint_iterator->endpoint().address().to_string()<<" Port: "<<
+        endpoint_iterator->endpoint().port()<<'\n';
+}
+
+
+boost::statechart::result StateWaiting::react(const EvtConnectRequest& evt)
+{
+     //get a resolver
+    boost::shared_ptr<tcp::resolver> resolver(
+        new tcp::resolver(outermost_context().io_service)
+    );
+
+    // create a query
+    boost::shared_ptr<tcp::resolver::query> query(
+        new tcp::resolver::query(evt.host, evt.service)
+    );
+
+
+    // dispatch an asynchronous resolve request
+    resolver->async_resolve(
+        *query,
+        boost::bind(
+            &StateNegotiating::resolveHandler,
+            boost::asio::placeholders::error,
+            boost::asio::placeholders::iterator,
+            boost::ref(outermost_context()),
+            resolver, query
+        )
+    );
+
+#if 0
+    boost::shared_ptr<boost::asio::deadline_timer> timer(
+        new boost::asio::deadline_timer(
+            outermost_context().io_service, boost::posix_time::seconds(5)
+        )
+    );
+
+    timer->async_wait(
+        boost::bind(
+            StateNegotiating::tiktakHandler,
+            boost::asio::placeholders::error,
+            timer,
+            boost::ref(outermost_context())
+        )
+    );
+#endif
+
     return transit< StateNegotiating >();
 }
 
@@ -51,10 +180,36 @@ boost::statechart::result StateWaiting::react(const EvtSendMsg& evt)
 }
 
 
+
 StateNegotiating::StateNegotiating(my_context ctx)
     : my_base(ctx)
 {
-    std::cout<<"Negotiating\n";
+    std::cout<<"Entering StateNegotiating\n";
+
+    try {
+        outermost_context().startIOOperations();
+    }
+    catch(const std::exception& e)
+    {
+        std::string errmsg(e.what());
+        errmsg = "Internal error:" + errmsg;
+
+        post_event(
+            EvtConnectReport(
+                false,
+                std::wstring(errmsg.begin(), errmsg.end())
+            )
+        );
+    }
+    catch(...)
+    {
+        post_event(
+            EvtConnectReport(
+                false,
+                std::wstring(L"Unknown internal Error")
+            )
+        );
+    }
 
     // send positive connection report for debugging purposes
     post_event(
@@ -84,7 +239,6 @@ boost::statechart::result StateNegotiating::react(const EvtConnectReport& evt)
                     <control::ProtocolNotification::ID_CONNECT_REPORT>()
                 );
 
-
         return transit<StateConnected>();
     }
     else
@@ -93,7 +247,7 @@ boost::statechart::result StateNegotiating::react(const EvtConnectReport& evt)
             .notification_callback(
                 control::ReportNotification
                     <control::ProtocolNotification::ID_CONNECT_REPORT>(
-                        std::wstring(L"Connection Failed")
+                        std::wstring(L"Connection Failed: " + evt.message)
                     )
                 );
 
@@ -109,7 +263,7 @@ boost::statechart::result StateNegotiating::react(const EvtDisconnectRequest&)
 StateConnected::StateConnected(my_context ctx)
     : my_base(ctx)
 {
-    std::cout<<"Connected\n";
+    std::cout<<"Entering StateConnected\n";
 }
 
 
