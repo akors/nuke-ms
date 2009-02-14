@@ -43,6 +43,7 @@ namespace protocol
 class BasicMessageLayer
 {
 public:
+    typedef boost::shared_ptr<BasicMessageLayer> ptr_type;
     typedef boost::shared_ptr<byte_traits::byte_sequence> dataptr_type;
 
     /** Virtual destructor */
@@ -61,7 +62,7 @@ public:
     /** Retrieve the serialized size.
      * Returns the length of the returned sequence of a successive call to
      * serialize(). <br>
-     * Access shall be performed in constant ammortized time.
+     * Access shall be performed in ammortized  constant time.
      *
      * @return The number of bytes the serialized byte sequence would have.
     */
@@ -85,6 +86,8 @@ class SegmentationLayer : public BasicMessageLayer
     byte_traits::byte_sequence payload;
 
 public:
+    typedef boost::shared_ptr<SegmentationLayer> ptr_type;
+
     enum { LAYER_ID = 0x80 };
     enum { header_length = 4 };
 
@@ -137,6 +140,7 @@ class StringwrapLayer : public BasicMessageLayer
     byte_traits::byte_sequence payload;
 
 public:
+    typedef boost::shared_ptr<StringwrapLayer> ptr_type;
 
     /** Construct from a a std::wstring.
     * Of copies each byte of each character into the payload of the layer.

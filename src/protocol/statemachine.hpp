@@ -83,10 +83,12 @@ struct EvtDisconnectRequest :
     public boost::statechart::event<EvtDisconnectRequest>
 {};
 
-/** Event representing a sent message
+
+/** Event representing a Disconnect.
 * @ingroup proto_machine
 */
-struct EvtSendMsg : public boost::statechart::event<EvtSendMsg>
+struct EvtDisconnected :
+    public boost::statechart::event<EvtDisconnected>
 {
     /** The text of the message. */
     std::wstring msg;
@@ -94,8 +96,24 @@ struct EvtSendMsg : public boost::statechart::event<EvtSendMsg>
     /** Constructor.
     * @param _msg The text of the message.
     */
-    EvtSendMsg(const std::wstring& _msg)
+    EvtDisconnected(const std::wstring& _msg)
         : msg (_msg)
+    {}
+};
+
+/** Event representing a sent message
+* @ingroup proto_machine
+*/
+struct EvtSendMsg : public boost::statechart::event<EvtSendMsg>
+{
+    /** The data of the message */
+    BasicMessageLayer::ptr_type data;
+
+    /** Constructor.
+    * @param _data The text of the message.
+    */
+    EvtSendMsg(BasicMessageLayer::ptr_type _data)
+        : data (_data)
     {}
 };
 
@@ -131,8 +149,7 @@ struct ProtocolMachine :
 
     /** Socket used for the connection */
     boost::asio::ip::tcp::socket socket;
-    //boost::asio::deadline_timer timer;
-    // int bigarray[5000];
+
 
     /** A thread object for all asynchronouy I/O operations. It will start in
     not-a-thread state. */
@@ -227,6 +244,13 @@ struct StateNegotiating :
         boost::shared_ptr<boost::asio::ip::tcp::resolver::query> /* query */
     );
 
+
+    static void connectHandler(
+        const boost::system::error_code& error,
+        outermost_context_type& _outermost_context
+    );
+
+
     boost::statechart::result react(const EvtConnectReport& evt);
     boost::statechart::result react(const EvtDisconnectRequest&);
     boost::statechart::result react(const EvtSendMsg& evt);
@@ -239,7 +263,8 @@ struct StateConnected :
     /** State reactions. */
     typedef boost::mpl::list<
         boost::statechart::custom_reaction<EvtDisconnectRequest>,
-        boost::statechart::custom_reaction<EvtSendMsg>
+        boost::statechart::custom_reaction<EvtSendMsg>,
+        boost::statechart::custom_reaction<EvtDisconnected>
     > reactions;
 
     /** Constructor. To be used only by Boost.Statechart classes. */
@@ -247,6 +272,22 @@ struct StateConnected :
 
     boost::statechart::result react(const EvtDisconnectRequest&);
     boost::statechart::result react(const EvtSendMsg& evt);
+    boost::statechart::result react(const EvtDisconnected& evt);
+
+    static void writeHandler(
+        const boost::system::error_code& error,
+        std::size_t bytes_transferred,
+        outermost_context_type& _outermost_context,
+        SegmentationLayer::dataptr_type data
+    );
+
+    static void receiveSegmentationHeaderHandler(
+        const boost::system::error_code& error,
+        std::size_t bytes_transferred,
+        outermost_context_type& _outermost_context,
+        byte_traits::byte_t rcvbuf[SegmentationLayer::header_length]
+    );
+
 };
 
 // this function is declared in protocol.hpp and defined in protocol.hpp

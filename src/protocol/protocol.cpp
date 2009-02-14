@@ -122,10 +122,13 @@ void NMSProtocol::connect_to(const std::wstring& id)
 void NMSProtocol::send(const std::wstring& msg)
     throw(std::runtime_error, ProtocolError)
 {
+    // create a Stringwrapper for the message
+    StringwrapLayer::ptr_type data(new StringwrapLayer(msg));
+
     // Create new Connection request event and dispatch it to the statemachine
     boost::intrusive_ptr<EvtSendMsg>
     send_evt(
-        new EvtSendMsg(msg)
+        new EvtSendMsg(data)
     );
 
     machine_scheduler.queue_event(event_processor, send_evt);

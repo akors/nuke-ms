@@ -52,7 +52,7 @@ void ProtocolMachine::stopIOOperations() throw()
     boost::system::error_code dontcare;
 
     // cancel all operations and close the socket
-    // socket.close(dontcare);
+    socket.close(dontcare);
 
     // stop the service object if it's running
     io_service.stop();
@@ -74,54 +74,6 @@ StateWaiting::StateWaiting(my_context ctx)
     outermost_context().stopIOOperations();
 }
 
-
-void StateNegotiating::tiktakHandler(
-    const boost::system::error_code& error,
-    boost::shared_ptr<boost::asio::deadline_timer> timer,
-    outermost_context_type& _outermost_context
-)
-{
-    std::cout<<"Timer went off: "<<error.message()<<'\n';
-}
-
-void StateNegotiating::resolveHandler(
-    const boost::system::error_code& error,
-    tcp::resolver::iterator endpoint_iterator,
-    outermost_context_type& _outermost_context,
-    boost::shared_ptr<tcp::resolver> /* resolver */,
-    boost::shared_ptr<tcp::resolver::query> /* query */
-)
-{
-    std::cout<<"resolveHandler invoked.\n";
-
-    // if there was an error, report it
-    if (endpoint_iterator == tcp::resolver::iterator() )
-    {
-        std::string errmsg;
-
-        if (error)
-            errmsg = error.message();
-        else
-            errmsg = "No hosts found.";
-
-        _outermost_context.my_scheduler().queue_event(
-            _outermost_context.my_handle(),
-            boost::intrusive_ptr<EvtConnectReport> (
-                new EvtConnectReport(
-                    false,
-                    std::wstring(errmsg.begin(),errmsg.end())
-                )
-            )
-        );
-
-        std::cout<<"Connecting failed: "<<errmsg<<'\n';
-        return;
-    }
-
-    std::cout<<"Resolving finished. Host: "<<
-        endpoint_iterator->endpoint().address().to_string()<<" Port: "<<
-        endpoint_iterator->endpoint().port()<<'\n';
-}
 
 
 boost::statechart::result StateWaiting::react(const EvtConnectRequest& evt)
@@ -173,7 +125,9 @@ boost::statechart::result StateWaiting::react(const EvtSendMsg& evt)
 {
     context<ProtocolMachine>()
         .notification_callback(
-            control::SendReport(evt.msg, std::wstring(L"Not Connected."))
+            control::SendReport(
+                StringwrapLayer(*evt.data->getPayload()).getString(),
+                std::wstring(L"Not Connected."))
             );
 
     return discard_event();
@@ -211,10 +165,6 @@ StateNegotiating::StateNegotiating(my_context ctx)
         );
     }
 
-    // send positive connection report for debugging purposes
-    post_event(
-        EvtConnectReport(true, std::wstring(L"Connection attempt succeeded."))
-    );
 }
 
 boost::statechart::result StateNegotiating::react(const EvtSendMsg& evt)
@@ -222,7 +172,9 @@ boost::statechart::result StateNegotiating::react(const EvtSendMsg& evt)
     // we dont send messages to nowhere
     context<ProtocolMachine>()
         .notification_callback(
-            control::SendReport(evt.msg, std::wstring(L"Not yet Connected."))
+            control::SendReport(
+                StringwrapLayer(*evt.data->getPayload()).getString(),
+                std::wstring(L"Not yet Connected."))
             );
 
     return discard_event();
@@ -247,7 +199,7 @@ boost::statechart::result StateNegotiating::react(const EvtConnectReport& evt)
             .notification_callback(
                 control::ReportNotification
                     <control::ProtocolNotification::ID_CONNECT_REPORT>(
-                        std::wstring(L"Connection Failed: " + evt.message)
+                        std::wstring(evt.message)
                     )
                 );
 
@@ -259,6 +211,117 @@ boost::statechart::result StateNegotiating::react(const EvtDisconnectRequest&)
 {
     return transit<StateWaiting>();
 }
+
+
+
+void StateNegotiating::tiktakHandler(
+    const boost::system::error_code& error,
+    boost::shared_ptr<boost::asio::deadline_timer> timer,
+    outermost_context_type& _outermost_context
+)
+{
+    std::cout<<"Timer went off: "<<error.message()<<'\n';
+}
+
+void StateNegotiating::resolveHandler(
+    const boost::system::error_code& error,
+    tcp::resolver::iterator endpoint_iterator,
+    outermost_context_type& _outermost_context,
+    boost::shared_ptr<tcp::resolver> /* resolver */,
+    boost::shared_ptr<tcp::resolver::query> /* query */
+)
+{
+    std::cout<<"resolveHandler invoked.\n";
+
+    // if there was an error, report it
+    if (endpoint_iterator == tcp::resolver::iterator() )
+    {
+        std::string errmsg;
+
+        if (error)
+            errmsg = error.message();
+        else
+            errmsg = "No hosts found.";
+
+        _outermost_context.my_scheduler().queue_event(
+            _outermost_context.my_handle(),
+            boost::intrusive_ptr<EvtConnectReport> (
+                new EvtConnectReport(
+                    false,
+                    std::wstring(errmsg.begin(),errmsg.end())
+                )
+            )
+        );
+
+        return;
+    }
+
+    std::cout<<"Resolving finished. Host: "<<
+        endpoint_iterator->endpoint().address().to_string()<<" Port: "<<
+        endpoint_iterator->endpoint().port()<<'\n';
+
+    _outermost_context.socket.async_connect(
+        *endpoint_iterator,
+        boost::bind(
+            &StateNegotiating::connectHandler,
+            boost::asio::placeholders::error,
+            boost::ref(_outermost_context)
+        )
+    );
+}
+
+
+void StateNegotiating::connectHandler(
+    const boost::system::error_code& error,
+    outermost_context_type& _outermost_context
+)
+{
+    std::cout<<"connectHandler invoked.\n";
+
+    boost::intrusive_ptr<EvtConnectReport> evt_rprt;
+
+    // if there was an error, create a negative reply
+    if (error)
+    {
+        std::string errmsg(error.message());
+
+        evt_rprt = new EvtConnectReport(
+            false,
+            std::wstring(errmsg.begin(), errmsg.end())
+        );
+    }
+    else // if there was no error, create a positive reply
+    {
+        evt_rprt = new EvtConnectReport(
+            true,
+            std::wstring(L"Connection succeeded.")
+        );
+
+        // create a receive buffer
+        byte_traits::byte_t* rcvbuf =
+            new byte_traits::byte_t[SegmentationLayer::header_length];
+
+        // start an asynchronous read to receive the header of the first packet
+        async_read(
+            _outermost_context.socket,
+            boost::asio::buffer(rcvbuf, SegmentationLayer::header_length),
+            boost::bind(
+                &StateConnected::receiveSegmentationHeaderHandler,
+                boost::asio::placeholders::error,
+                boost::asio::placeholders::bytes_transferred,
+                boost::ref(_outermost_context),
+                rcvbuf
+            )
+        );
+    }
+
+    _outermost_context.my_scheduler().
+        queue_event(_outermost_context.my_handle(), evt_rprt);
+}
+
+
+
+
 
 StateConnected::StateConnected(my_context ctx)
     : my_base(ctx)
@@ -275,9 +338,138 @@ boost::statechart::result StateConnected::react(const EvtDisconnectRequest&)
 
 boost::statechart::result StateConnected::react(const EvtSendMsg& evt)
 {
-#if 1
-    std::wcout<<L" << "<<evt.msg<<L'\n';
-#endif
+    SegmentationLayer segm_layer(*evt.data);
+    SegmentationLayer::dataptr_type data = segm_layer.serialize();
+
+    async_write(
+        context<ProtocolMachine>().socket,
+        boost::asio::buffer(*data),
+        boost::bind(
+            &StateConnected::writeHandler,
+            boost::asio::placeholders::error,
+            boost::asio::placeholders::bytes_transferred,
+            boost::ref(outermost_context()),
+            data
+        )
+    );
 
     return discard_event();
 }
+
+
+boost::statechart::result StateConnected::react(const EvtDisconnected& evt)
+{
+    context<ProtocolMachine>()
+        .notification_callback(control::DisconnectedNotification(evt.msg));
+
+    return transit<StateWaiting>();
+}
+
+
+void StateConnected::writeHandler(
+    const boost::system::error_code& error,
+    std::size_t bytes_transferred,
+    outermost_context_type& _outermost_context,
+    SegmentationLayer::dataptr_type data
+)
+{
+    std::cout<<"writeHandler invoked.\n";
+
+    if (!error)
+    {
+        _outermost_context.notification_callback(
+            control::SendReport(
+                StringwrapLayer(*data).getString()
+            )
+        );
+    }
+    else
+    {
+        std::string errmsg(error.message());
+
+        _outermost_context.notification_callback(
+            control::SendReport(
+                StringwrapLayer(*data).getString(),
+                std::wstring(errmsg.begin(), errmsg.end())
+            )
+        );
+
+        _outermost_context.my_scheduler().queue_event(
+            _outermost_context.my_handle(),
+            boost::intrusive_ptr<EvtDisconnected> (
+                new EvtDisconnected(
+                    std::wstring(errmsg.begin(), errmsg.end())
+                )
+            )
+        );
+
+    }
+}
+
+void StateConnected::receiveSegmentationHeaderHandler(
+    const boost::system::error_code& error,
+    std::size_t bytes_transferred,
+    outermost_context_type& _outermost_context,
+    byte_traits::byte_t rcvbuf[SegmentationLayer::header_length]
+)
+{
+    std::cout<<"StateConnected::receiveSegmentationHeaderHandler invoked\n";
+
+    // we need to delete the receive buffer in any case
+    try {
+
+        // if there was an error,
+        // tear down the connection by posting a disconnection event
+        if (error || bytes_transferred != SegmentationLayer::header_length)
+        {
+            std::string errmsg(error.message());
+
+            throw std::wstring(errmsg.begin(),errmsg.end());
+        }
+
+        // if no error occured, try to decode the header
+
+        // check first byte to be the correct layer identifier
+        if ( rcvbuf[0] != SegmentationLayer::LAYER_ID )
+            throw std::wstring(L"Invalid packet header");
+
+        // get the size of the packet
+        byte_traits::uint2b_t packetsize;
+
+        *reinterpret_cast<byte_traits::byte_t*>(&packetsize) = rcvbuf[1];
+        *(reinterpret_cast<byte_traits::byte_t*>(&packetsize)+1) = rcvbuf[2];
+
+        packetsize = ntohx(packetsize);
+
+// FIXME Magic number, set to something proper or make configurable
+const byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
+
+        if (packetsize > MAX_PACKETSIZE)
+            throw std::wstring(L"Invalid packet header");
+
+        if (rcvbuf[3] != 0)
+            throw std::wstring(L"Invalid packet header");
+
+
+    }
+    // on failure, report back to applicatiob
+    catch (const std::wstring& e)
+    {
+        _outermost_context.my_scheduler().queue_event(
+            _outermost_context.my_handle(),
+            boost::intrusive_ptr<EvtDisconnected>(new EvtDisconnected(e))
+        );
+    }
+    catch(...)
+    {
+        _outermost_context.my_scheduler().queue_event(
+            _outermost_context.my_handle(),
+            boost::intrusive_ptr<EvtDisconnected>(
+                new EvtDisconnected(L"Unknown Error")
+            )
+        );
+    }
+
+    delete[] rcvbuf;
+}
+
