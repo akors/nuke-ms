@@ -4,7 +4,7 @@ CP := cp
 RMF := rm -f
 
 # include configuration file
-include $(PROJECT_ROOT)/build/config.gcc
+include $(PROJECT_ROOT)/build/config.mak
 
 # A few directory definitions
 SRCDIR := $(PROJECT_ROOT)/src
