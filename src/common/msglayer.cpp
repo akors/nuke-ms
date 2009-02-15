@@ -20,7 +20,7 @@
 
 
 #include "bytes.hpp"
-#include "protocol/msglayer.hpp"
+#include "msglayer.hpp"
 
 using namespace nms;
 using namespace protocol;
@@ -89,8 +89,6 @@ BasicMessageLayer::dataptr_type StringwrapLayer::getPayload() const throw()
 {
     return this->serialize();
 }
-
-
 
 
 

@@ -415,59 +415,55 @@ void StateConnected::receiveSegmentationHeaderHandler(
 {
     std::cout<<"StateConnected::receiveSegmentationHeaderHandler invoked\n";
 
-    // we need to delete the receive buffer in any case
-    try {
-
-        // if there was an error,
-        // tear down the connection by posting a disconnection event
-        if (error || bytes_transferred != SegmentationLayer::header_length)
-        {
-            std::string errmsg(error.message());
-
-            throw std::wstring(errmsg.begin(),errmsg.end());
-        }
-
-        // if no error occured, try to decode the header
-
-        // check first byte to be the correct layer identifier
-        if ( rcvbuf[0] != SegmentationLayer::LAYER_ID )
-            throw std::wstring(L"Invalid packet header");
-
-        // get the size of the packet
-        byte_traits::uint2b_t packetsize;
-
-        *reinterpret_cast<byte_traits::byte_t*>(&packetsize) = rcvbuf[1];
-        *(reinterpret_cast<byte_traits::byte_t*>(&packetsize)+1) = rcvbuf[2];
-
-        packetsize = ntohx(packetsize);
-
-// FIXME Magic number, set to something proper or make configurable
-const byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
-
-        if (packetsize > MAX_PACKETSIZE)
-            throw std::wstring(L"Invalid packet header");
-
-        if (rcvbuf[3] != 0)
-            throw std::wstring(L"Invalid packet header");
-
-
-    }
-    // on failure, report back to applicatiob
-    catch (const std::wstring& e)
+    // if there was an error,
+    // tear down the connection by posting a disconnection event
+    if (error || bytes_transferred != SegmentationLayer::header_length)
     {
-        _outermost_context.my_scheduler().queue_event(
-            _outermost_context.my_handle(),
-            boost::intrusive_ptr<EvtDisconnected>(new EvtDisconnected(e))
-        );
-    }
-    catch(...)
-    {
+        std::string errmsg(error.message());
+
         _outermost_context.my_scheduler().queue_event(
             _outermost_context.my_handle(),
             boost::intrusive_ptr<EvtDisconnected>(
-                new EvtDisconnected(L"Unknown Error")
+                new EvtDisconnected(std::wstring(errmsg.begin(),errmsg.end()))
             )
         );
+    }
+    else // if no error occured, try to decode the header
+    {
+        try {
+            // decode and verify the header of the message
+            SegmentationLayer::HeaderType header_data
+                = SegmentationLayer::decodeHeader(rcvbuf);
+
+/// FIXME Magic number, set to something proper or make configurable
+const byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
+
+            if (header_data.packetsize > MAX_PACKETSIZE)
+                throw MsgLayerError("Oversized packet.");
+        }
+        // on failure, report back to application
+        catch (const std::exception& e)
+        {
+            std::string errmsg(e.what());
+
+            _outermost_context.my_scheduler().queue_event(
+                _outermost_context.my_handle(),
+                boost::intrusive_ptr<EvtDisconnected>(
+                    new EvtDisconnected(
+                        std::wstring(errmsg.begin(),errmsg.end())
+                    )
+                )
+            );
+        }
+        catch(...)
+        {
+            _outermost_context.my_scheduler().queue_event(
+                _outermost_context.my_handle(),
+                boost::intrusive_ptr<EvtDisconnected>(
+                    new EvtDisconnected(L"Unknown Error")
+                )
+            );
+        }
     }
 
     delete[] rcvbuf;

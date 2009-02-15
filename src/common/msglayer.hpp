@@ -31,7 +31,44 @@
 #include <boost/shared_ptr.hpp>
 
 #include "bytes.hpp"
-#include "protocol/errors.hpp"
+
+
+/** Class for errors with the message layers
+* @ingroup proto
+*/
+class MsgLayerError : public std::runtime_error
+{
+    /** The error message */
+    const char* msg;
+public:
+    /** Default Constructor */
+    MsgLayerError() throw()
+        : std::runtime_error("Unknown message layer error")
+    { }
+
+    /** Constructor.
+    * @param str The error message
+    */
+    MsgLayerError(const char* str) throw()
+        : std::runtime_error(str)
+    {}
+
+    /** Return error message as char array.
+    * @return A null- terminated character array containg the error message
+    */
+    virtual const char* what() const throw()
+    { return std::runtime_error::what(); }
+
+    virtual ~MsgLayerError() throw()
+    { }
+};
+
+struct InvalidHeaderError : public MsgLayerError
+{
+    InvalidHeaderError() throw()
+        : MsgLayerError("Invalid packet header")
+    {}
+};
 
 
 namespace nms
@@ -86,6 +123,10 @@ class SegmentationLayer : public BasicMessageLayer
     byte_traits::byte_sequence payload;
 
 public:
+    struct HeaderType {
+        byte_traits::uint2b_t packetsize;
+    };
+
     typedef boost::shared_ptr<SegmentationLayer> ptr_type;
 
     enum { LAYER_ID = 0x80 };
@@ -93,11 +134,11 @@ public:
 
     /** Construct from a message coming from the application. */
     SegmentationLayer(const BasicMessageLayer& upper_layer)
-        throw (ProtocolError)
+        throw (MsgLayerError)
     {
         // throw an error on oversized packets
         if (upper_layer.getSerializedSize() > getMaxDataLength())
-            throw ProtocolError("Oversized Packet");
+            throw MsgLayerError("Oversized Packet");
 
         // serialize upper layer and store it in the payload
         payload = *upper_layer.serialize();
@@ -105,16 +146,19 @@ public:
 
     /** Construct from a message coming from the network. */
     SegmentationLayer(const byte_traits::byte_sequence& _payload)
-        throw (ProtocolError)
+        throw (MsgLayerError)
     {
         // throw an error on oversized packets
         if (_payload.size() > getMaxDataLength())
-            throw ProtocolError("Oversized Packet");
+            throw MsgLayerError("Oversized Packet");
 
         // copy byte sequence into the local buffer
         payload = _payload;
     }
 
+    template <typename InputIterator>
+    static HeaderType decodeHeader(InputIterator headerbuf)
+        throw(InvalidHeaderError);
 
     static std::size_t getMaxDataLength()
     {
@@ -129,6 +173,32 @@ public:
     virtual dataptr_type getPayload() const  throw();
 
 };
+
+
+
+template <typename InputIterator>
+SegmentationLayer::HeaderType
+SegmentationLayer::decodeHeader(InputIterator headerbuf)
+    throw(InvalidHeaderError)
+{
+    HeaderType headerdata;
+
+    // check first byte to be the correct layer identifier
+    if ( headerbuf[0] != SegmentationLayer::LAYER_ID )
+        throw InvalidHeaderError();
+
+    // get the size of the packet
+
+    *reinterpret_cast<byte_traits::byte_t*>(&headerdata.packetsize)
+        = headerbuf[1];
+    *(reinterpret_cast<byte_traits::byte_t*>(&headerdata.packetsize)+1)
+        = headerbuf[2];
+
+    headerdata.packetsize = ntohx(headerdata.packetsize);
+
+    if (headerbuf[3] != 0)
+        throw InvalidHeaderError();
+}
 
 
 /** Class that is used to wrap Strings into a Message Layer.

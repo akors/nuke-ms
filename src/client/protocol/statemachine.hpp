@@ -30,7 +30,7 @@
 #include <boost/mpl/list.hpp>
 #include <boost/ref.hpp>
 
-#include "protocol/msglayer.hpp"
+#include "msglayer.hpp"
 #include "control/notifications.hpp"
 
 
