@@ -5,26 +5,20 @@ PROJECT_ROOT := ../..
 include $(PROJECT_ROOT)/build/global.mak
 
 
-# the list of the components of the application
-COMPONENTS := gui protocol controls
-
 # create a variable that contains all source files
 # first expand the wildcard in the working directory
 SOURCES := $(wildcard *.cpp)
-# then expand the wildcards in the components directories
-SOURCES += $(foreach comp,$(COMPONENTS),$(wildcard $(comp)/*.cpp))
 # finally create the names for the object file
 OBJECTS := $(patsubst %.cpp,%.o,$(SOURCES))
 
-LDFLAGS += -l$(B_LIB_THREAD) -l$(B_LIB_SYSTEM) $(WX_LIBS)
 
-# add the current directory to the Include flags
-CXXFLAGS += -I.
+LDFLAGS += -l$(B_LIB_SYSTEM) $(WX_LIBS)
 
-all: nms-client
+all: nms-serv
 
-nms-client: $(OBJECTS)
+nms-serv: $(OBJECTS)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS) -lnmscommon
 
 clean:
-	-$(RMF) $(OBJECTS) nms-client
+	-$(RMF) $(OBJECTS) nms-serv
+

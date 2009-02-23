@@ -51,9 +51,6 @@ NMSProtocol::NMSProtocol(const control::notif_callback_t _notification_callback)
     : machine_scheduler(true), notification_callback(_notification_callback)
 {
 
-    std::cout<<"Protocol constructed.\n";
-
-
     // create an event processor for our state machine
 
     // Passing _io_service by pointer, because passing references to

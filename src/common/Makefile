@@ -17,5 +17,5 @@ libnmscommon.a: $(OBJECTS)
 	$(AR) rcs $@ $^
 
 clean:
-	-rm -f $(OBJECTS) libnmscommon.a
+	-$(RMF) $(OBJECTS) libnmscommon.a
 

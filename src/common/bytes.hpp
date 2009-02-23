@@ -42,7 +42,7 @@ struct byte_traits
     /** The type of a signed integer with the width of two bytes*/
     typedef boost::int16_t int2b_t;
 
-    /** The type for a sequence of bye*/
+    /** The type for a sequence of bytes */
     typedef std::vector<byte_t> byte_sequence;
 
 };

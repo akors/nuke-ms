@@ -23,7 +23,6 @@
 #include "msglayer.hpp"
 
 using namespace nms;
-using namespace protocol;
 
 std::size_t SegmentationLayer::getSerializedSize() const throw()
 {

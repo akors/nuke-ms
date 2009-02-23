@@ -33,6 +33,12 @@
 #include "bytes.hpp"
 
 
+
+
+namespace nms
+{
+
+
 /** Class for errors with the message layers
 * @ingroup proto
 */
@@ -69,12 +75,6 @@ struct InvalidHeaderError : public MsgLayerError
         : MsgLayerError("Invalid packet header")
     {}
 };
-
-
-namespace nms
-{
-namespace protocol
-{
 
 
 class BasicMessageLayer
@@ -239,8 +239,6 @@ public:
 };
 
 
-
-} // namespace protocol
 } // namespace nms
 
 #endif // ifndef MSGLAYERS_HPP_INCLUDED
