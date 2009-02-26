@@ -12,7 +12,7 @@ SOURCES := $(wildcard *.cpp)
 OBJECTS := $(patsubst %.cpp,%.o,$(SOURCES))
 
 
-LDFLAGS += -l$(B_LIB_SYSTEM) $(WX_LIBS)
+LDFLAGS += -l$(B_LIB_SYSTEM)
 
 all: nms-serv
 

@@ -17,9 +17,7 @@ SERVDIR := $(SRCDIR)/server
 
 # Compiler and Liner Flag definitions
 CXXFLAGS += $(WX_FLAGS) $(WARNFLAGS) $(INCLUDEDIRS) -I$(COMMONDIR)
-LDFLAGS += $(LIBDIRS) -L$(COMMONDIR) \
-		-l$(B_LIB_THREAD) -l$(B_LIB_SYSTEM) $(WX_LIBS)
-
+LDFLAGS += $(LIBDIRS) -L$(COMMONDIR)
 
 # compose all boost libraries used
 B_LIB_SYSTEM := $(BOOST_PREFIX)boost_system$(BOOST_SUFFIX)

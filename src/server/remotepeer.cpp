@@ -23,6 +23,18 @@
 using namespace nms;
 
 
+RemotePeer::RemotePeer(
+    socket_ptr _socket,
+    connection_id_t _connection_id,
+    event_callback_t _event_callback
+) throw()
+    : socket(_socket), connection_id(_connection_id),
+    event_callback(_event_callback)
+{
+
+}
+
+
 void RemotePeer::sendHandler(
     const boost::system::error_code& e,
     std::size_t bytes_transferred,
