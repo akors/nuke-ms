@@ -22,7 +22,7 @@
 #ifndef DISPATCHER_HPP
 #define DISPATCHER_HPP
 
-
+#include <map>
 #include <boost/asio.hpp>
 #include <boost/shared_ptr.hpp>
 
@@ -56,6 +56,9 @@ private:
 
     boost::asio::io_service io_service;
     boost::asio::ip::tcp::acceptor acceptor;
+
+    /** A list with connected peers. */
+    std::map<RemotePeer::connection_id_t, RemotePeer::ptr_type> peers_list;
 
     static const unsigned short listening_port = 34443;
 

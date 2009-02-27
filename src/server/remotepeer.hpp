@@ -24,19 +24,52 @@
 #include <boost/asio.hpp>
 
 #include "msglayer.hpp"
+#include "refcounter.hpp"
 #include "servevent.hpp"
 
 namespace nms {
 
-class RemotePeer {
-
+class RemotePeer : protected ReferenceCounter<RemotePeer>
+{
     /** Typedef for pointer to a socket */
     typedef boost::shared_ptr<boost::asio::ip::tcp::socket> socket_ptr;
+
+public:
 
     /** Type that identifies the connection to which this event happened. */
     typedef BasicServerEvent::connection_id_t connection_id_t;
 
-    socket_ptr socket; /**< The socket this Peer is associated with */
+    typedef boost::shared_ptr<RemotePeer> ptr_type;
+
+
+    RemotePeer(
+        socket_ptr _peer_socket,
+        connection_id_t _connection_id,
+        event_callback_t _event_callback
+    ) throw();
+
+
+    static void _sendHandler(
+        const boost::system::error_code& e,
+        std::size_t bytes_transferred,
+        SegmentationLayer::dataptr_type sendbuf
+    ) throw();
+
+    void sendMessage(const SegmentationLayer& msg) throw();
+
+
+    /** Shutdown the connection to the remote peer.
+    * This function closes the connected socket.
+    * However, deletion of this object is invalid until all handlers have
+    * returned.
+    * When this has happened, an event with eventtype ID_CAN_DELETE
+    * will be sent to the callback specified in the constructor.
+    */
+    void shutdownConnection() throw();
+
+private:
+
+    socket_ptr peer_socket; /**< The socket this Peer is associated with */
 
     /**< An ID to identify the Peer at the server */
     connection_id_t connection_id;
@@ -44,27 +77,49 @@ class RemotePeer {
     /** Callback where events will be reported.*/
     event_callback_t event_callback;
 
+    /** The message that will be passed to the callback when ready to be
+    * deleted. */
+    std::wstring disconnection_reason;
 
-public:
-    RemotePeer(
-        socket_ptr _socket,
-        connection_id_t _connection_id,
-        event_callback_t _event_callback
-    ) throw();
+    /** A static buffer for the header */
+    byte_traits::byte_t header_buffer[SegmentationLayer::header_length];
 
-    void sendHandler(
+    /**
+    */
+    void startReceive();
+
+    /** Called when all handlers with a this pointer returned.
+    * This function should only be called when all handlers that contain a
+    * this pointer (also called "member functions") have returned.
+    * In this case, the function signals the enclosing entity via the
+    * callback that this object can go out of scope.
+    */
+    void canDelete();
+
+    static void sendHandler(
         const boost::system::error_code& e,
         std::size_t bytes_transferred,
+        ReferenceCounter<RemotePeer>::CountedReference peer_reference,
         SegmentationLayer::dataptr_type sendbuf
     ) throw();
 
-    void rcvHeaderHandler(
+    static void rcvHeaderHandler(
+        const boost::system::error_code& error,
+        std::size_t bytes_transferred,
+        ReferenceCounter<RemotePeer>::CountedReference peer_reference
+    ) throw();
 
-    );
+    static void rcvBodyHandler(
+        const boost::system::error_code& error,
+        std::size_t bytes_transferred,
+        ReferenceCounter<RemotePeer>::CountedReference peer_reference,
+        SegmentationLayer::dataptr_type body_data
+    ) throw();
 
-    void rcvBodyHandler(
+    // no copy construction allowed.
+    RemotePeer(const RemotePeer&);
 
-    );
+
 };
 
 

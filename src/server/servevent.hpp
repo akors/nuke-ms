@@ -22,6 +22,7 @@
 #define SERVEVENT_HPP
 
 #include <boost/function.hpp>
+#include "msglayer.hpp"
 
 namespace nms
 {
@@ -62,36 +63,38 @@ struct BasicServerEvent
     virtual ~BasicServerEvent() {}
 };
 
-/**  Server Event with a message.
+/**  Server Event with one parameter.
 * This class template is to be used for Server events, which contain a single
-* message string.
+* parameter.
 */
-template <BasicServerEvent::event_kind_t EventKind>
-struct ServerEventMessage : public BasicServerEvent
+template <BasicServerEvent::event_kind_t EventKind, typename ParmType>
+struct ServerEvent1Parm : public BasicServerEvent
 {
-    /** The message that was received */
-    const std::wstring msg;
+    /** The parameter that is passed with the event */
+    ParmType parm;
 
     /** Constructor.
-    * @param _msg The message that was received
+    * @param _parm The parameter that is passed with the event
     */
-    ServerEventMessage(
+    ServerEvent1Parm(
         BasicServerEvent::connection_id_t _connection_id,
-        const std::wstring& _msg
+        const ParmType& _parm
     )  throw()
-        :  BasicServerEvent(EventKind, _connection_id), msg(_msg)
+        :  BasicServerEvent(EventKind, _connection_id), parm(_parm)
     {}
 
-    virtual ~ServerEventMessage() {}
+    virtual ~ServerEvent1Parm() {}
 };
 
 /** Typedef for received message. */
-typedef ServerEventMessage<BasicServerEvent::ID_MSG_RECEIVED>
+typedef ServerEvent1Parm<
+    BasicServerEvent::ID_MSG_RECEIVED, SegmentationLayer::dataptr_type>
     ReceivedMessageEvent;
 
 /** Typedef for Disconnection events. */
-typedef ServerEventMessage<BasicServerEvent::ID_CAN_DELETE>
-    DisconnectedEvent;
+typedef ServerEvent1Parm<
+    BasicServerEvent::ID_CAN_DELETE, std::wstring>
+    CanDeleteEvent;
 
 
 

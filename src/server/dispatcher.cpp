@@ -82,7 +82,7 @@ void DispatchingServer::acceptHandler(
             *socket,
             boost::asio::buffer(*sendbuf),
             boost::bind(
-                &RemotePeer::sendHandler,
+                &RemotePeer::_sendHandler,
                 boost::asio::placeholders::error,
                 boost::asio::placeholders::bytes_transferred,
                 sendbuf
