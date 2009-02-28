@@ -117,6 +117,20 @@ struct EvtSendMsg : public boost::statechart::event<EvtSendMsg>
     {}
 };
 
+/** Event representing a received message */
+struct EvtRcvdMessage :
+    public boost::statechart::event<EvtRcvdMessage>
+{
+    /** The text of the message. */
+    std::wstring msg;
+
+    /** Constructor.
+    * @param _msg The text of the message.
+    */
+    EvtRcvdMessage(const std::wstring& _msg)
+        : msg (_msg)
+    {}
+};
 
 // Forward declaration of the Initial State
 struct StateWaiting;
@@ -264,7 +278,8 @@ struct StateConnected :
     typedef boost::mpl::list<
         boost::statechart::custom_reaction<EvtDisconnectRequest>,
         boost::statechart::custom_reaction<EvtSendMsg>,
-        boost::statechart::custom_reaction<EvtDisconnected>
+        boost::statechart::custom_reaction<EvtDisconnected>,
+        boost::statechart::custom_reaction<EvtRcvdMessage>
     > reactions;
 
     /** Constructor. To be used only by Boost.Statechart classes. */
@@ -273,6 +288,7 @@ struct StateConnected :
     boost::statechart::result react(const EvtDisconnectRequest&);
     boost::statechart::result react(const EvtSendMsg& evt);
     boost::statechart::result react(const EvtDisconnected& evt);
+    boost::statechart::result react(const EvtRcvdMessage& evt);
 
     static void writeHandler(
         const boost::system::error_code& error,
@@ -286,6 +302,13 @@ struct StateConnected :
         std::size_t bytes_transferred,
         outermost_context_type& _outermost_context,
         byte_traits::byte_t rcvbuf[SegmentationLayer::header_length]
+    );
+
+    static void receiveSegmentationBodyHandler(
+        const boost::system::error_code& error,
+        std::size_t bytes_transferred,
+        outermost_context_type& _outermost_context,
+        SegmentationLayer::dataptr_type rcvbuf
     );
 
 };

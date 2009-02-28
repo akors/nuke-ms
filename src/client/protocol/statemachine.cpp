@@ -366,6 +366,15 @@ boost::statechart::result StateConnected::react(const EvtDisconnected& evt)
 }
 
 
+boost::statechart::result StateConnected::react(const EvtRcvdMessage& evt)
+{
+     context<ProtocolMachine>()
+        .notification_callback(control::ReceivedMsgNotification(evt.msg));
+
+    return discard_event();
+}
+
+
 void StateConnected::writeHandler(
     const boost::system::error_code& error,
     std::size_t bytes_transferred,
@@ -440,6 +449,26 @@ const byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
 
             if (header_data.packetsize > MAX_PACKETSIZE)
                 throw MsgLayerError("Oversized packet.");
+
+
+            SegmentationLayer::dataptr_type body_buf(
+                new byte_traits::byte_sequence(
+                    header_data.packetsize-SegmentationLayer::header_length
+                )
+            );
+
+            // start an asynchronous receive for the body
+            async_read(
+                _outermost_context.socket,
+                boost::asio::buffer(*body_buf),
+                boost::bind(
+                    &StateConnected::receiveSegmentationBodyHandler,
+                    boost::asio::placeholders::error,
+                    boost::asio::placeholders::bytes_transferred,
+                    boost::ref(_outermost_context),
+                    body_buf
+                )
+            );
         }
         // on failure, report back to application
         catch (const std::exception& e)
@@ -467,5 +496,57 @@ const byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
     }
 
     delete[] rcvbuf;
+}
+
+void StateConnected::receiveSegmentationBodyHandler(
+    const boost::system::error_code& error,
+    std::size_t bytes_transferred,
+    outermost_context_type& _outermost_context,
+    SegmentationLayer::dataptr_type rcvbuf
+)
+{
+    // if there was an error,
+    // tear down the connection by posting a disconnection event
+    if (error)
+    {
+        std::string errmsg(error.message());
+
+        _outermost_context.my_scheduler().queue_event(
+            _outermost_context.my_handle(),
+            boost::intrusive_ptr<EvtDisconnected>(
+                new EvtDisconnected(std::wstring(errmsg.begin(),errmsg.end()))
+            )
+        );
+    }
+    else // if no error occured, report the received message to the application
+    {
+        StringwrapLayer strlayer(*rcvbuf);
+
+        _outermost_context.my_scheduler().queue_event(
+            _outermost_context.my_handle(),
+            boost::intrusive_ptr<EvtRcvdMessage>(
+                new EvtRcvdMessage(strlayer.getString())
+            )
+        );
+
+        // start a new receive for the next message
+
+        // create a receive buffer
+        byte_traits::byte_t* rcvbuf =
+            new byte_traits::byte_t[SegmentationLayer::header_length];
+
+        // start an asynchronous read to receive the header of the first packet
+        async_read(
+            _outermost_context.socket,
+            boost::asio::buffer(rcvbuf, SegmentationLayer::header_length),
+            boost::bind(
+                &StateConnected::receiveSegmentationHeaderHandler,
+                boost::asio::placeholders::error,
+                boost::asio::placeholders::bytes_transferred,
+                boost::ref(_outermost_context),
+                rcvbuf
+            )
+        );
+    }
 }
 
