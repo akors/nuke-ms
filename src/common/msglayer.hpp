@@ -184,20 +184,19 @@ SegmentationLayer::decodeHeader(InputIterator headerbuf)
     HeaderType headerdata;
 
     // check first byte to be the correct layer identifier
-    if ( headerbuf[0] != SegmentationLayer::LAYER_ID )
+    if ( headerbuf[0] !=
+        static_cast<byte_traits::byte_t>(SegmentationLayer::LAYER_ID) )
         throw InvalidHeaderError();
 
     // get the size of the packet
-
-    *reinterpret_cast<byte_traits::byte_t*>(&headerdata.packetsize)
-        = headerbuf[1];
-    *(reinterpret_cast<byte_traits::byte_t*>(&headerdata.packetsize)+1)
-        = headerbuf[2];
+    headerdata.packetsize = readbytes<byte_traits::uint2b_t>(&headerbuf[1]);
 
     headerdata.packetsize = ntohx(headerdata.packetsize);
 
     if (headerbuf[3] != 0)
         throw InvalidHeaderError();
+
+    return headerdata;
 }
 
 

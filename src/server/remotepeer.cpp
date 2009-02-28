@@ -32,9 +32,9 @@ RemotePeer::RemotePeer(
 ) throw()
     : ReferenceCounter<RemotePeer>(boost::bind(&RemotePeer::canDelete, this)),
     peer_socket(_peer_socket), connection_id(_connection_id),
-    event_callback(_event_callback)
+    event_callback(_event_callback), error_happened(false)
 {
-
+    startReceive();
 }
 
 void RemotePeer::startReceive()
@@ -52,6 +52,28 @@ void RemotePeer::startReceive()
     );
 }
 
+
+void RemotePeer::canDelete()
+{
+    if (this->getRefCount() == 0)
+        event_callback(
+            BasicServerEvent(BasicServerEvent::ID_CAN_DELETE, connection_id)
+        );
+}
+
+void RemotePeer::postError(const std::wstring& errmsg)
+{
+    if (!error_happened)
+    {
+        event_callback(
+            ConnectionErrorEvent(connection_id, errmsg)
+        );
+
+        error_happened = true;
+    }
+}
+
+
 void RemotePeer::sendHandler(
     const boost::system::error_code& error,
     std::size_t bytes_transferred,
@@ -66,11 +88,9 @@ void RemotePeer::sendHandler(
     if (!error)
         return;
 
-    // otherwise report error and shutdown connection
+    // otherwise report error
     std::string errmsg(error.message());
-    remotepeer.disconnection_reason.assign(errmsg.begin(),errmsg.end());
-
-    remotepeer.shutdownConnection();
+    remotepeer.postError(std::wstring(errmsg.begin(), errmsg.end()));
 }
 
 void RemotePeer::rcvHeaderHandler(
@@ -82,12 +102,11 @@ void RemotePeer::rcvHeaderHandler(
     // import reference for convenience
     RemotePeer& remotepeer = peer_reference;
 
-    // on error, set the error string. The rest will be handled by the refernce
-    // counter.
     if (error)
     {
+        // report error
         std::string errmsg(error.message());
-        remotepeer.disconnection_reason.assign(errmsg.begin(), errmsg.end());
+        remotepeer.postError(std::wstring(errmsg.begin(), errmsg.end()));
     }
     else
     {
@@ -97,14 +116,17 @@ void RemotePeer::rcvHeaderHandler(
                 SegmentationLayer::decodeHeader(remotepeer.header_buffer)
             );
 
+
             SegmentationLayer::dataptr_type body_data(
-                new byte_traits::byte_sequence(header.packetsize)
+                new byte_traits::byte_sequence(
+                    header.packetsize-SegmentationLayer::header_length
+                )
             );
 
             // start a receive for the packet body_data
             async_read(
                 *remotepeer.peer_socket,
-                boost::asio::buffer(*body_data, header.packetsize),
+                boost::asio::buffer(*body_data),
                 boost::bind(
                     &RemotePeer::rcvBodyHandler,
                     boost::asio::placeholders::error,
@@ -116,8 +138,8 @@ void RemotePeer::rcvHeaderHandler(
         }
         catch(const InvalidHeaderError& e)
         {
-            std::string errmsg(error.message());
-            remotepeer.disconnection_reason.assign(errmsg.begin(),errmsg.end());
+            std::string errmsg(e.what());
+            remotepeer.postError(std::wstring(errmsg.begin(), errmsg.end()));
         }
 
     }
@@ -137,7 +159,7 @@ void RemotePeer::rcvBodyHandler(
     if (error)
     {
         std::string errmsg(error.message());
-        remotepeer.disconnection_reason.assign(errmsg.begin(), errmsg.end());
+        remotepeer.postError(std::wstring(errmsg.begin(), errmsg.end()));
     }
     else
     {
@@ -151,26 +173,6 @@ void RemotePeer::rcvBodyHandler(
     }
 }
 
-void RemotePeer::canDelete()
-{
-    if (this->getRefCount() == 0)
-        event_callback(
-            CanDeleteEvent(connection_id, disconnection_reason)
-        );
-}
-
-
-
-void RemotePeer::_sendHandler(
-    const boost::system::error_code& e,
-    std::size_t bytes_transferred,
-    SegmentationLayer::dataptr_type sendbuf
-) throw()
-{
-    if (e)
-        std::cout<<"Sending message failed: "<<e.message()<<'\n';
-
-}
 
 void RemotePeer::sendMessage(const SegmentationLayer& msg) throw()
 {
@@ -192,7 +194,9 @@ void RemotePeer::sendMessage(const SegmentationLayer& msg) throw()
 
 void RemotePeer::shutdownConnection() throw()
 {
-    peer_socket->shutdown(boost::asio::ip::tcp::socket::shutdown_both);
-    peer_socket->close();
+    boost::system::error_code dontcare;
+
+    peer_socket->shutdown(boost::asio::ip::tcp::socket::shutdown_both,dontcare);
+    peer_socket->close(dontcare);
 }
 

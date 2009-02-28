@@ -51,6 +51,8 @@ public:
     */
     void run() throw();
 
+    void handleServerEvent(const BasicServerEvent& evt) throw();
+
 private:
     typedef boost::shared_ptr<boost::asio::ip::tcp::socket> socket_ptr;
 
@@ -62,6 +64,8 @@ private:
 
     static const unsigned short listening_port = 34443;
 
+    RemotePeer::connection_id_t current_conn_id;
+
     /** Dispatch an asynchronous accept request.
     * The request will be processed when the run() member function is run.
     */
@@ -72,8 +76,15 @@ private:
     */
     void acceptHandler(
         const boost::system::error_code& e,
-        socket_ptr socket
+        socket_ptr peer_socket
     ) throw();
+
+    void distributeMessage(
+        RemotePeer::connection_id_t originating_id,
+        SegmentationLayer::dataptr_type data
+    );
+
+    RemotePeer::connection_id_t getNextConnectionId();
 
 };
 

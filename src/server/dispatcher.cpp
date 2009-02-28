@@ -18,6 +18,8 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <algorithm>
+#include <functional>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 
@@ -28,7 +30,8 @@ using boost::asio::ip::tcp;
 
 
 DispatchingServer::DispatchingServer()
-    : acceptor(io_service, tcp::endpoint(tcp::v4(), listening_port))
+    : acceptor(io_service, tcp::endpoint(tcp::v4(), listening_port)),
+    current_conn_id(0)
 {
     startAccept();
 }
@@ -36,6 +39,60 @@ DispatchingServer::DispatchingServer()
 void DispatchingServer::run() throw()
 {
     io_service.run();
+}
+
+void DispatchingServer::handleServerEvent(const BasicServerEvent& evt) throw()
+{
+    // ignore everything that is not in the list
+    if (! peers_list.count(evt.connection_id) )
+        return;
+
+    switch (evt.event_kind)
+    {
+        case BasicServerEvent::ID_MSG_RECEIVED:
+        {
+            const ReceivedMessageEvent& rcvd_msg_evt =
+                static_cast<const ReceivedMessageEvent&>(evt);
+
+            std::cout<<"Received a message from "<<rcvd_msg_evt.connection_id<<
+                std::endl;
+
+            distributeMessage(rcvd_msg_evt.connection_id, rcvd_msg_evt.parm);
+
+            break;
+        }
+
+        case BasicServerEvent::ID_CONNECTION_ERROR:
+        {
+
+            const ConnectionErrorEvent& error_evt =
+                static_cast<const ConnectionErrorEvent&>(evt);
+
+            std::cout<<"An error with the connection("<<
+                error_evt.connection_id<<") occured: "<<
+                std::string(error_evt.parm.begin(), error_evt.parm.end())<<
+                ". Closing this connection."<<std::endl;
+
+            peers_list[error_evt.connection_id]->shutdownConnection();
+
+            break;
+        }
+
+        case BasicServerEvent::ID_CAN_DELETE:
+        {
+            // delete the peer object if it existed
+            peers_list.erase(evt.connection_id);
+            break;
+        }
+
+        default:
+        {
+//             bool unknown_server_event = false;
+//             assert(unknown_server_event);
+            std::cout<<"Unknown server event\n";
+            break;
+        }
+    }
 }
 
 void DispatchingServer::startAccept() throw()
@@ -58,7 +115,7 @@ void DispatchingServer::startAccept() throw()
 
 void DispatchingServer::acceptHandler(
     const boost::system::error_code& e,
-    socket_ptr socket
+    socket_ptr peer_socket
 ) throw()
 {
     if (e)
@@ -72,24 +129,50 @@ void DispatchingServer::acceptHandler(
     {
         std::cout<<"New client connected!\n";
 
-        const char* msg = "Hello Goodbye!";
+        RemotePeer::connection_id_t connection_id = getNextConnectionId();
 
-        SegmentationLayer::dataptr_type sendbuf(
-            new byte_traits::byte_sequence(msg, msg+strlen(msg))
-        );
-
-        boost::asio::async_write(
-            *socket,
-            boost::asio::buffer(*sendbuf),
-            boost::bind(
-                &RemotePeer::_sendHandler,
-                boost::asio::placeholders::error,
-                boost::asio::placeholders::bytes_transferred,
-                sendbuf
+        // create new peer object
+        RemotePeer::ptr_type remote_peer(
+            new RemotePeer(
+                peer_socket,
+                connection_id,
+                boost::bind(
+                    &DispatchingServer::handleServerEvent,
+                    this,
+                    _1
+                )
             )
         );
+
+        // put peer object into the map
+        peers_list[connection_id] = remote_peer;
 
         startAccept();
     }
 
 }
+
+
+void DispatchingServer::distributeMessage(
+    RemotePeer::connection_id_t originating_id,
+    SegmentationLayer::dataptr_type data
+)
+{
+    SegmentationLayer segmlayer_data(*data);
+
+    std::map<RemotePeer::connection_id_t, RemotePeer::ptr_type>::iterator it =
+        peers_list.begin();
+
+    for(; it != peers_list.end(); ++it )
+    {
+        it->second->sendMessage(segmlayer_data);
+    }
+}
+
+RemotePeer::connection_id_t DispatchingServer::getNextConnectionId()
+{
+    return ++current_conn_id;
+}
+
+
+

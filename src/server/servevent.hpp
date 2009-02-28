@@ -44,6 +44,7 @@ struct BasicServerEvent
     /** Enum for the kind of the Event that happened. */
     enum event_kind_t {
         ID_MSG_RECEIVED,
+        ID_CONNECTION_ERROR,
         ID_CAN_DELETE
     };
 
@@ -93,8 +94,8 @@ typedef ServerEvent1Parm<
 
 /** Typedef for Disconnection events. */
 typedef ServerEvent1Parm<
-    BasicServerEvent::ID_CAN_DELETE, std::wstring>
-    CanDeleteEvent;
+    BasicServerEvent::ID_CONNECTION_ERROR, std::wstring>
+    ConnectionErrorEvent;
 
 
 

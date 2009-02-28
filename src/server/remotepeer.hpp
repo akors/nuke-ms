@@ -39,6 +39,7 @@ public:
     /** Type that identifies the connection to which this event happened. */
     typedef BasicServerEvent::connection_id_t connection_id_t;
 
+
     typedef boost::shared_ptr<RemotePeer> ptr_type;
 
 
@@ -48,12 +49,6 @@ public:
         event_callback_t _event_callback
     ) throw();
 
-
-    static void _sendHandler(
-        const boost::system::error_code& e,
-        std::size_t bytes_transferred,
-        SegmentationLayer::dataptr_type sendbuf
-    ) throw();
 
     void sendMessage(const SegmentationLayer& msg) throw();
 
@@ -72,17 +67,17 @@ private:
     socket_ptr peer_socket; /**< The socket this Peer is associated with */
 
     /**< An ID to identify the Peer at the server */
-    connection_id_t connection_id;
+    const connection_id_t connection_id;
 
     /** Callback where events will be reported.*/
     event_callback_t event_callback;
 
-    /** The message that will be passed to the callback when ready to be
-    * deleted. */
-    std::wstring disconnection_reason;
-
     /** A static buffer for the header */
     byte_traits::byte_t header_buffer[SegmentationLayer::header_length];
+
+    /** A variable that will prevent duplicate error messages.
+    * Only the first error will be reported. */
+    bool error_happened;
 
     /**
     */
@@ -95,6 +90,8 @@ private:
     * callback that this object can go out of scope.
     */
     void canDelete();
+
+    void postError(const std::wstring& errmsg);
 
     static void sendHandler(
         const boost::system::error_code& e,
