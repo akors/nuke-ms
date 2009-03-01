@@ -1,7 +1,7 @@
 // servevent.hpp
 
 /*
- *   NMS - Nuclear Messaging System
+ *   nuke-ms - Nuclear Messaging System
  *   Copyright (C) 2009  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -24,7 +24,7 @@
 #include <boost/function.hpp>
 #include "msglayer.hpp"
 
-namespace nms
+namespace nuke_ms
 {
 
 /** Basic event sent to the server.
@@ -103,6 +103,6 @@ typedef ServerEvent1Parm<
 typedef boost::function1 <void, const BasicServerEvent&>
     event_callback_t;
 
-} // nms
+} // nuke_ms
 
 #endif // ifndef SERVEVENT_HPP

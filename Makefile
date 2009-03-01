@@ -5,17 +5,17 @@ PROJECT_ROOT := .
 include $(PROJECT_ROOT)/build/global.mak
 
 
-all: nms-client nms-serv
+all: nuke-ms-client nuke-ms-serv
 
-nms-client: nms-common
+nuke-ms-client: nuke-ms-common
 	$(MAKE) -C $(CLIENTDIR)
 	$(CP) $(CLIENTDIR)/$@ $(BINDIR)/
 
-nms-serv: nms-common
+nuke-ms-serv: nuke-ms-common
 	$(MAKE) -C $(SERVDIR)
 	$(CP) $(SERVDIR)/$@ $(BINDIR)/
 
-nms-common:
+nuke-ms-common:
 	$(MAKE) -C $(COMMONDIR)
 
 

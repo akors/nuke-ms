@@ -1,7 +1,7 @@
 // refcounter.hpp
 
 /*
- *   NMS - Nuclear Messaging System
+ *   nuke-ms - Nuclear Messaging System
  *   Copyright (C) 2009  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify

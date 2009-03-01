@@ -1,7 +1,7 @@
 // errors.hpp
 
 /*
- *   NMS - Nuclear Messaging System
+ *   nuke-ms - Nuclear Messaging System
  *   Copyright (C) 2008  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -23,7 +23,7 @@
 
 #include <stdexcept>
 
-namespace nms
+namespace nuke_ms
 {
 namespace protocol
 {
@@ -61,6 +61,6 @@ public:
 
 
 } // namespace protocol
-} // namespace nms
+} // namespace nuke_ms
 
 #endif // ifndef ERRORS_HPP

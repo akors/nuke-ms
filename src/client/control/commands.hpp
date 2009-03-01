@@ -1,7 +1,7 @@
 // commands.hpp
 
 /*
- *   NMS - Nuclear Messaging System
+ *   nuke-ms - Nuclear Messaging System
  *   Copyright (C) 2008  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -36,7 +36,7 @@
 
 #include <string>
 
-namespace nms
+namespace nuke_ms
 {
 namespace control
 {
@@ -101,7 +101,7 @@ struct MessageCommand : public ControlCommand
 
 } // namespace control
 
-} // namespace nms
+} // namespace nuke_ms
 
 
 #endif // ifndef COMMANDS_HPP

@@ -11,11 +11,11 @@ SOURCES := $(wildcard *.cpp)
 # finally create the names for the object file
 OBJECTS := $(patsubst %.cpp,%.o,$(SOURCES))
 
-all: libnmscommon.a
+all: libnukems.a
 
-libnmscommon.a: $(OBJECTS)
+libnukems.a: $(OBJECTS)
 	$(AR) rcs $@ $^
 
 clean:
-	-$(RMF) $(OBJECTS) libnmscommon.a
+	-$(RMF) $(OBJECTS) libnukems.a
 

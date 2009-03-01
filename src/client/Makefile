@@ -21,10 +21,10 @@ LDFLAGS += -l$(B_LIB_THREAD) -l$(B_LIB_SYSTEM) $(WX_LIBS)
 # add the current directory to the Include flags
 CXXFLAGS += -I.
 
-all: nms-client
+all: nuke-ms-client
 
-nms-client: $(OBJECTS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS) -lnmscommon
+nuke-ms-client: $(OBJECTS)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS) -lnuke-mscommon
 
 clean:
-	-$(RMF) $(OBJECTS) nms-client
+	-$(RMF) $(OBJECTS) nuke-ms-client

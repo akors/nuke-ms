@@ -14,11 +14,11 @@ OBJECTS := $(patsubst %.cpp,%.o,$(SOURCES))
 
 LDFLAGS += -l$(B_LIB_SYSTEM)
 
-all: nms-serv
+all: nuke-ms-serv
 
-nms-serv: $(OBJECTS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS) -lnmscommon
+nuke-ms-serv: $(OBJECTS)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS) -lnuke-mscommon
 
 clean:
-	-$(RMF) $(OBJECTS) nms-serv
+	-$(RMF) $(OBJECTS) nuke-ms-serv
 

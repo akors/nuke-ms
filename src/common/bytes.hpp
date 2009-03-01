@@ -1,7 +1,7 @@
 // bytes.hpp
 
 /*
- *   NMS - Nuclear Messaging System
+ *   nuke-ms - Nuclear Messaging System
  *   Copyright (C) 2008  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -27,7 +27,7 @@
 #include <vector>
 #include <boost/cstdint.hpp>
 
-namespace nms
+namespace nuke_ms
 {
 
 
@@ -84,7 +84,7 @@ T readbytes(ByteSequenceIterator it)
     return tmpval;
 }
 
-#ifndef NMS_BIG_ENDIAN
+#ifndef NUKE_MS_BIG_ENDIAN
 
 template <typename T>
 inline T htonx(T x) { return reversebytes(x); }
@@ -103,7 +103,7 @@ inline T ntohx(T x) { return x; }
 
 #endif
 
-} // nms
+} // nuke_ms
 
 
 

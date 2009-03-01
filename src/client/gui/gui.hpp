@@ -1,7 +1,7 @@
 // gui.hpp
 
 /*
- *   NMS - Nuclear Messaging System
+ *   nuke-ms - Nuclear Messaging System
  *   Copyright (C) 2008  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -42,7 +42,7 @@
 
 #include "control/commands.hpp"
 
-namespace nms
+namespace nuke_ms
 {
 namespace gui
 {
@@ -238,7 +238,7 @@ public:
 
 
 // declare the new event type for printing messages
-DECLARE_EVENT_TYPE( nmsEVT_PRINT_MESSAGE, -1 )
+DECLARE_EVENT_TYPE( nuke_msEVT_PRINT_MESSAGE, -1 )
 
 
 
@@ -270,7 +270,7 @@ inline wxString wstring2wxString(const std::wstring& str)
 
 
 } // namespace gui
-} // namespace nms
+} // namespace nuke_ms
 
 #endif // ifndef MAIN_HPP_INCLUDED
 

@@ -1,7 +1,7 @@
 // protocol.hpp
 
 /*
- *   NMS - Nuclear Messaging System
+ *   nuke-ms - Nuclear Messaging System
  *   Copyright (C) 2008, 2009  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -22,7 +22,7 @@
 * @brief Network communication protocol.
 *
 * This file contains all of the networking logic.
-* The main class is nms::protocol::NMSProtocol. Use this file within an
+* The main class is nuke_ms::protocol::NukeMSProtocol. Use this file within an
 * Application Control entitiy.
 * This file depends only on the file "notifications.hpp" that contains the
 * types for the interface to the Application Control entitiy.
@@ -50,7 +50,7 @@
 
 
 
-namespace nms
+namespace nuke_ms
 {
 namespace protocol
 {
@@ -65,7 +65,7 @@ namespace protocol
 * Request are handled by the public functions connect_to, send and disconnect.
 * Replies will be dispatched to the callback function you supply in the constructor.
 */
-class NMSProtocol
+class NukeMSProtocol
 {
     /** An own thread for the State Machine*/
     boost::thread machine_thread;
@@ -91,12 +91,12 @@ public:
     * @param _notification_callback The callback function where the events will
     * be dispatched
     */
-    NMSProtocol(const control::notif_callback_t _notification_callback) throw();
+    NukeMSProtocol(const control::notif_callback_t _notification_callback) throw();
 
     /** Destructor.
     * Stops the Network machine and destroys the thread.
     */
-    ~NMSProtocol();
+    ~NukeMSProtocol();
 
     /** Connect to a remote site.
      * @param id The string representation of the address of the remote site
@@ -148,6 +148,6 @@ void catchThread(boost::thread& thread, unsigned threadwait_ms) throw();
 
 
 } // namespace protocol
-} // namespace nms
+} // namespace nuke_ms
 
 #endif /*PROTOCOL_HPP_*/

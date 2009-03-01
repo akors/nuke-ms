@@ -22,12 +22,12 @@ include wxwin_cxxflags.txt
 
 CXXFLAGS=-g -mthreads $(INCLUDEDIRS) $(WX_CXXFLAGS) -D_WIN32_WINNT=0x0501
 
-all: nms
+all: nuke-ms
 
-doc: 
-	doxygen $(DOXYFILE)	
+doc:
+	doxygen $(DOXYFILE)
 
-nms: main.o protocol.o
+nuke-ms: main.o protocol.o
 	$(CXX) $(CXXFLAGS) $(LIBDIRS) -o $@ $^ $(B_LIBS) $(WX_LIBS) -lws2_32
 
 

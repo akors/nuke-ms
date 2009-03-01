@@ -1,7 +1,7 @@
 // protocol.cpp
 
 /*
- *   NMS - Nuclear Messaging System
+ *   nuke-ms - Nuclear Messaging System
  *   Copyright (C) 2008, 2009  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -34,7 +34,7 @@
 * @ingroup proto */
 
 
-using namespace nms;
+using namespace nuke_ms;
 using namespace protocol;
 
 
@@ -45,7 +45,7 @@ static bool parseDestinationString(
 );
 
 
-NMSProtocol::NMSProtocol(const control::notif_callback_t _notification_callback)
+NukeMSProtocol::NukeMSProtocol(const control::notif_callback_t _notification_callback)
             throw()
 
     : machine_scheduler(true), notification_callback(_notification_callback)
@@ -78,7 +78,7 @@ NMSProtocol::NMSProtocol(const control::notif_callback_t _notification_callback)
 
 }
 
-NMSProtocol::~NMSProtocol()
+NukeMSProtocol::~NukeMSProtocol()
 {
     // stop the network machine
     machine_scheduler.terminate();
@@ -88,7 +88,7 @@ NMSProtocol::~NMSProtocol()
 }
 
 
-void NMSProtocol::connect_to(const std::wstring& id)
+void NukeMSProtocol::connect_to(const std::wstring& id)
     throw(std::runtime_error, ProtocolError)
 {
     // Get Host/Service pair from the destination string
@@ -116,7 +116,7 @@ void NMSProtocol::connect_to(const std::wstring& id)
 
 
 
-void NMSProtocol::send(const std::wstring& msg)
+void NukeMSProtocol::send(const std::wstring& msg)
     throw(std::runtime_error, ProtocolError)
 {
     // create a Stringwrapper for the message
@@ -132,7 +132,7 @@ void NMSProtocol::send(const std::wstring& msg)
 }
 
 
-void NMSProtocol::disconnect()
+void NukeMSProtocol::disconnect()
     throw(std::runtime_error, ProtocolError)
 {
     // Create new Disconnect request event and dispatch it to the statemachine
@@ -197,7 +197,7 @@ static bool parseDestinationString(
 
 
 
-void nms::protocol::catchThread(boost::thread& thread, unsigned threadwait_ms)
+void nuke_ms::protocol::catchThread(boost::thread& thread, unsigned threadwait_ms)
     throw()
 {
     // a thread id that compares equal to "not-a-thread"

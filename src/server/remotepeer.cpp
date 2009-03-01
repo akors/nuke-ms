@@ -1,7 +1,7 @@
 // remotepeer.cpp
 
 /*
- *   NMS - Nuclear Messaging System
+ *   nuke-ms - Nuclear Messaging System
  *   Copyright (C) 2009  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -22,7 +22,7 @@
 
 #include <boost/bind.hpp>
 
-using namespace nms;
+using namespace nuke_ms;
 
 
 RemotePeer::RemotePeer(

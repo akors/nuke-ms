@@ -1,7 +1,7 @@
 // dispatcher.hpp
 
 /*
- *   NMS - Nuclear Messaging System
+ *   nuke-ms - Nuclear Messaging System
  *   Copyright (C) 2009  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -28,7 +28,7 @@
 
 #include "remotepeer.hpp"
 
-namespace nms
+namespace nuke_ms
 {
 
 /** Main server class.
@@ -89,7 +89,7 @@ private:
 };
 
 
-} //namespace nms
+} //namespace nuke_ms
 
 
 

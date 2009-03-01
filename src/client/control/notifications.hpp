@@ -1,7 +1,7 @@
 // notifications.hpp
 
 /*
- *   NMS - Nuclear Messaging System
+ *   nuke-ms - Nuclear Messaging System
  *   Copyright (C) 2008, 2009  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -38,7 +38,7 @@
 
 #include <boost/function.hpp>
 
-namespace nms
+namespace nuke_ms
 {
 namespace control
 {
@@ -170,6 +170,6 @@ typedef boost::function1 <void, const control::ProtocolNotification&>
 
 } // namespace control
 
-} // namespace nms
+} // namespace nuke_ms
 
 #endif // ifndef NOTIFICATIONS_HPP

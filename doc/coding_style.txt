@@ -2,7 +2,7 @@ Naming Scheme:
 
 All characters are allowed in Variable names.
 
-1) Classes, Interfaces, Namespaces and Enums begin with an uppercase Letter or 
+1) Classes, Interfaces, Namespaces and Enums begin with an uppercase Letter or
 an underscore, all other characters are lowercase letters or underscores. If the
 names consist of several words, each word starts with an uppercase Letter, all
 other characters are lowercase letters or underscores.
@@ -12,7 +12,7 @@ other characters are lowercase letters or underscores.
 
 2) Global variables, local variables, member variables, constants end anonymous
 enum members that are used instead of constants consist of lowercase letters.
-If the names consist of several words, the words are separated by an 
+If the names consist of several words, the words are separated by an
 underscore. Uppercase letters are allowed for abbreviations.
 
     Example: app_control
@@ -25,14 +25,14 @@ the only difference that the function name starts with a lowercase letter.
 
 
 5) Preprocessor macros and members of non- anonymous enums are in uppercase
-letters. If the names consist of several words, the words are separated by an 
+letters. If the names consist of several words, the words are separated by an
 underscore.
 
 
 Whitespaces:
-1) Line endings consist of only the line- feed character ('\n'). 
-2) All indentations where a tab character would be used consist of 4 space 
-characters. To avoid confusion, no tab character should be used at all. (An 
+1) Line endings consist of only the line- feed character ('\n').
+2) All indentations where a tab character would be used consist of 4 space
+characters. To avoid confusion, no tab character should be used at all. (An
 exception to this rule are Makefiles)
 
 3) goto labels shall be indented to the indentation level of the current scope.
@@ -40,28 +40,28 @@ exception to this rule are Makefiles)
     int main()
     {
         goto main_sub3;
-    
+
     main_sub3:
     }
-    
+
 4) Access modifiers (public, protected, private) are indented to the indentation
 level of their enclosing class.
-    
+
     example:
-    
+
     class BasicMessageLayer
     {
-    public:		
+    public:
     	bytes_sequence serialize();
     };
-    
+
 5) if, else, else if, for, while, try and catch execution blocks begin on the
-next line after their respective statement. All statements and blocks inside 
+next line after their respective statement. All statements and blocks inside
 are indented one additional level.
-If the execution block is only one statement, the braces can be ommited. 
+If the execution block is only one statement, the braces can be ommited.
 
     Example:
-    
+
     if ( something )
     {
         doSomething();
@@ -69,11 +69,11 @@ If the execution block is only one statement, the braces can be ommited.
     }
     else
         doSomethingElse();
-        
 
 
 
-6) Space characters should be inserted everywhere where they help to group or 
+
+6) Space characters should be inserted everywhere where they help to group or
 separate expressions. They can be omitted however, to squeeze an expression into
 one line.
 
@@ -92,20 +92,20 @@ Every source file begins with a C++ line comment ("//"), a space, the name of
 the source file, a newline, another newline and the license block.
 
     Example:
-    
+
      ----------------------------------------------------------------------------
     // main.hpp
 
     /*
-     *   NMS - Nuclear Messaging System
+     *   nuke-ms - Nuclear Messaging System
      *   Copyright (C) 2008  Alexander Korsunsky
-     * 
+     *
      *   This program is free software: you can redistribute it and/or modify
-     
+
      ...
     ----------------------------------------------------------------------------
-    
-This block should be followed by a Javadoc- like comment intended for 
+
+This block should be followed by a Javadoc- like comment intended for
 documentation of the file by doxygen.
 Then all kinds of doxygen declarations and documentations can follow.
 
@@ -119,14 +119,14 @@ The source code itself contains the following optional items, in this order:
 
     preprocessor macros
     typedefs
-    
+
     type declarations
-    
+
     function declarations
-    
+
     variable declarations
     variable definitions
-    
+
     function definitions
-    
+
 Of course, if required by the source code, this order can be broken.

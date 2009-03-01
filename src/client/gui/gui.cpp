@@ -1,7 +1,7 @@
 // gui.cpp
 
 /*
- *   NMS - Nuclear Messaging System
+ *   nuke-ms - Nuclear Messaging System
  *   Copyright (C) 2008  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -26,7 +26,7 @@
 
 #include "control/control.hpp"
 
-namespace nms
+namespace nuke_ms
 {
 namespace gui
 {
@@ -172,7 +172,7 @@ void MainFrame::printMessage(const std::wstring& str)
     // need any mutexes and locking here.
 
     // create an event to be sent to the event processor
-    wxCommandEvent event( nmsEVT_PRINT_MESSAGE, this->GetId() );
+    wxCommandEvent event( nuke_msEVT_PRINT_MESSAGE, this->GetId() );
 
     // set the event object that shall receive the event
     event.SetEventObject( this );
@@ -268,7 +268,7 @@ void MainFrame::OnPrintMessage(wxCommandEvent& event) throw()
 
 
 // define the new event type for printing messages
-DEFINE_EVENT_TYPE( nmsEVT_PRINT_MESSAGE )
+DEFINE_EVENT_TYPE( nuke_msEVT_PRINT_MESSAGE )
 
 } // namespace gui
-} // namespace nms
+} // namespace nuke_ms

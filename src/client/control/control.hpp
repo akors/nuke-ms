@@ -1,7 +1,7 @@
 // control.hpp
 
 /*
- *   NMS - Nuclear Messaging System
+ *   nuke-ms - Nuclear Messaging System
  *   Copyright (C) 2008  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -48,7 +48,7 @@
 #include "control/notifications.hpp"
 #include "control/commands.hpp"
 
-namespace nms
+namespace nuke_ms
 {
 namespace control
 {
@@ -321,7 +321,7 @@ void AppControl<GuiT, ProtocolT>::handleNotification
 
 } // namespace control
 
-} // namespace nms
+} // namespace nuke_ms
 
 
 

@@ -1,7 +1,7 @@
 // msglayer.cpp
 
 /*
- *   NMS - Nuclear Messaging System
+ *   nuke-ms - Nuclear Messaging System
  *   Copyright (C) 2008  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -22,7 +22,7 @@
 #include "bytes.hpp"
 #include "msglayer.hpp"
 
-using namespace nms;
+using namespace nuke_ms;
 
 std::size_t SegmentationLayer::getSerializedSize() const throw()
 {

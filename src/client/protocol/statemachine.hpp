@@ -1,7 +1,7 @@
 // statemachine.hpp
 
 /*
- *   NMS - Nuclear Messaging System
+ *   nuke-ms - Nuclear Messaging System
  *   Copyright (C) 2008, 2009  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -35,7 +35,7 @@
 
 
 
-namespace nms
+namespace nuke_ms
 {
 namespace protocol
 {
@@ -156,7 +156,7 @@ struct ProtocolMachine :
     enum {thread_timeout = 3000u};
 
     /** Callback that will be used to inform the application */
-    nms::control::notif_callback_t notification_callback;
+    nuke_ms::control::notif_callback_t notification_callback;
 
     /** I/O Service Object */
     boost::asio::io_service io_service;
@@ -175,7 +175,7 @@ struct ProtocolMachine :
     * create_processor does not work.
     */
     ProtocolMachine(my_context ctx,
-                    nms::control::notif_callback_t _notification_callback);
+                    nuke_ms::control::notif_callback_t _notification_callback);
 
 
     /** Destructor. Stops all I/O operations and threads as cleanly as possible.
@@ -318,7 +318,7 @@ extern void catchThread(boost::thread& thread, unsigned threadwait_ms) throw();
 
 
 } // namespace protocol
-} // namespace nms
+} // namespace nuke_ms
 
 
 #endif // ifndef STATEMACHINE_HPP
