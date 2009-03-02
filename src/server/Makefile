@@ -17,7 +17,7 @@ LDFLAGS += -l$(B_LIB_SYSTEM)
 all: nuke-ms-serv
 
 nuke-ms-serv: $(OBJECTS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS) -lnuke-mscommon
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS) -lnukems
 
 clean:
 	-$(RMF) $(OBJECTS) nuke-ms-serv

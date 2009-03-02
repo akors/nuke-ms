@@ -1,0 +1,9 @@
+nuke-ms is a intended as a multi-platform, reliable and secure instant messaging system.
+The goal is to create a two- component messaging system, consisting of a minimal client and a fully featured server.
+The system should be able to be used on a peer to peer basis by incorporating various firewall bypassing techniques, as well as typical server - client application. 
+The servers should be able to connect to each other, and build a web where participants can communicate with each other across the servers.
+The system should be reliable in a sense that each message sent should be acknowledged by the receiver, but also in the sense that communication should be reasonably stable even across a rather unstable network connection.
+Encryption and authentication should be used on a point to point basis. That means that no instance of the system is actually "trusted" blindly, but instead all traffic will be transmitted encrypted until the point of it's destination. This ensures secure data transfer from client to client even if parts of the web are compromised.
+The attempt is to create a secure, modern and maintainable system by using the C++ programming language and modern libraries such as wxWidgets and various Boost libraries. At the same time, the usage of C++ and these libraries should enable the system to compile and work on a variety of platforms.
+
+nuke-ms is free software, distribution and modification are appreciated. The development of this system should be as open as possible and accompanied by well written documentation to detect problems as early as possible and aid the writing of stable and secure software.

@@ -24,7 +24,7 @@ CXXFLAGS += -I.
 all: nuke-ms-client
 
 nuke-ms-client: $(OBJECTS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS) -lnuke-mscommon
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS) -lnukems
 
 clean:
 	-$(RMF) $(OBJECTS) nuke-ms-client
