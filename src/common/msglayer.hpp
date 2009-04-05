@@ -23,8 +23,6 @@
 #ifndef MSGLAYERS_HPP_INCLUDED
 #define MSGLAYERS_HPP_INCLUDED
 
-
-
 #include <stdexcept>
 #include <limits>
 
@@ -37,6 +35,7 @@
 
 namespace nuke_ms
 {
+
 
 
 /** Class for errors with the message layers
@@ -69,6 +68,7 @@ public:
     { }
 };
 
+
 struct InvalidHeaderError : public MsgLayerError
 {
     InvalidHeaderError() throw()
@@ -83,160 +83,73 @@ public:
     typedef boost::shared_ptr<BasicMessageLayer> ptr_type;
     typedef boost::shared_ptr<byte_traits::byte_sequence> dataptr_type;
 
+    typedef byte_traits::byte_sequence::iterator data_iterator;
+    typedef byte_traits::byte_sequence::const_iterator const_data_iterator;
+
     /** Virtual destructor */
     virtual ~BasicMessageLayer()
     {}
 
-    /** Retrieve payload.
-     * Returns a pointer to the byte sequence holding the payload of
-     * the packet.
-     *
-     * @return A pointer to the payload of the packet.
-     */
-    virtual dataptr_type getPayload() const  throw() = 0;
-
-
     /** Retrieve the serialized size.
      * Returns the length of the returned sequence of a successive call to
      * serialize(). <br>
-     * Access shall be performed in ammortized  constant time.
      *
      * @return The number of bytes the serialized byte sequence would have.
     */
     virtual std::size_t getSerializedSize() const throw() = 0;
 
-    /** Retrieve serialized version of this Layer.
-     *
-     * Turns the current object into a series of bytes that can be sent onto
-     * the wire.
-     *
-     * @return A pointer to the serialized data of this object.
-     */
-    virtual dataptr_type serialize() const throw () = 0;
-};
-
-
-
-
-class SegmentationLayer : public BasicMessageLayer
-{
-    byte_traits::byte_sequence payload;
-
-public:
-    struct HeaderType {
-        byte_traits::uint2b_t packetsize;
-    };
-
-    typedef boost::shared_ptr<SegmentationLayer> ptr_type;
-
-    enum { LAYER_ID = 0x80 };
-    enum { header_length = 4 };
-
-    /** Construct from a message coming from the application. */
-    SegmentationLayer(const BasicMessageLayer& upper_layer)
-        throw (MsgLayerError)
-    {
-        // throw an error on oversized packets
-        if (upper_layer.getSerializedSize() > getMaxDataLength())
-            throw MsgLayerError("Oversized Packet");
-
-        // serialize upper layer and store it in the payload
-        payload = *upper_layer.serialize();
-    }
-
-    /** Construct from a message coming from the network. */
-    SegmentationLayer(const byte_traits::byte_sequence& _payload)
-        throw (MsgLayerError)
-    {
-        // throw an error on oversized packets
-        if (_payload.size() > getMaxDataLength())
-            throw MsgLayerError("Oversized Packet");
-
-        // copy byte sequence into the local buffer
-        payload = _payload;
-    }
-
-    template <typename InputIterator>
-    static HeaderType decodeHeader(InputIterator headerbuf)
-        throw(InvalidHeaderError);
-
-    static std::size_t getMaxDataLength()
-    {
-        return std::numeric_limits<byte_traits::uint2b_t>::max() -header_length;
-    }
-
-
-
-    // overriden Methods of Base class
-    virtual std::size_t getSerializedSize() const throw();
-    virtual dataptr_type serialize() const throw ();
-    virtual dataptr_type getPayload() const  throw();
-
-};
-
-
-
-template <typename InputIterator>
-SegmentationLayer::HeaderType
-SegmentationLayer::decodeHeader(InputIterator headerbuf)
-    throw(InvalidHeaderError)
-{
-    HeaderType headerdata;
-
-    // check first byte to be the correct layer identifier
-    if ( headerbuf[0] !=
-        static_cast<byte_traits::byte_t>(SegmentationLayer::LAYER_ID) )
-        throw InvalidHeaderError();
-
-    // get the size of the packet
-    headerdata.packetsize = readbytes<byte_traits::uint2b_t>(&headerbuf[1]);
-
-    headerdata.packetsize = ntohx(headerdata.packetsize);
-
-    if (headerbuf[3] != 0)
-        throw InvalidHeaderError();
-
-    return headerdata;
-}
-
-
-/** Class that is used to wrap Strings into a Message Layer.
-* This Class can be used to translate strings into byte sequences and vice
-* versa.
-*/
-class StringwrapLayer : public BasicMessageLayer
-{
-    byte_traits::byte_sequence payload;
-
-public:
-    typedef boost::shared_ptr<StringwrapLayer> ptr_type;
-
-    /** Construct from a a byte_traits::string.
-    * Of copies each byte of each character into the payload of the layer.
-    * @param msg The msg that you want to wrap
+    /** Fill a buffer with the serialized version of this object.
+    * This function serializes itself (and its upper layers) and writes
+    * the bytes into a buffer that is pointed to by buffer.
+    * The buffer has to have at least the size that is returned by the
+    * getSerializedSize() functions. Beware! No checks will be performed
+    * to assure proper buffer size.
+    *
+    * @param buffer
     */
-    StringwrapLayer(const byte_traits::string& msg) throw ();
-
-    /** Construct from a message coming from the network. */
-    StringwrapLayer(const byte_traits::byte_sequence& _payload)
-        : payload(_payload)
-    { }
-
-
-    byte_traits::string getString() const throw();
-
-
-    virtual std::size_t getSerializedSize() const throw()
-    {
-        return payload.size();
-    }
-
-
-    virtual BasicMessageLayer::dataptr_type serialize() const throw();
-
-    virtual BasicMessageLayer::dataptr_type getPayload() const  throw();
+    virtual void fillSerialized(data_iterator buffer) const throw() = 0;
 };
 
+
+
+/** Object holding an ownership to memory.
+* This class is a capsule around a smart pointer.
+* As long as an object of this class exists, its underlying memory block
+* (specified in the constructor) also exists.
+* Only when all of the objects holding the ownership to one memory block
+* go out of scope, the memory block will be deleted.
+* The reference counting functionality will be provided by the smart pointer
+* type specified as template parameter. Make sure the template parameter is
+* a smart pointer, otherwise this class will not work.
+*
+* Thread safety: equal to the construction and destruction
+* thread safety of the smart pointer type.
+*
+* @tparam PointerType Type of a smart pointer
+*/
+template <typename PointerType>
+class MemoryOwnership
+{
+    PointerType memory_pointer;
+
+public:
+    /** Default constructor.
+    * Construct object with no ownership to any memory block.
+    * The memory pointer will be default constructed.
+    */
+    MemoryOwnership() {}
+
+    /** Constructor.
+    * Construct object with ownership to the memory block pointed to by
+    * _memory_pointer.
+    */
+    MemoryOwnership(const PointerType& _memory_pointer)
+        : memory_pointer(_memory_pointer)
+    {}
+};
+
+
+// typedef MemoryOwnership<BasicMessageLayer::dataptr_type> DataOwnership;
 
 } // namespace nuke_ms
 
