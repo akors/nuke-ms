@@ -23,3 +23,35 @@
 #include "msglayer.hpp"
 
 using namespace nuke_ms;
+
+
+UnknownMessageLayer::UnknownMessageLayer(
+    DataOwnership _memblock,
+    BasicMessageLayer::const_data_iterator _data_it,
+    std::size_t _data_size,
+    bool new_memory_block
+)
+    : memblock(_memblock), data_it(_data_it), data_size(_data_size)
+{
+
+}
+
+
+// overriding base class version
+std::size_t UnknownMessageLayer::getSerializedSize() const throw()
+{
+    // return the size of the memory block
+    return data_size;
+}
+
+// overriding base class version
+void UnknownMessageLayer::fillSerialized(data_iterator buffer) const throw()
+{
+    // copy the maintained data into the specified buffer
+    std::copy(
+        data_it,
+        data_it + data_size,
+        buffer
+    );
+}
+

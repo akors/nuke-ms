@@ -31,8 +31,6 @@
 #include "bytes.hpp"
 
 
-
-
 namespace nuke_ms
 {
 
@@ -77,39 +75,6 @@ struct InvalidHeaderError : public MsgLayerError
 };
 
 
-class BasicMessageLayer
-{
-public:
-    typedef boost::shared_ptr<BasicMessageLayer> ptr_type;
-    typedef boost::shared_ptr<byte_traits::byte_sequence> dataptr_type;
-
-    typedef byte_traits::byte_sequence::iterator data_iterator;
-    typedef byte_traits::byte_sequence::const_iterator const_data_iterator;
-
-    /** Virtual destructor */
-    virtual ~BasicMessageLayer()
-    {}
-
-    /** Retrieve the serialized size.
-     * Returns the length of the returned sequence of a successive call to
-     * serialize(). <br>
-     *
-     * @return The number of bytes the serialized byte sequence would have.
-    */
-    virtual std::size_t getSerializedSize() const throw() = 0;
-
-    /** Fill a buffer with the serialized version of this object.
-    * This function serializes itself (and its upper layers) and writes
-    * the bytes into a buffer that is pointed to by buffer.
-    * The buffer has to have at least the size that is returned by the
-    * getSerializedSize() functions. Beware! No checks will be performed
-    * to assure proper buffer size.
-    *
-    * @param buffer
-    */
-    virtual void fillSerialized(data_iterator buffer) const throw() = 0;
-};
-
 
 
 /** Object holding an ownership to memory.
@@ -149,7 +114,77 @@ public:
 };
 
 
-// typedef MemoryOwnership<BasicMessageLayer::dataptr_type> DataOwnership;
+/** Message Layer base class.
+* This virtual base class presents a basic interface to it's deriving classes.
+* Derived classes are said to represent "layers" of the communication pipeline,
+* and objects of these deriving classes represent "messages" of their layer
+* in the communication pipeline.
+*
+*
+*/
+class BasicMessageLayer
+{
+public:
+    typedef boost::shared_ptr<BasicMessageLayer> ptr_type;
+    typedef boost::shared_ptr<byte_traits::byte_sequence> dataptr_type;
+
+    typedef byte_traits::byte_sequence::iterator data_iterator;
+    typedef byte_traits::byte_sequence::const_iterator const_data_iterator;
+
+    /** Virtual destructor */
+    virtual ~BasicMessageLayer()
+    {}
+
+    /** Retrieve the serialized size.
+     * Returns the length of the returned sequence of a successive call to
+     * serialize(). <br>
+     *
+     * @return The number of bytes the serialized byte sequence would have.
+    */
+    virtual std::size_t getSerializedSize() const throw() = 0;
+
+    /** Fill a buffer with the serialized version of this object.
+    * This function serializes itself (and its upper layers) and writes
+    * the bytes into a buffer that is pointed to by buffer.
+    * The buffer has to have at least the size that is returned by the
+    * getSerializedSize() functions. Beware! No checks will be performed
+    * to assure proper buffer size. Use the function getSerializedSize() to
+    * obtain the minimal required size.
+    *
+    * @param buffer A series of bytes
+    */
+    virtual void fillSerialized(data_iterator buffer) const throw() = 0;
+};
+
+
+typedef MemoryOwnership<BasicMessageLayer::dataptr_type> DataOwnership;
+
+
+class UnknownMessageLayer : public BasicMessageLayer
+{
+    DataOwnership memblock;
+    BasicMessageLayer::const_data_iterator data_it;
+    std::size_t data_size;
+
+public:
+    UnknownMessageLayer(
+        DataOwnership _memblock,
+        BasicMessageLayer::const_data_iterator _data_it,
+        std::size_t _data_size,
+        bool new_memory_block = false
+    );
+
+    // overriding base class version
+    virtual std::size_t getSerializedSize() const throw();
+
+    // overriding base class version
+    virtual void fillSerialized(data_iterator buffer) const throw();
+
+    BasicMessageLayer::const_data_iterator getDataIterator() const throw()
+    { return data_it; }
+};
+
+
 
 } // namespace nuke_ms
 
