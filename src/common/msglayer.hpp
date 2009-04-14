@@ -31,6 +31,81 @@
 #include "bytes.hpp"
 
 
+/** @file msglayer.hpp
+* @brief Message Layers
+*
+* When data is intended to be sent over the network, the data normally is
+* encapsuled in many layers, several "headers" are attached to it.
+*
+* The idea behind this class hierarchy is to ease and unify the handling of
+* encoding and decoding messages into messages of a lower or upper layer.
+*
+* To clarify the use of this hierarchy, one hypothetical procedure of sending a
+* message is explained:
+* The user enters some data (e.g. a text message). This data is
+* encapsuled in a wrapper tagging the message with metadata (like username,
+* font...). Let's call this layer "layer A".
+* Then message of layer A is encrypted becomes a message of layer b.
+* Finally the message is serialized. To ensure wholeness of the message, it is
+* encapsuled in a segmentation layer, layer C.
+*
+* The layer C object holds a copy of the layer B object, which holds a copy of
+* layer A object, which holds a copy of the text the user entered.
+*
+* To be able to send this message, the size of the message has to be determined
+* and the data has to be serialized.
+* To determine the size, the request is made "up the pipeline":
+* layer C asks layer B, which in turn asks A which knows
+* the size of the original message. The value travels back "down the pipeline",
+* where at each step the header size of each layer is added.
+* To serialize the message, layer C serializes its header and asks B to
+* serialize. B in turn serializes its header and asks A to serialize. A
+* serializes its header and appends the text data.
+*
+* This message pipeline is implemented by a class for each layer. An object of
+* this class is therefor considered as a message of this layer.
+* Although the above explanation would suggest that each layer holds a copy of
+* it's upper layer, it is up to the implementation of a layer to decide wether
+* the data is held as a reference or a copy.
+* Normally a layer only adds a small header (compared to the size of the
+* original message). Therefor it would be waste of memory and computation time
+* to copy the data of each upper layer into the current layer.
+* To avoid this, layers should hold their data as a reference counted shared
+* pointer. Only when necessary - usually when the data is actually sent over the
+* network - the data is serialized and written into a single buffer. This buffer
+* is sent over the network, and the original data chunks (headers + user data)
+* are discarded (and deleted!).
+*
+* Let's examine the handling of the message on the receiving side:
+* The header of the segmentation layer message (layer C) arrives at the
+* receiving site. Then the receiving site allocates memory and receives the
+* rest of the message.
+* Then, the message is passed "up the pipeline". However, the code that handles
+* new messages doesn't know what kind of message (which layer) it has received.
+* Therefor, layer C is holding a reference to a message of an "unknown message
+* layer". The layer C message is passed to the next handling code. This
+* code inspects the "unknown message layer" message and tries to make sense of
+* it. If it does, the appropriate message layer (let's say it's layer B) is
+* constructed from the unknown message layer. The upper layer contained in this
+* layer B message is still unknown, and will be a "unknown message layer"
+* message. The message is passed up to the next handling code, the data is
+* investigated and the appropriate layer (let's say layer A) is constructed.
+* The string message contained in layer A is then displayed to the user.
+*
+* The main memory allocation for an incoming message should be performed at the
+* very beginning, right before receiving the message body of the segmentation
+* layer. The whole block should be kept in memory and the message layers pass
+* ownership to this block and iterators upwards. This is a tradeoff:
+* At the expense of unnessecary bytes being held in memory, additional memory
+* allocations and copy operations can be prevented. This should be a good
+* tradeoff because "normally" the headers on the messages are relatively small
+* and memory waste is negelctable.
+* If for a layer, the cost becomes to high (if its header is rather big), it
+* can decide to discard the old buffer and allocate a new smaller buffer.
+*
+*/
+
+
 namespace nuke_ms
 {
 
