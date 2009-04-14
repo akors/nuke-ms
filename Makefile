@@ -5,7 +5,7 @@ PROJECT_ROOT := .
 include $(PROJECT_ROOT)/build/global.mak
 
 
-all: nuke-ms-client nuke-ms-serv
+all: tests
 
 nuke-ms-client: nuke-ms-common
 	$(MAKE) -C $(CLIENTDIR)
@@ -18,11 +18,13 @@ nuke-ms-serv: nuke-ms-common
 nuke-ms-common:
 	$(MAKE) -C $(COMMONDIR)
 
+tests: nuke-ms-common
+	$(MAKE) -C $(SRCDIR)/test
 
 
 
 # clean targets
-clean: clean-common clean-client clean-serv
+clean: clean-common clean-client clean-serv clean-tests
 	-$(RMF) $(BINDIR)/*
 
 clean-common:
@@ -33,3 +35,6 @@ clean-client:
 
 clean-serv:
 	$(MAKE) -C $(SERVDIR) clean
+
+clean-tests:
+	$(MAKE) -C $(COMMONDIR) clean

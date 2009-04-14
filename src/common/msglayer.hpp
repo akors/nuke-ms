@@ -234,14 +234,32 @@ public:
 
 typedef MemoryOwnership<BasicMessageLayer::dataptr_type> DataOwnership;
 
-
+/** Message of an unknown message layer.
+* This class should be used when a new message arrives and its real message
+* layer class is not determined yet. It holds all only the reference to the
+* memory block and a iterator to the data.
+* It provides a possibility to access the contained data to determine the real
+* message layer class.
+*/
 class UnknownMessageLayer : public BasicMessageLayer
 {
-    DataOwnership memblock;
-    BasicMessageLayer::const_data_iterator data_it;
-    std::size_t data_size;
+    DataOwnership memblock; /**< Ownership to the memory block */
+    BasicMessageLayer::const_data_iterator data_it; /**< Iterater to the data */
+    std::size_t data_size; /**< Size of the data */
 
 public:
+    /** Constructor.
+    * Constructs a new object and passes memory ownership, data iterator and
+    * data size. Note that the memory block can contain other data than is
+    * accessible with the data iterator. If desired, a new block of memory can
+    * be allocated by setting the new_memory_block parameter to true.
+    *
+    * @param _memblock Ownership of a memory block that ensures that _data_it is
+    * valid
+    * @param _data_it Iterator to the data of the message in the memory block
+    * block
+    * @param _data_size size of the message in bytes
+    */
     UnknownMessageLayer(
         DataOwnership _memblock,
         BasicMessageLayer::const_data_iterator _data_it,
@@ -255,8 +273,26 @@ public:
     // overriding base class version
     virtual void fillSerialized(data_iterator buffer) const throw();
 
+    /** Get iterator to message data.
+    * This function can be used to access the buffer directly, so that
+    * other layers can construct themselves from data coming from the network.
+    *
+    * @returns An iterator to the message data. This iterator is valid as long
+    * as this object is alive.
+    */
     BasicMessageLayer::const_data_iterator getDataIterator() const throw()
     { return data_it; }
+
+    /** Get ownership to message data.
+    * This function returns the ownership object that ensures that the data
+    * iterator pointed to by getDataIterator() is valid.
+    *
+    * @returns An ownership object ensuring that a pointer returned by
+    * getDataIterator() is valid.
+    *
+    */
+    DataOwnership getOwnership() const throw()
+    { return  memblock; }
 };
 
 

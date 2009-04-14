@@ -18,6 +18,7 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <algorithm>
 
 #include "bytes.hpp"
 #include "msglayer.hpp"
@@ -31,20 +32,45 @@ UnknownMessageLayer::UnknownMessageLayer(
     std::size_t _data_size,
     bool new_memory_block
 )
-    : memblock(_memblock), data_it(_data_it), data_size(_data_size)
+    : memblock(), data_it(_data_it), data_size(_data_size)
 {
+    // if we don't want a new memory block, everything is fine
+    if (!new_memory_block)
+    {
+        memblock = _memblock;
+        data_it = _data_it;
+    }
+    // if we do want one, we have to allocate a new buffer and copy the data
+    else
+    {
+        // allocate buffer with appropriate size
+        BasicMessageLayer::dataptr_type data(
+            new byte_traits::byte_sequence(_data_size)
+        );
 
+        // copy buffer
+        std::copy(
+            _data_it,
+            _data_it + _data_size,
+            data->begin()
+        );
+
+        // assign ownership
+        memblock = DataOwnership(data);
+
+        // asign data iterator
+        data_it = data->begin();
+    }
 }
 
 
-// overriding base class version
 std::size_t UnknownMessageLayer::getSerializedSize() const throw()
 {
     // return the size of the memory block
     return data_size;
 }
 
-// overriding base class version
+
 void UnknownMessageLayer::fillSerialized(data_iterator buffer) const throw()
 {
     // copy the maintained data into the specified buffer

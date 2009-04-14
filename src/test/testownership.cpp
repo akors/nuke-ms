@@ -26,15 +26,17 @@
 struct A
 {
     A()
-    { std::cout<<"A was born\n"; }
+    { std::cout<<"A was born this = "<<reinterpret_cast<void*>(this)<<'\n'; }
 
     ~A()
-    { std::cout<<"A has died\n"; }
+    { std::cout<<"A has died this = "<<reinterpret_cast<void*>(this)<<'\n'; }
 };
 
 int main()
 {
-    nuke_ms::MemoryOwnership<boost::shared_ptr<A> > own_a0;
+
+    nuke_ms::MemoryOwnership<boost::shared_ptr<A> >
+    own_a0(boost::shared_ptr<A>(new A));
 
     {
         boost::shared_ptr<A> a_ptr(new A);
