@@ -142,15 +142,6 @@ public:
 };
 
 
-struct InvalidHeaderError : public MsgLayerError
-{
-    InvalidHeaderError() throw()
-        : MsgLayerError("Invalid packet header")
-    {}
-};
-
-
-
 
 /** Object holding an ownership to memory.
 * This class is a capsule around a smart pointer.
@@ -226,9 +217,13 @@ public:
     * to assure proper buffer size. Use the function getSerializedSize() to
     * obtain the minimal required size.
     *
-    * @param buffer A series of bytes
+    * @param buffer An iterator pointing to a range in the buffer that will be
+    * filled
+    * @returns An iterator pointing past the filled range in the buffer. This
+    * is the same iterator as buffer but it is incremented getSerializedSize()
+    * times.
     */
-    virtual void fillSerialized(data_iterator buffer) const throw() = 0;
+    virtual data_iterator fillSerialized(data_iterator buffer) const throw()= 0;
 };
 
 
@@ -243,8 +238,10 @@ typedef MemoryOwnership<BasicMessageLayer::dataptr_type> DataOwnership;
 */
 class UnknownMessageLayer : public BasicMessageLayer
 {
+    typedef boost::shared_ptr<UnknownMessageLayer> ptr_type;
+
     DataOwnership memblock; /**< Ownership to the memory block */
-    BasicMessageLayer::const_data_iterator data_it; /**< Iterater to the data */
+    const_data_iterator data_it; /**< Iterater to the data */
     std::size_t data_size; /**< Size of the data */
 
 public:
@@ -262,7 +259,7 @@ public:
     */
     UnknownMessageLayer(
         DataOwnership _memblock,
-        BasicMessageLayer::const_data_iterator _data_it,
+        const_data_iterator _data_it,
         std::size_t _data_size,
         bool new_memory_block = false
     );
@@ -271,7 +268,7 @@ public:
     virtual std::size_t getSerializedSize() const throw();
 
     // overriding base class version
-    virtual void fillSerialized(data_iterator buffer) const throw();
+    virtual data_iterator fillSerialized(data_iterator buffer) const throw();
 
     /** Get iterator to message data.
     * This function can be used to access the buffer directly, so that
@@ -280,7 +277,7 @@ public:
     * @returns An iterator to the message data. This iterator is valid as long
     * as this object is alive.
     */
-    BasicMessageLayer::const_data_iterator getDataIterator() const throw()
+    const_data_iterator getDataIterator() const throw()
     { return data_it; }
 
     /** Get ownership to message data.
@@ -293,6 +290,95 @@ public:
     */
     DataOwnership getOwnership() const throw()
     { return  memblock; }
+};
+
+/** Layer wrapping a string.
+* This class is a simple wrapper around a wstring message. The header of this
+* layer encodes only the bytesize of a character text.
+*
+* The header looks like the following:
+*
+*  0 1 2 3 4 5
+* +-+-+-+-+-+-+
+* |I|S|Text ...
+* +-+-+-+-+-+-+
+*
+* Byte 0: Layer identifier of this layer ( 0x81 )
+* Byte 1: Bytesize of a character of the text
+* Byte 2 to end: Text of the message with character
+*
+* The text field must have a length such that the number of bytes module the
+* character bytesize equals zero.
+*/
+class StringwrapLayer : public BasicMessageLayer
+{
+    /** The actual text message */
+    std::wstring message_string;
+
+    /** size of the character in bytes */
+    std::size_t charsize;
+
+    /** header length of this layer */
+    enum { header_length = 2 };
+public:
+    /** Typedef for this shared pointer*/
+    typedef boost::shared_ptr<StringwrapLayer> ptr_type;
+
+    /** Layer identifier */
+    enum { LAYER_ID = 0x81 };
+
+
+    /** Constructor.
+    * Create a StringwrapLayer message from an std::wstring.
+    *
+    * @param msg msg The string the message shall contain.
+    */
+    StringwrapLayer(const std::wstring& msg) throw ();
+
+    /** Constructor.
+    * Create a StringwrapLayer from a message of unknown message layer, for
+    * example a message that comes from the network.
+    * This constructor parses a bytewise buffer into a widestring and loads this
+    * string into the internal buffer.
+    * If the number of bytes in the byte sequence after the header is not a
+    * multiple of the character size declared in the header of the message,
+    * an exception is thrown.
+    *
+    * @param msg Message of unknown message layer type.
+    * @throws MsgLayerError when the data in msg does not conform to the
+    * layer encoding definition.
+    *
+    */
+    StringwrapLayer(const UnknownMessageLayer& msg) throw(MsgLayerError);
+
+    // overriding base class version
+    virtual std::size_t getSerializedSize() const throw();
+
+    // overriding base class version
+    virtual data_iterator fillSerialized(data_iterator buffer) const throw();
+
+    /** Return the string contained in the layer message.
+    *
+    * This function returns a constant reference to the internal string message.
+    * When using this string object bear in mind that this is only a reference,
+    * not a copy. This reference is valid as long as *this is alive.
+    * If you need to pass this string on, create a new instance from this
+    * reference.
+    *
+    * @returns A constant reference to the string contained in this message
+    */
+    const std::wstring &getString() const throw()
+    { return message_string; }
+
+    /** Get bytesize of a character.
+    * This function returns the size of a single character of the message.
+    * Note that this function is only useful when inspecting an incoming
+    * message. For outgoing messages, the charactersize will allways be equal
+    * to sizeof(std::wstring::value_type)
+    */
+    std::size_t getCharsize() const throw()
+    { return charsize; }
+
 };
 
 

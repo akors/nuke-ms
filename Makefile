@@ -37,4 +37,4 @@ clean-serv:
 	$(MAKE) -C $(SERVDIR) clean
 
 clean-tests:
-	$(MAKE) -C $(COMMONDIR) clean
+	$(MAKE) -C $(SRCDIR)/test clean
