@@ -34,7 +34,7 @@ namespace nuke_ms
 struct byte_traits
 {
     /** The type of the smallest adressable data unit in memory */
-    typedef boost::int8_t byte_t;
+    typedef boost::uint8_t byte_t;
 
     /** The type of an unsigned integer with the width of two bytes*/
     typedef boost::uint16_t uint2b_t;
@@ -67,7 +67,8 @@ writebytes(ByteSequenceIterator it, T value)
 	return std::copy(
 		reinterpret_cast<byte_traits::byte_t*>(&value),
 		reinterpret_cast<byte_traits::byte_t*>(&value) + sizeof(value),
-		it);
+		it
+    );
 }
 
 template <typename T, typename ByteSequenceIterator> inline
