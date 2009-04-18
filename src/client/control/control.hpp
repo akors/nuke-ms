@@ -82,8 +82,10 @@ private:
     *
     * @param id The string that identifies the remote site. This string must be
     * understood by the protocol.
+    *
+    * @todo Do we really need a wide character remote site identifier?
     */
-    void connectTo(const std::wstring& id)
+    void connectTo(const byte_traits::string& id)
         throw();
 
     /** Send a message to the site that is connected.
@@ -91,7 +93,7 @@ private:
     * the message, an error message is displayed.
     * @param msg The message you want to send
     */
-    void sendMessage(const std::wstring& msg)
+    void sendMessage(const byte_traits::string& msg)
         throw();
 
     /** Disconnect from a remote site, if connected */
@@ -104,7 +106,7 @@ private:
         catch (const std::exception& e) {
             const char* errmsg = e.what();
             printMessage(L"*  Failed to disconnect: " +
-                            std::wstring(errmsg, errmsg+strlen(errmsg)));
+                            byte_traits::string(errmsg, errmsg+strlen(errmsg)));
         }
     }
 
@@ -112,7 +114,7 @@ private:
     *
     * @param msg the message you want to print
     */
-    void printMessage(const std::wstring& msg)
+    void printMessage(const byte_traits::string& msg)
         throw()
     {
         try {
@@ -171,7 +173,7 @@ public:
 
 
 template <typename GuiT, typename ProtocolT>
-void AppControl<GuiT, ProtocolT>::connectTo(const std::wstring& id)
+void AppControl<GuiT, ProtocolT>::connectTo(const byte_traits::string& id)
     throw()
 {
     try {
@@ -181,12 +183,12 @@ void AppControl<GuiT, ProtocolT>::connectTo(const std::wstring& id)
     {
         std::string errmsg(e.what());
         this->printMessage(L"* Failed to connect to " + id + L": "
-                          + std::wstring(errmsg.begin(), errmsg.end()) );
+                          + byte_traits::string(errmsg.begin(), errmsg.end()) );
     }
 }
 
 template <typename GuiT, typename ProtocolT>
-void AppControl<GuiT, ProtocolT>::sendMessage(const std::wstring& msg)
+void AppControl<GuiT, ProtocolT>::sendMessage(const byte_traits::string& msg)
     throw()
 {
     try {
@@ -196,7 +198,7 @@ void AppControl<GuiT, ProtocolT>::sendMessage(const std::wstring& msg)
     {
         std::string errmsg(e.what());
         this->printMessage(L"Failed to send message: "
-                            + std::wstring(errmsg.begin(), errmsg.end()));
+                            + byte_traits::string(errmsg.begin(), errmsg.end()));
     }
 }
 

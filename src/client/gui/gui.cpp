@@ -105,7 +105,7 @@ void MainFrame::createTextBoxes()
 
 
 boost::shared_ptr<control::ControlCommand>
-MainFrame::parseCommand(const std::wstring& str)
+MainFrame::parseCommand(const byte_traits::string& str)
 {
     // we are basically dealing only with Control commands, so it would be nice
     // if all the types were in scope
@@ -113,7 +113,7 @@ MainFrame::parseCommand(const std::wstring& str)
 
     // get ourself a tokenizer
     typedef boost::tokenizer<boost::char_separator<wchar_t>,
-                             std::wstring::const_iterator, std::wstring >
+                             byte_traits::string::const_iterator, byte_traits::string >
         tokenizer;
 
 try {
@@ -165,7 +165,7 @@ catch(...) {}
 }
 
 
-void MainFrame::printMessage(const std::wstring& str)
+void MainFrame::printMessage(const byte_traits::string& str)
     throw (std::runtime_error)
 {
     // wxEvtHandler::AddPendingEvent is explicitly thread-safe, so we don't
@@ -177,7 +177,7 @@ void MainFrame::printMessage(const std::wstring& str)
     // set the event object that shall receive the event
     event.SetEventObject( this );
 
-    // create the wxString from std::wstring, and perform conversion
+    // create the wxString from byte_traits::string, and perform conversion
     wxString msg(str.c_str(), wxConvLocal);
 
     // attach the string to the event object
@@ -225,8 +225,8 @@ void MainFrame::OnQuit(wxCommandEvent& event)
 void MainFrame::OnEnter(wxCommandEvent& event)
     throw()
 {
-    // create reference to a std::wstring
-    const std::wstring& input_string =
+    // create reference to a byte_traits::string
+    const byte_traits::string& input_string =
         wxString2wstring(text_input_box->GetValue() );
 
     // clear input box

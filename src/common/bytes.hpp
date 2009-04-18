@@ -45,6 +45,8 @@ struct byte_traits
     /** The type for a sequence of bytes */
     typedef std::vector<byte_t> byte_sequence;
 
+    /** The string type */
+    typedef std::basic_string<wchar_t, std::char_traits<wchar_t> > string;
 };
 
 

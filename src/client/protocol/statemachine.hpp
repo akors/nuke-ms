@@ -65,13 +65,13 @@ struct EvtConnectRequest : public boost::statechart::event<EvtConnectRequest>
 struct EvtConnectReport : public boost::statechart::event<EvtConnectReport>
 {
     bool success; /**< true on success, false on failure */
-    std::wstring message; /**< Message commenting the outcome. */
+    byte_traits::string message; /**< Message commenting the outcome. */
 
     /** Constructor. Initializes members.
     * @param _success true on success, false on failure
     * @param _message Message commenting the outcome.
     */
-    EvtConnectReport(bool _success, const std::wstring& _message)
+    EvtConnectReport(bool _success, const byte_traits::string& _message)
         : success(_success), message (_message)
     {}
 };
@@ -91,12 +91,12 @@ struct EvtDisconnected :
     public boost::statechart::event<EvtDisconnected>
 {
     /** The text of the message. */
-    std::wstring msg;
+    byte_traits::string msg;
 
     /** Constructor.
     * @param _msg The text of the message.
     */
-    EvtDisconnected(const std::wstring& _msg)
+    EvtDisconnected(const byte_traits::string& _msg)
         : msg (_msg)
     {}
 };
@@ -122,12 +122,12 @@ struct EvtRcvdMessage :
     public boost::statechart::event<EvtRcvdMessage>
 {
     /** The text of the message. */
-    std::wstring msg;
+    byte_traits::string msg;
 
     /** Constructor.
     * @param _msg The text of the message.
     */
-    EvtRcvdMessage(const std::wstring& _msg)
+    EvtRcvdMessage(const byte_traits::string& _msg)
         : msg (_msg)
     {}
 };

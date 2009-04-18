@@ -91,15 +91,15 @@ BasicMessageLayer::dataptr_type StringwrapLayer::getPayload() const throw()
 
 
 
-StringwrapLayer::StringwrapLayer(const std::wstring& msg) throw ()
-    : payload(msg.length()*sizeof(std::wstring::value_type))
+StringwrapLayer::StringwrapLayer(const byte_traits::string& msg) throw ()
+    : payload(msg.length()*sizeof(byte_traits::string::value_type))
 {
-    // initialize payload to be as big as sizeof(std::wstring::value_type)
+    // initialize payload to be as big as sizeof(byte_traits::string::value_type)
     // times the message length
 
     // one iterator for input, one for output
     byte_traits::byte_sequence::iterator out_iter = payload.begin();
-    std::wstring::const_iterator in_iter = msg.begin();
+    byte_traits::string::const_iterator in_iter = msg.begin();
 
     // write all bytes of one character into the buffer, advance the output
     // iterator
@@ -109,19 +109,19 @@ StringwrapLayer::StringwrapLayer(const std::wstring& msg) throw ()
 
 
 
-std::wstring StringwrapLayer::getString() const throw()
+byte_traits::string StringwrapLayer::getString() const throw()
 {
     // assure that the payload length is a multiple of the
     // size of the character type (granted by the constructor)
-    assert(!(payload.size() % sizeof(std::wstring::value_type)));
+    assert(!(payload.size() % sizeof(byte_traits::string::value_type)));
 
     // creat a string, initialize with the right size
     // and create iterator pointing at it
-    std::wstring str((payload.size()/sizeof(std::wstring::value_type)), 'a');
-    std::wstring::iterator out_iter = str.begin();
+    byte_traits::string str((payload.size()/sizeof(byte_traits::string::value_type)), 'a');
+    byte_traits::string::iterator out_iter = str.begin();
 
     // create a temporary value to store one wide character
-    std::wstring::value_type tmpval;
+    byte_traits::string::value_type tmpval;
 
     // pointer to the temporary value where the bytes will be written
     byte_traits::byte_t* tmpval_ptr;

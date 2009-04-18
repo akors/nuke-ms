@@ -122,7 +122,7 @@ class MainFrame : public wxFrame
     * @throws std::runtime_error if a ressource could not be allocated.
     * e.g. a threading resource.
     */
-    void printMessage(const std::wstring& str)
+    void printMessage(const byte_traits::string& str)
         throw(std::runtime_error);
 
 
@@ -132,7 +132,7 @@ class MainFrame : public wxFrame
     * @param str The string you want to be checked
     * @todo Add proper checking here
     */
-    inline static bool isCommand(const std::wstring& str)
+    inline static bool isCommand(const byte_traits::string& str)
         throw()
     {
         return ((str.size() != 0) && (str[0] == L'/'));
@@ -149,7 +149,7 @@ class MainFrame : public wxFrame
     * @todo add proper parser here
     */
     static boost::shared_ptr<control::ControlCommand>
-    parseCommand(const std::wstring& str);
+    parseCommand(const byte_traits::string& str);
 
 public:
     friend class MainFrameWrapper;
@@ -214,7 +214,7 @@ public:
     * @throws std::runtime_error if a ressource could not be allocated.
     * e.g. a threading resource.
     */
-    void printMessage(const std::wstring& str)
+    void printMessage(const byte_traits::string& str)
         throw (std::runtime_error)
     {
         main_frame->printMessage(str);
@@ -243,26 +243,26 @@ DECLARE_EVENT_TYPE( nuke_msEVT_PRINT_MESSAGE, -1 )
 
 
 
-/** create a std::wstring object from a wxString.
+/** create a byte_traits::string object from a wxString.
 *
 * @param str The string you want to convert
 * @return the output string
 * @warning Probably not portable
 */
-inline std::wstring wxString2wstring(const wxString& str)
+inline byte_traits::string wxString2wstring(const wxString& str)
     throw()
 {
-    return std::wstring( str.wc_str(wxConvLocal) );
+    return byte_traits::string( str.wc_str(wxConvLocal) );
 }
 
 
-/** create a wxString object from an std::wstring.
+/** create a wxString object from an byte_traits::string.
 *
 * @param str The string you want to convert
 * @return the output string
 * @warning Probably not portable
 */
-inline wxString wstring2wxString(const std::wstring& str)
+inline wxString wstring2wxString(const byte_traits::string& str)
     throw()
 {
     return wxString( str.c_str() );

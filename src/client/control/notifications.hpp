@@ -75,12 +75,12 @@ template <ProtocolNotification::notification_id_t NotificationId>
 struct ProtocolNotificationMessage : public ProtocolNotification
 {
     /** The message that was received */
-    const std::wstring msg;
+    const byte_traits::string msg;
 
     /** Constructor.
     * @param _msg The message that was received
     */
-    ProtocolNotificationMessage(const std::wstring& _msg)  throw()
+    ProtocolNotificationMessage(const byte_traits::string& _msg)  throw()
         :  ProtocolNotification(NotificationId), msg(_msg)
     {}
 };
@@ -104,7 +104,7 @@ typedef ProtocolNotificationMessage<ProtocolNotification::ID_DISCONNECTED>
 struct RequestReport
 {
     const bool successful; /**< Good news or bad news? */
-    const std::wstring failure_reason; /**< What went wrong? */
+    const byte_traits::string failure_reason; /**< What went wrong? */
 
     /** Construct a positive report */
     RequestReport()  throw()
@@ -112,7 +112,7 @@ struct RequestReport
     {}
 
     /** Construct a negative report */
-    RequestReport(const std::wstring& reason)  throw()
+    RequestReport(const byte_traits::string& reason)  throw()
         : successful(false), failure_reason(reason)
     {}
 
@@ -130,7 +130,7 @@ struct ReportNotification : public ProtocolNotification, public RequestReport
     {}
 
     /** Generate a negative report */
-    ReportNotification(const std::wstring& reason)  throw()
+    ReportNotification(const byte_traits::string& reason)  throw()
         : ProtocolNotification(NOTIF_ID), RequestReport(reason)
     {}
 };
@@ -141,12 +141,12 @@ struct SendReport :
     public ReportNotification<ProtocolNotification::ID_SEND_REPORT>
 {
     /** The message that was supposed to be sent. */
-    std::wstring message;
+    byte_traits::string message;
 
     /** Generate a successful report.
      * @param _message The message that was supposed to be sent.
      */
-    SendReport(std::wstring _message)  throw()
+    SendReport(byte_traits::string _message)  throw()
         : ReportNotification<ProtocolNotification::ID_SEND_REPORT>(),
             message(_message)
     {}
@@ -155,7 +155,7 @@ struct SendReport :
      * @param _message The message that was supposed to be sent.
      * @param _failure_reason The reason why the sending failed.
      */
-    SendReport(std::wstring _message, std::wstring _failure_reason)  throw()
+    SendReport(byte_traits::string _message, byte_traits::string _failure_reason)  throw()
         : ReportNotification<ProtocolNotification::ID_SEND_REPORT>(
             _failure_reason),
         message(_message)

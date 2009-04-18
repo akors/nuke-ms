@@ -127,7 +127,7 @@ boost::statechart::result StateWaiting::react(const EvtSendMsg& evt)
         .notification_callback(
             control::SendReport(
                 StringwrapLayer(*evt.data->getPayload()).getString(),
-                std::wstring(L"Not Connected."))
+                byte_traits::string(L"Not Connected."))
             );
 
     return discard_event();
@@ -151,7 +151,7 @@ StateNegotiating::StateNegotiating(my_context ctx)
         post_event(
             EvtConnectReport(
                 false,
-                std::wstring(errmsg.begin(), errmsg.end())
+                byte_traits::string(errmsg.begin(), errmsg.end())
             )
         );
     }
@@ -160,7 +160,7 @@ StateNegotiating::StateNegotiating(my_context ctx)
         post_event(
             EvtConnectReport(
                 false,
-                std::wstring(L"Unknown internal Error")
+                byte_traits::string(L"Unknown internal Error")
             )
         );
     }
@@ -174,7 +174,7 @@ boost::statechart::result StateNegotiating::react(const EvtSendMsg& evt)
         .notification_callback(
             control::SendReport(
                 StringwrapLayer(*evt.data->getPayload()).getString(),
-                std::wstring(L"Not yet Connected."))
+                byte_traits::string(L"Not yet Connected."))
             );
 
     return discard_event();
@@ -199,7 +199,7 @@ boost::statechart::result StateNegotiating::react(const EvtConnectReport& evt)
             .notification_callback(
                 control::ReportNotification
                     <control::ProtocolNotification::ID_CONNECT_REPORT>(
-                        std::wstring(evt.message)
+                        byte_traits::string(evt.message)
                     )
                 );
 
@@ -248,7 +248,7 @@ void StateNegotiating::resolveHandler(
             boost::intrusive_ptr<EvtConnectReport> (
                 new EvtConnectReport(
                     false,
-                    std::wstring(errmsg.begin(),errmsg.end())
+                    byte_traits::string(errmsg.begin(),errmsg.end())
                 )
             )
         );
@@ -287,14 +287,14 @@ void StateNegotiating::connectHandler(
 
         evt_rprt = new EvtConnectReport(
             false,
-            std::wstring(errmsg.begin(), errmsg.end())
+            byte_traits::string(errmsg.begin(), errmsg.end())
         );
     }
     else // if there was no error, create a positive reply
     {
         evt_rprt = new EvtConnectReport(
             true,
-            std::wstring(L"Connection succeeded.")
+            byte_traits::string(L"Connection succeeded.")
         );
 
         // create a receive buffer
@@ -399,7 +399,7 @@ void StateConnected::writeHandler(
         _outermost_context.notification_callback(
             control::SendReport(
                 StringwrapLayer(*data).getString(),
-                std::wstring(errmsg.begin(), errmsg.end())
+                byte_traits::string(errmsg.begin(), errmsg.end())
             )
         );
 
@@ -407,7 +407,7 @@ void StateConnected::writeHandler(
             _outermost_context.my_handle(),
             boost::intrusive_ptr<EvtDisconnected> (
                 new EvtDisconnected(
-                    std::wstring(errmsg.begin(), errmsg.end())
+                    byte_traits::string(errmsg.begin(), errmsg.end())
                 )
             )
         );
@@ -433,7 +433,7 @@ void StateConnected::receiveSegmentationHeaderHandler(
         _outermost_context.my_scheduler().queue_event(
             _outermost_context.my_handle(),
             boost::intrusive_ptr<EvtDisconnected>(
-                new EvtDisconnected(std::wstring(errmsg.begin(),errmsg.end()))
+                new EvtDisconnected(byte_traits::string(errmsg.begin(),errmsg.end()))
             )
         );
     }
@@ -479,7 +479,7 @@ const byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
                 _outermost_context.my_handle(),
                 boost::intrusive_ptr<EvtDisconnected>(
                     new EvtDisconnected(
-                        std::wstring(errmsg.begin(),errmsg.end())
+                        byte_traits::string(errmsg.begin(),errmsg.end())
                     )
                 )
             );
@@ -514,7 +514,7 @@ void StateConnected::receiveSegmentationBodyHandler(
         _outermost_context.my_scheduler().queue_event(
             _outermost_context.my_handle(),
             boost::intrusive_ptr<EvtDisconnected>(
-                new EvtDisconnected(std::wstring(errmsg.begin(),errmsg.end()))
+                new EvtDisconnected(byte_traits::string(errmsg.begin(),errmsg.end()))
             )
         );
     }

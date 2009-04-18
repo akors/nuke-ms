@@ -88,12 +88,12 @@ template <ControlCommand::command_id_t CMD_ID>
 struct MessageCommand : public ControlCommand
 {
     /** The message you want to transport */
-    const std::wstring msg;
+    const byte_traits::string msg;
 
     /** Constructor.
     * @param str The message you want to transport
     */
-    MessageCommand(const std::wstring& str)  throw()
+    MessageCommand(const byte_traits::string& str)  throw()
         : ControlCommand(CMD_ID), msg(str)
     { }
 };

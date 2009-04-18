@@ -41,7 +41,7 @@ using namespace protocol;
 static bool parseDestinationString(
     std::string& host,
     std::string& service,
-    const std::wstring& where
+    const byte_traits::string& where
 );
 
 
@@ -88,7 +88,7 @@ NukeMSProtocol::~NukeMSProtocol()
 }
 
 
-void NukeMSProtocol::connect_to(const std::wstring& id)
+void NukeMSProtocol::connect_to(const byte_traits::string& id)
     throw(std::runtime_error, ProtocolError)
 {
     // Get Host/Service pair from the destination string
@@ -116,7 +116,7 @@ void NukeMSProtocol::connect_to(const std::wstring& id)
 
 
 
-void NukeMSProtocol::send(const std::wstring& msg)
+void NukeMSProtocol::send(const byte_traits::string& msg)
     throw(std::runtime_error, ProtocolError)
 {
     // create a Stringwrapper for the message
@@ -161,12 +161,12 @@ void NukeMSProtocol::disconnect()
 static bool parseDestinationString(
     std::string& host,
     std::string& service,
-    const std::wstring& where
+    const byte_traits::string& where
 )
 {
     // get ourself a tokenizer
     typedef boost::tokenizer<boost::char_separator<wchar_t>,
-                            std::wstring::const_iterator, std::wstring>
+                            byte_traits::string::const_iterator, byte_traits::string>
         tokenizer;
 
     // get the part before the colon and the part after the colon

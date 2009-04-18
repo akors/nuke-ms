@@ -211,11 +211,11 @@ class StringwrapLayer : public BasicMessageLayer
 public:
     typedef boost::shared_ptr<StringwrapLayer> ptr_type;
 
-    /** Construct from a a std::wstring.
+    /** Construct from a a byte_traits::string.
     * Of copies each byte of each character into the payload of the layer.
     * @param msg The msg that you want to wrap
     */
-    StringwrapLayer(const std::wstring& msg) throw ();
+    StringwrapLayer(const byte_traits::string& msg) throw ();
 
     /** Construct from a message coming from the network. */
     StringwrapLayer(const byte_traits::byte_sequence& _payload)
@@ -223,7 +223,7 @@ public:
     { }
 
 
-    std::wstring getString() const throw();
+    byte_traits::string getString() const throw();
 
 
     virtual std::size_t getSerializedSize() const throw()

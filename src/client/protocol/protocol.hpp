@@ -104,7 +104,7 @@ public:
     * e.g. a threading resource.
     * @throws ProtocolError if a networking error occured
      */
-    void connect_to(const std::wstring& id)
+    void connect_to(const byte_traits::string& id)
         throw(std::runtime_error, ProtocolError);
 
 
@@ -115,7 +115,7 @@ public:
     * e.g. a threading resource.
     * @throws ProtocolError if a networking error occured
      */
-    void send(const std::wstring& msg)
+    void send(const byte_traits::string& msg)
         throw(std::runtime_error, ProtocolError);
 
 
