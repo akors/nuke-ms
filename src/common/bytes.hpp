@@ -49,7 +49,11 @@ struct byte_traits
     typedef std::basic_string<wchar_t, std::char_traits<wchar_t> > string;
 };
 
-
+/** Reverse the bytes of a POD variable.
+* @tparam T A POD variable.
+* @param x The value whos bytes you want to get reversed
+* @return The value with returned bytes.
+*/
 template <typename T>
 inline T reversebytes(T x)
 {
@@ -61,7 +65,16 @@ inline T reversebytes(T x)
     return x;
 }
 
-
+/** Write a value into a byte sequence container of any kind.
+* @tparam T The type of the value you want to write. Most useful when POD.
+* @tparam ByteSequenceIterator Type of the iterator to the byte sequence. Must
+* meet the requirement of OutputIterator. The dereference of this iterator must
+* be able to be assigned to a byte_traits::byte_t value.
+*
+* @param it Iterator to the byte sequence
+* @param value Value to be written to the byte sequence
+* @return Returns it + sizeof(T)
+*/
 template <typename T, typename ByteSequenceIterator> inline
 ByteSequenceIterator
 writebytes(ByteSequenceIterator it, T value)
@@ -73,19 +86,33 @@ writebytes(ByteSequenceIterator it, T value)
     );
 }
 
+/** Read bytes from a byte sequence into a POD variable
+* @tparam T The type of the value. POD is required.
+* @tparam ByteSequenceIterator Iterator to the byte sequence. Must meet
+* InputIterator requirement. The dereference of this iterator must be
+* POD and be one byte of size.
+*
+* @param val_ptr Pointer to the value that will be written to.
+* @param it Iterator to the sequence that contains the bytes for the value
+* @return Returns it + sizeof(T)
+*/
 template <typename T, typename ByteSequenceIterator> inline
-T readbytes(ByteSequenceIterator it)
+ByteSequenceIterator readbytes(T* val_ptr, ByteSequenceIterator it)
 {
-    T tmpval;
-
     std::copy(
         it,
         it + sizeof(T),
-        reinterpret_cast<byte_traits::byte_t*>(&tmpval)
+        reinterpret_cast<byte_traits::byte_t*>(val_ptr)
     );
 
-    return tmpval;
+    return it + sizeof(T);
 }
+
+
+template <typename ByteSequenceIterator> inline
+ByteSequenceIterator readbytes(
+    byte_traits::byte_t* val_ptr, ByteSequenceIterator it)
+{ *val_ptr = *it; return ++it; }
 
 #ifndef NUKE_MS_BIG_ENDIAN
 

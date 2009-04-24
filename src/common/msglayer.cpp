@@ -84,70 +84,56 @@ UnknownMessageLayer::fillSerialized(data_iterator buffer) const
 }
 
 StringwrapLayer::StringwrapLayer(const std::wstring& msg) throw ()
-    : message_string(msg), charsize(sizeof(std::wstring::value_type))
+    : message_string(msg)
 {}
 
 
-#if 0 // not ready yet!
 StringwrapLayer::StringwrapLayer(const UnknownMessageLayer& msg)
     throw(MsgLayerError)
 {
-    data_size = msg.getSerializedSize();
-    data_iterator = msg.getDataIterator();
+    std::size_t data_size = msg.getSerializedSize();
+    const_data_iterator data_it = msg.getDataIterator();
 
-
-    // bail out immediately if header is too short
-    if (data_size < 2)
-        throw MsgLayerError("Message too short");
-
-    // also bail out if the layer id does not match
-    if (*data_iterator++ != static_cast<byte_traits::byte_t>(LAYER_ID))
-        throw MsgLayerError("Invalid packet header");
-
-    // retreive charactersize and bail out if the string is not aligned
-    charsize = *data_iterator++;
-    if ((data_size - header_length) % charsize != 0)
+    // bail out if the string is not aligned
+    if (data_size % sizeof(std::wstring::value_type) !=0)
         throw MsgLayerError("Unaligned packet");
 
     // set message_string to the proper size
-    message_string.resize((data_size - header_length)/charsize);
+    message_string.resize((data_size)/sizeof(std::wstring::value_type));
 
     // iterator to the message_string
-    std::wstring::iterator out_iter = str.begin();
+    std::wstring::iterator out_iter = message_string.begin();
 
-    // create a temporary value to store one wide character
     std::wstring::value_type tmpval;
+
+    // iterate through all bytes in the sequence
+    for ( const_data_iterator it = data_it; it < data_it + data_size; )
+    {
+        // read bytes into a character, convert byte endianness
+        it = readbytes(&tmpval, it);
+        *out_iter++ = ntohx(tmpval);
+    }
 
 
 }
-#endif
 
 
 std::size_t StringwrapLayer::getSerializedSize() const throw()
 {
-    return
-        message_string.length() * sizeof(std::wstring::value_type)
-        + header_length;
+    return message_string.length() * sizeof(std::wstring::value_type);
 }
 
 BasicMessageLayer::data_iterator
 StringwrapLayer::fillSerialized(data_iterator buffer) const
     throw()
 {
-    // first byte is the layer identifier
-    *buffer++ = static_cast<byte_traits::byte_t>(LAYER_ID);
-
-    // second byte is the bytesize of a character
-    *buffer++ = static_cast<byte_traits::byte_t>(
-        sizeof(std::wstring::value_type));
-
     // an iterator to the message of string type
     std::wstring::const_iterator in_iter = message_string.begin();
 
     // write all bytes of one character into the buffer, advance the output
     // iterator
     for (; in_iter < message_string.end(); in_iter++)
-        buffer = writebytes(buffer, *in_iter);
+        buffer = writebytes(buffer, htonx(*in_iter));
 
     return buffer;
 }

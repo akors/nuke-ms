@@ -293,39 +293,17 @@ public:
 };
 
 /** Layer wrapping a string.
-* This class is a simple wrapper around a wstring message. The header of this
-* layer encodes only the bytesize of a character text.
-*
-* The header looks like the following:
-*
-*  0 1 2 3 4 5
-* +-+-+-+-+-+-+
-* |I|S|Text ...
-* +-+-+-+-+-+-+
-*
-* Byte 0: Layer identifier of this layer ( 0x81 )
-* Byte 1: Bytesize of a character of the text
-* Byte 2 to end: Text of the message with character
-*
-* The text field must have a length such that the number of bytes module the
-* character bytesize equals zero.
+* This class is a simple wrapper around a wstring message.
+* No header is prepended to the message.
 */
 class StringwrapLayer : public BasicMessageLayer
 {
     /** The actual text message */
     std::wstring message_string;
 
-    /** size of the character in bytes */
-    std::size_t charsize;
-
-    /** header length of this layer */
-    enum { header_length = 2 };
 public:
     /** Typedef for this shared pointer*/
     typedef boost::shared_ptr<StringwrapLayer> ptr_type;
-
-    /** Layer identifier */
-    enum { LAYER_ID = 0x81 };
 
 
     /** Constructor.
@@ -341,13 +319,11 @@ public:
     * This constructor parses a bytewise buffer into a widestring and loads this
     * string into the internal buffer.
     * If the number of bytes in the byte sequence after the header is not a
-    * multiple of the character size declared in the header of the message,
-    * an exception is thrown.
+    * multiple of the character size, an exception is thrown.
     *
     * @param msg Message of unknown message layer type.
-    * @throws MsgLayerError when the data in msg does not conform to the
-    * layer encoding definition.
-    *
+    * @throws MsgLayerError if the bytesize is not a multiple of the character
+    * size.
     */
     StringwrapLayer(const UnknownMessageLayer& msg) throw(MsgLayerError);
 
@@ -362,22 +338,14 @@ public:
     * This function returns a constant reference to the internal string message.
     * When using this string object bear in mind that this is only a reference,
     * not a copy. This reference is valid as long as *this is alive.
-    * If you need to pass this string on, create a new instance from this
-    * reference.
+    * If you need to pass this string on, copy construvt a new instance from
+    * this reference.
     *
     * @returns A constant reference to the string contained in this message
     */
-    const std::wstring &getString() const throw()
+    const std::wstring& getString() const throw()
     { return message_string; }
 
-    /** Get bytesize of a character.
-    * This function returns the size of a single character of the message.
-    * Note that this function is only useful when inspecting an incoming
-    * message. For outgoing messages, the charactersize will allways be equal
-    * to sizeof(std::wstring::value_type)
-    */
-    std::size_t getCharsize() const throw()
-    { return charsize; }
 
 };
 
