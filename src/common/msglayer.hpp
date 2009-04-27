@@ -299,7 +299,7 @@ public:
 class StringwrapLayer : public BasicMessageLayer
 {
     /** The actual text message */
-    std::wstring message_string;
+    byte_traits::string message_string;
 
 public:
     /** Typedef for this shared pointer*/
@@ -307,11 +307,11 @@ public:
 
 
     /** Constructor.
-    * Create a StringwrapLayer message from an std::wstring.
+    * Create a StringwrapLayer message from an byte_traits::string.
     *
     * @param msg msg The string the message shall contain.
     */
-    StringwrapLayer(const std::wstring& msg) throw ();
+    StringwrapLayer(const byte_traits::string& msg) throw ();
 
     /** Constructor.
     * Create a StringwrapLayer from a message of unknown message layer, for
@@ -343,7 +343,7 @@ public:
     *
     * @returns A constant reference to the string contained in this message
     */
-    const std::wstring& getString() const throw()
+    const byte_traits::string& getString() const throw()
     { return message_string; }
 
 

@@ -1,10 +1,11 @@
 #include <iostream>
-#include <string>
 #include <sstream>
 #include <iomanip>
 
 #include "bytes.hpp"
 #include "msglayer.hpp"
+
+using nuke_ms::byte_traits;
 
 std::string escapechar(char _ch);
 
@@ -44,7 +45,7 @@ std::ostream& operator << (std::ostream& os,
 
 int main()
 {
-    std::wstring s(L"This is a wide char string");
+    byte_traits::string s(L"This is a wide char string");
     std::cout<<"Original string (length "<<s.length()<<"): \n"<<
         printbytes(s.begin(), s.end())<<'\n';
 
