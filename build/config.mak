@@ -19,7 +19,7 @@ LIBDIRS :=
 
 # boost library names follow a certain pattern
 BOOST_PREFIX :=
-BOOST_SUFFIX := -gcc42-mt-1_35
+BOOST_SUFFIX := -mt
 
 # wxWidgets flags and libraries
 WX_FLAGS := `wx-config --cxxflags`

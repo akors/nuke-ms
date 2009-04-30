@@ -34,9 +34,9 @@
 #ifndef NOTIFICATIONS_HPP
 #define NOTIFICATIONS_HPP
 
-#include <string>
-
 #include <boost/function.hpp>
+
+#include "bytes.hpp"
 
 namespace nuke_ms
 {
