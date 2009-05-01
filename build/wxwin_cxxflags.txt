@@ -1,1 +1,0 @@
-WX_CXXFLAGS=-mthreads -DHAVE_W32API_H -D__WXMSW__ -D__WXDEBUG__ -D_UNICODE -ID:\korsunsa\trunk\wxMSW-2.8.8\lib\gcc_lib\mswud -ID:\korsunsa\trunk\wxMSW-2.8.8\include -Wno-ctor-dtor-privacy -pipe -fmessage-length=0   

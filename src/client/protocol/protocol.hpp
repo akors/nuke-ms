@@ -38,13 +38,13 @@
 #define PROTOCOL_HPP_
 
 #include <stdexcept>
-#include <string>
 
 #include <boost/asio.hpp>
 
 #include <boost/thread/thread.hpp>
 #include <boost/statechart/asynchronous_state_machine.hpp>
 
+#include "bytes.hpp"
 #include "protocol/errors.hpp"
 #include "control/notifications.hpp"
 

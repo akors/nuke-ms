@@ -41,10 +41,10 @@
 #include <iostream>
 
 #include <stdexcept>
-#include <string>
 
 #include <boost/bind.hpp>
 
+#include "bytes.hpp"
 #include "control/notifications.hpp"
 #include "control/commands.hpp"
 

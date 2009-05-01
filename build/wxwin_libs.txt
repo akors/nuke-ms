@@ -1,1 +1,0 @@
-WX_LIBS=-mthreads -LD:\korsunsa\trunk\wxMSW-2.8.8\lib\gcc_lib -lwxmsw28ud_html -lwxmsw28ud_adv -lwxmsw28ud_core -lwxbase28ud_xml -lwxbase28ud_net -lwxbase28ud -lwxtiffd -lwxjpegd -lwxpngd -lwxzlibd -lwxregexud -lwxexpatd -lkernel32 -luser32 -lgdi32 -lcomdlg32 -lwxregexud -lwinspool -lwinmm -lshell32 -lcomctl32 -lole32 -loleaut32 -luuid -lrpcrt4 -ladvapi32 -lwsock32 
