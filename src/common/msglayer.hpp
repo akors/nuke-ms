@@ -39,58 +39,66 @@
 *
 * The idea behind this class hierarchy is to ease and unify the handling of
 * encoding and decoding messages into messages of a lower or upper layer.
+* To clarify the use of this class hierarchy, one hypothetical procedure of
+* sending a message is explained.
 *
-* To clarify the use of this hierarchy, one hypothetical procedure of sending a
-* message is explained:
-* The user enters some data (e.g. a text message). This data is
+* The message travels from the user "down the pipeline" to the network, where it
+* can be sent.
+* At the beginning the user enters some data (e.g. a text message). This data is
 * encapsuled in a wrapper tagging the message with metadata (like username,
 * font...). Let's call this layer "layer A".
 * Then message of layer A is encrypted becomes a message of layer b.
 * Finally the message is serialized. To ensure wholeness of the message, it is
 * encapsuled in a segmentation layer, layer C.
 *
-* The layer C object holds a copy of the layer B object, which holds a copy of
-* layer A object, which holds a copy of the text the user entered.
+* At this moment the message looks like this:
+* layer C object holds a copy of the layer B object, which holds a copy of layer
+* A object, which holds a copy of the text the user entered.
+* Now, the message can be sent over the network.
 *
-* To be able to send this message, the size of the message has to be determined
-* and the data has to be serialized.
-* To determine the size, the request is made "up the pipeline":
-* layer C asks layer B, which in turn asks A which knows
-* the size of the original message. The value travels back "down the pipeline",
-* where at each step the header size of each layer is added.
-* To serialize the message, layer C serializes its header and asks B to
-* serialize. B in turn serializes its header and asks A to serialize. A
-* serializes its header and appends the text data.
 *
-* This message pipeline is implemented by a class for each layer. An object of
+* This is what happens on the receiving site:
+* The header of the segmentation layer message (layer C) arrives at the
+* receiving site. The receiving site allocates memory and receives the
+* rest of the message.
+* Then, the message is passed "up the pipeline" to a responsible function
+* which determines the correct layer of the message (layer B in our case) and
+* passes the message on to the next layer handling function. His layer B
+* function unpacks the encapsuled layer A message which is then finally
+* displayed back to the user.
+*
+*
+* Implementation
+*
+* The message pipeline is implemented by a class for each layer. An object of
 * this class is therefor considered as a message of this layer.
 * Although the above explanation would suggest that each layer holds a copy of
 * it's upper layer, it is up to the implementation of a layer to decide wether
 * the data is held as a reference or a copy.
 * Normally a layer only adds a small header (compared to the size of the
-* original message). Therefor it would be waste of memory and computation time
-* to copy the data of each upper layer into the current layer.
+* original message) to the message and passes it down to the next layer. It
+* would be waste of memory and computation time to copy the data of each upper
+* layer into the current layer.
 * To avoid this, layers should hold their data as a reference counted shared
 * pointer. Only when necessary - usually when the data is actually sent over the
 * network - the data is serialized and written into a single buffer. This buffer
 * is sent over the network, and the original data chunks (headers + user data)
 * are discarded (and deleted!).
 *
-* Let's examine the handling of the message on the receiving side:
-* The header of the segmentation layer message (layer C) arrives at the
-* receiving site. Then the receiving site allocates memory and receives the
-* rest of the message.
-* Then, the message is passed "up the pipeline". However, the code that handles
-* new messages doesn't know what kind of message (which layer) it has received.
-* Therefor, layer C is holding a reference to a message of an "unknown message
-* layer". The layer C message is passed to the next handling code. This
-* code inspects the "unknown message layer" message and tries to make sense of
-* it. If it does, the appropriate message layer (let's say it's layer B) is
-* constructed from the unknown message layer. The upper layer contained in this
-* layer B message is still unknown, and will be a "unknown message layer"
-* message. The message is passed up to the next handling code, the data is
-* investigated and the appropriate layer (let's say layer A) is constructed.
-* The string message contained in layer A is then displayed to the user.
+*   Sending messages
+*
+* When sending messages, the size of the message has to be determined
+* and the data has to be serialized.
+* To determine the size, a request is made up the pipeline:
+* layer C asks layer B, which in turn asks A which knows
+* the size of the original message. The value travels back down the pipeline,
+* where at each step the header size of each layer is added.
+* To serialize the message, layer C serializes its header and asks B to
+* serialize. B in turn serializes its header and asks A to serialize. A
+* serializes its header and appends the text data. The network layer can then
+* send the serialized data.
+*
+*  Receiving messages
 *
 * The main memory allocation for an incoming message should be performed at the
 * very beginning, right before receiving the message body of the segmentation
@@ -103,6 +111,8 @@
 * If for a layer, the cost becomes to high (if its header is rather big), it
 * can decide to discard the old buffer and allocate a new smaller buffer.
 *
+*
+* @todo Describe implementation of the message pipeline
 */
 
 
