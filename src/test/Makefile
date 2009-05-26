@@ -4,17 +4,12 @@ PROJECT_ROOT := ../..
 # include global makefile
 include $(PROJECT_ROOT)/build/global.mak
 
-
-# create a variable that contains all source files
-# first expand the wildcard in the working directory
-SOURCES := $(wildcard *.cpp)
-# finally create the names for the executable files
-EXECS := $(patsubst %.cpp,%,$(SOURCES))
-
-
+EXECS := teststringwrap testownership
 #LDFLAGS += -l$(B_LIB_SYSTEM)
 
 all: $(EXECS)
+
+teststringwrap: byteprinter.o
 
 %: %.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS) -lnukems
