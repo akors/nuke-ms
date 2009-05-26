@@ -302,6 +302,37 @@ public:
     { return  memblock; }
 };
 
+/** Layer that ensures proper segmentation of messages sent over the network.
+* This class should be used as the lowest layer of a message - the one that
+* shall be sent over the network. The next level lower than this one is the TCP
+* layer.
+* This class tags messages with a header @todo
+*/
+class SegmentationLayer : public BasicMessageLayer
+{
+    BasicMessageLayer::ptr_type upper_layer;
+    std::size_t datasize;
+
+public:
+    typedef boost::shared_ptr<SegmentationLayer> ptr_type;
+
+    enum { LAYER_ID = 0x80 };
+    enum { header_length = 4 };
+
+    struct HeaderType {
+        byte_traits::uint2b_t packetsize;
+    };
+
+    SegmentationLayer(BasicMessageLayer::ptr_type _upper_layer)
+        : upper_layer(_upper_layer), datasize(upper_layer->getSerializedSize())
+    { }
+
+    virtual std::size_t getSerializedSize() const throw()
+    { return datasize + header_length; }
+
+    virtual data_iterator fillSerialized(data_iterator buffer) const throw();
+};
+
 /** Layer wrapping a string.
 * This class is a simple wrapper around a wstring message.
 * No header is prepended to the message.

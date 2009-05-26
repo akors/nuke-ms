@@ -41,8 +41,8 @@ std::string escapechar(char _ch)
         default:
             retstring<<"\\x";
             retstring.width(2);
-
-retstring<<std::hex<<std::right<<std::setfill('0')<<static_cast<unsigned>(ch);
+            retstring<<std::hex<<std::right<<std::setfill('0')<<
+                static_cast<unsigned>(ch);
     }
 
     return retstring.str();

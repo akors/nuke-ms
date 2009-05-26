@@ -124,7 +124,7 @@ std::size_t StringwrapLayer::getSerializedSize() const throw()
 }
 
 BasicMessageLayer::data_iterator
-StringwrapLayer::fillSerialized(data_iterator buffer) const
+StringwrapLayer::fillSerialized(BasicMessageLayer::data_iterator buffer) const
     throw()
 {
     // an iterator to the message of string type
@@ -136,4 +136,25 @@ StringwrapLayer::fillSerialized(data_iterator buffer) const
         buffer = writebytes(buffer, htonx(*in_iter));
 
     return buffer;
+}
+
+
+BasicMessageLayer::data_iterator
+SegmentationLayer::fillSerialized(BasicMessageLayer::data_iterator buffer) const
+    throw()
+{
+    // first byte is layer identifier
+    *buffer++ = static_cast<byte_traits::byte_t>(LAYER_ID);
+
+    // second and third bytes are the size of the whole packet
+    buffer = writebytes(
+        buffer,
+        htonx(static_cast<byte_traits::uint2b_t>(datasize+header_length))
+    );
+
+    // fourth byte is a zero
+    *buffer++ = 0;
+
+    // the rest is the message
+    return upper_layer->fillSerialized(buffer);
 }
