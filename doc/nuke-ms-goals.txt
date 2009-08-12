@@ -1,0 +1,33 @@
+nuke-ms is intended as a multi-platform, reliable and secure instant messaging
+system.
+
+The goal of this project is to create a messaging system that is secure,
+stable, efficient and powerful.
+
+The communication architecture shall be scalable reaching from simple peer to
+peer communcation and a client/server model to, broad distributed web of
+communication nodes.
+
+Security shall be achieved by applying modern cryptographic methods to
+authentication of and encryption of messages of all including parties, wether
+human oder automated.
+
+The resulting code shall be mature, well tested, effective and
+comprehensible; only high-quality and multi-platform libraries shall be used.
+Defects of the code, documentation or environment must not be hidden or
+obfuscated, instead these defects shall be addressed openly, fast and
+responsibly.
+
+Clear guidelines and extensive and comprehensible documentation shall be an aid
+to both contributors and users and ensure clarity of the development process
+and functionality of the software.
+
+The project shall reach a broad audience and impose as few restrictions on the
+usage as possible. This shall be achieved by opening the program to as many
+platforms, languages, use cases and audience skills as possible.
+
+The development process must be open and have many possibilities
+for contribution.
+nuke-ms is free software and dedicated to the FLOSS Community. Distribution and 
+modification are allowed and well appreciated.
+
