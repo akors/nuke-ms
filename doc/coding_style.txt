@@ -78,7 +78,7 @@ separate expressions. They can be omitted however, to squeeze an expression into
 one line.
 
 
-Line Length:
+7) Line Length:
 
 The maximum line length is 80 characters, including any leading and trailing
 whitespace.
@@ -87,7 +87,7 @@ cases it is advisable to ignore this limitation and write lines that are longer
 than 80 characters.
 
 
-Source file layout:
+8) Source file layout:
 Every source file begins with a C++ line comment ("//"), a space, the name of
 the source file, a newline, another newline and the license block.
 
