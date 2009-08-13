@@ -22,5 +22,5 @@ testsegmlayer: testsegmlayer.cpp byteprinter.o
 
 
 clean:
-	-$(RMF) $(EXECS)
+	-$(RMF) $(EXECS) *.o
 
