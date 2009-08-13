@@ -54,10 +54,10 @@ int main()
     // construct segmentation layer from the unknonw message layer
     SegmentationLayer
     segmlayer_up((bytewise));
-/*
+
     // stringwrap from unknown layer
     try {
-        StringwrapLayer s2(segmlayer_up);
+        StringwrapLayer s2(*segmlayer_up.getUpperLayer());
 
         std::cout<<"The sent string has size "<<std::dec<<
             s2.getString().size()<<" and was: ";
@@ -65,7 +65,7 @@ int main()
         std::wcout<<s2.getString()<<std::endl;
     }
     catch(const MsgLayerError&)
-    { std::cout<<"Error constructing stringwrap package\n"; }*/
+    { std::cout<<"Error constructing stringwrap package\n"; }
 
     return 0;
 }

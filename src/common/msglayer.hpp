@@ -121,8 +121,6 @@
 
 
 
-
-
 namespace nuke_ms
 {
 
@@ -165,6 +163,27 @@ struct InvalidHeaderError : public MsgLayerError
         : MsgLayerError("Invalid packet header")
     {}
 };
+
+// this exception is thrown when putting a MessageLayer message into a
+// SegmentationLayer message and then retrieving it again.
+// This does not make much sense
+struct MessageReusedError  : public std::logic_error
+{
+    MessageReusedError() throw()
+        : std::logic_error(
+            "Retrieved layer message originating from application.")
+    {}
+
+    /** Return error message as char array.
+    * @return A null- terminated character array containg the error message
+    */
+    virtual const char* what() const throw()
+    { return std::logic_error::what(); }
+
+    virtual ~MessageReusedError() throw()
+    { }
+};
+
 
 
 /** Object holding an ownership to memory.
@@ -406,6 +425,31 @@ public:
     // overriding base class version
     virtual data_iterator fillSerialized(data_iterator buffer) const throw();
 
+    /** Return a pointer to the message contained in this layer.
+    * This function is used to retrieve a Message that was constructed from
+    * incoming network data.
+    * If the message contained in this layer is not constructed from network
+    * data but instead from a message coming from the application, a
+    * MessageReusedError exception is thrown.
+    *
+    * @returns A pointer to an UnknownMessageLayer object containing the
+    * data coming from the network.
+    *
+    * @throws MessageReusedError when
+    */
+    const UnknownMessageLayer::ptr_type getUpperLayer() const
+        throw(MessageReusedError)
+    {
+        // cast to unknown message layer
+        UnknownMessageLayer::ptr_type unknown =
+            boost::dynamic_pointer_cast<UnknownMessageLayer>(upper_layer);
+
+        // if the cast failed, throw an exception
+        if (!unknown)
+            throw MessageReusedError();
+
+        return unknown;
+    }
 
 };
 
