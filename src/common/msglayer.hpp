@@ -18,21 +18,11 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
-
-#ifndef MSGLAYERS_HPP_INCLUDED
-#define MSGLAYERS_HPP_INCLUDED
-
-#include <stdexcept>
-#include <limits>
-
-#include <boost/shared_ptr.hpp>
-
-#include "bytes.hpp"
-
-
 /** @file msglayer.hpp
-* @brief Message Layers
+* @brief Message Layer Interface
+*
+* This file contains declarations and definitions of the Message Layer
+* infrastructure.
 *
 * When data is intended to be sent over the network, the data normally is
 * encapsuled in many layers, several "headers" are attached to it.
@@ -107,13 +97,30 @@
 * At the expense of unnessecary bytes being held in memory, additional memory
 * allocations and copy operations can be prevented. This should be a good
 * tradeoff because "normally" the headers on the messages are relatively small
-* and memory waste is negelctable.
-* If for a layer, the cost becomes to high (if its header is rather big), it
+* and memory waste is neglectable.
+* If for a layer the cost becomes to high (if its header is rather big), it
 * can decide to discard the old buffer and allocate a new smaller buffer.
 *
 *
 * @todo Describe implementation of the message pipeline
+*
+* @author Alexander Korsunsky
+*
 */
+
+
+#ifndef MSGLAYERS_HPP_INCLUDED
+#define MSGLAYERS_HPP_INCLUDED
+
+#include <stdexcept>
+#include <limits>
+
+#include <boost/shared_ptr.hpp>
+
+#include "bytes.hpp"
+
+
+
 
 
 namespace nuke_ms
@@ -151,6 +158,13 @@ public:
     { }
 };
 
+
+struct InvalidHeaderError : public MsgLayerError
+{
+    InvalidHeaderError() throw()
+        : MsgLayerError("Invalid packet header")
+    {}
+};
 
 
 /** Object holding an ownership to memory.
@@ -191,12 +205,11 @@ public:
 
 
 /** Message Layer base class.
+*
 * This virtual base class presents a basic interface to it's deriving classes.
 * Derived classes are said to represent "layers" of the communication pipeline,
 * and objects of these deriving classes represent "messages" of their layer
 * in the communication pipeline.
-*
-*
 */
 class BasicMessageLayer
 {
@@ -220,7 +233,7 @@ public:
     virtual std::size_t getSerializedSize() const throw() = 0;
 
     /** Fill a buffer with the serialized version of this object.
-    * This function serializes itself (and its upper layers) and writes
+    * This function serializes this layer (and its upper layers) and writes
     * the bytes into a buffer that is pointed to by buffer.
     * The buffer has to have at least the size that is returned by the
     * getSerializedSize() functions. Beware! No checks will be performed
@@ -241,20 +254,22 @@ typedef MemoryOwnership<BasicMessageLayer::dataptr_type> DataOwnership;
 
 /** Message of an unknown message layer.
 * This class should be used when a new message arrives and its real message
-* layer class is not determined yet. It holds all only the reference to the
-* memory block and a iterator to the data.
+* layer class is not determined yet. It holds only the reference to the
+* memory block and an iterator to the data.
 * It provides a possibility to access the contained data to determine the real
 * message layer class.
 */
 class UnknownMessageLayer : public BasicMessageLayer
 {
-    typedef boost::shared_ptr<UnknownMessageLayer> ptr_type;
-
     DataOwnership memblock; /**< Ownership to the memory block */
     const_data_iterator data_it; /**< Iterater to the data */
-    std::size_t data_size; /**< Size of the data */
+    std::size_t datasize; /**< Size of the data */
 
 public:
+
+    typedef boost::shared_ptr<UnknownMessageLayer> ptr_type;
+
+
     /** Constructor.
     * Constructs a new object and passes memory ownership, data iterator and
     * data size. Note that the memory block can contain other data than is
@@ -265,12 +280,12 @@ public:
     * valid
     * @param _data_it Iterator to the data of the message in the memory block
     * block
-    * @param _data_size size of the message in bytes
+    * @param _datasize size of the message in bytes
     */
     UnknownMessageLayer(
         DataOwnership _memblock,
         const_data_iterator _data_it,
-        std::size_t _data_size,
+        std::size_t _datasize,
         bool new_memory_block = false
     );
 
@@ -302,36 +317,125 @@ public:
     { return  memblock; }
 };
 
-/** Layer that ensures proper segmentation of messages sent over the network.
+/** Layer ensuring correct segmentation of messages
+*
 * This class should be used as the lowest layer of a message - the one that
 * shall be sent over the network. The next level lower than this one is the TCP
 * layer.
-* This class tags messages with a header @todo
+* This class tags messages with a binary header in the following layout:
+* Bits
+* 0:      Layer Identifier, Value 0x80
+* 1-2:    Packet size in Network Byte Order
+* 3:      Zero, Value 0x0
+*
 */
 class SegmentationLayer : public BasicMessageLayer
 {
-    BasicMessageLayer::ptr_type upper_layer;
-    std::size_t datasize;
+
+    BasicMessageLayer::ptr_type upper_layer; /**< Upper layer */
+    std::size_t datasize; /**< size of the data for fast access */
 
 public:
+    /** Type of pointer to this class. */
     typedef boost::shared_ptr<SegmentationLayer> ptr_type;
 
-    enum { LAYER_ID = 0x80 };
+    enum { LAYER_ID = 0x80 }; /**< Layer Identifier */
     enum { header_length = 4 };
 
+    /** Type representing the header of a packet. */
     struct HeaderType {
         byte_traits::uint2b_t packetsize;
     };
 
+    /** Header decoding function.
+    *
+    * Creates a HeaderType structure from a series of bytes. The header is
+    * checked for validity, if invalid an InvalidHeaderError is thrown.
+    *
+    * @tparam InputIterator An Iterator type whos dereferenced type  is
+    * convertible to byte_traits::byte_t. Must meet the
+    * InputIterator requirement.
+    *
+    * @param headerbuf An Iterator to series of bytes containing the header of
+    * a serialized SegmentationLayer message. Must be at header_length bytes
+    * long.
+    */
+    template <typename InputIterator>
+    static HeaderType decodeHeader(InputIterator headerbuf)
+        throw(InvalidHeaderError);
+
+    /** Constructor.
+    * Construct a SegmentationLayer message from an upper layer, say a message
+    * coming from the application.
+    *
+    * @note To pass an upper layer, you have to static_cast the pointer to the
+    * message to the base class Pointer, BasicMessageLayer::ptr_type. Otherwise
+    * the overload with SegmentationLayer(BasicMessageLayer::dataptr_type)
+    * will not resolve. This is because overloads of function with different
+    * instantiations of boost::shared_ptr<> do not resolve with base class
+    * pointers.
+    *
+    * @param _upper_layer The message of the upper layer you want to send.
+    */
     SegmentationLayer(BasicMessageLayer::ptr_type _upper_layer)
         : upper_layer(_upper_layer), datasize(upper_layer->getSerializedSize())
     { }
 
+
+    /** Constructor.
+    * Construct a SegmentationLayer message from network data, say a message
+    * coming directly from the network.
+    *
+    * @param data A BasicMessageLayer::ptr_type, a shared pointer to a vector of
+    * bytes. This vector has to contain the body of the message (not the
+    * header).
+    *
+    * @note To pass an upper layer, you have to static_cast the pointer to the
+    * message to the base class Pointer, BasicMessageLayer::ptr_type. Otherwise
+    * the overload with SegmentationLayer(BasicMessageLayer::ptr_type)
+    * will not resolve. This is because overloads of function with different
+    * instantiations of boost::shared_ptr<> do not resolve with base class
+    * pointers.
+    */
+    SegmentationLayer(BasicMessageLayer::dataptr_type data);
+
+    // overriding base class version
     virtual std::size_t getSerializedSize() const throw()
     { return datasize + header_length; }
 
+    // overriding base class version
     virtual data_iterator fillSerialized(data_iterator buffer) const throw();
+
+
 };
+
+
+
+template <typename InputIterator>
+SegmentationLayer::HeaderType
+SegmentationLayer::decodeHeader(InputIterator headerbuf)
+    throw(InvalidHeaderError)
+{
+    HeaderType headerdata;
+
+    // check first byte to be the correct layer identifier
+    if ( headerbuf[0] !=
+        static_cast<byte_traits::byte_t>(SegmentationLayer::LAYER_ID) )
+        throw InvalidHeaderError();
+
+    // get the size of the packet
+    readbytes<byte_traits::uint2b_t>(&headerdata.packetsize, &headerbuf[1]);
+
+    headerdata.packetsize = ntohx(headerdata.packetsize);
+
+    if (headerbuf[3] != 0)
+        throw InvalidHeaderError();
+
+    return headerdata;
+}
+
+
+
 
 /** Layer wrapping a string.
 * This class is a simple wrapper around a wstring message.

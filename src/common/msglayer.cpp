@@ -29,10 +29,10 @@ using namespace nuke_ms;
 UnknownMessageLayer::UnknownMessageLayer(
     DataOwnership _memblock,
     BasicMessageLayer::const_data_iterator _data_it,
-    std::size_t _data_size,
+    std::size_t _datasize,
     bool new_memory_block
 )
-    : memblock(), data_it(_data_it), data_size(_data_size)
+    : memblock(), data_it(_data_it), datasize(_datasize)
 {
     // if we don't want a new memory block, everything is fine
     if (!new_memory_block)
@@ -45,13 +45,13 @@ UnknownMessageLayer::UnknownMessageLayer(
     {
         // allocate buffer with appropriate size
         BasicMessageLayer::dataptr_type data(
-            new byte_traits::byte_sequence(_data_size)
+            new byte_traits::byte_sequence(_datasize)
         );
 
         // copy buffer
         std::copy(
             _data_it,
-            _data_it + _data_size,
+            _data_it + _datasize,
             data->begin()
         );
 
@@ -67,7 +67,7 @@ UnknownMessageLayer::UnknownMessageLayer(
 std::size_t UnknownMessageLayer::getSerializedSize() const throw()
 {
     // return the size of the memory block
-    return data_size;
+    return datasize;
 }
 
 
@@ -78,7 +78,7 @@ UnknownMessageLayer::fillSerialized(data_iterator buffer) const
     // copy the maintained data into the specified buffer
     return std::copy(
         data_it,
-        data_it + data_size,
+        data_it + datasize,
         buffer
     );
 }
@@ -91,15 +91,15 @@ StringwrapLayer::StringwrapLayer(const byte_traits::string& msg) throw ()
 StringwrapLayer::StringwrapLayer(const UnknownMessageLayer& msg)
     throw(MsgLayerError)
 {
-    std::size_t data_size = msg.getSerializedSize();
+    std::size_t datasize = msg.getSerializedSize();
     const_data_iterator data_it = msg.getDataIterator();
 
     // bail out if the string is not aligned
-    if (data_size % sizeof(byte_traits::string::value_type) !=0)
+    if (datasize % sizeof(byte_traits::string::value_type) !=0)
         throw MsgLayerError("Unaligned packet");
 
     // set message_string to the proper size
-    message_string.resize((data_size)/sizeof(byte_traits::string::value_type));
+    message_string.resize((datasize)/sizeof(byte_traits::string::value_type));
 
     // iterator to the message_string
     byte_traits::string::iterator out_iter = message_string.begin();
@@ -107,7 +107,7 @@ StringwrapLayer::StringwrapLayer(const UnknownMessageLayer& msg)
     byte_traits::string::value_type tmpval;
 
     // iterate through all bytes in the sequence
-    for ( const_data_iterator it = data_it; it < data_it + data_size; )
+    for ( const_data_iterator it = data_it; it < data_it + datasize; )
     {
         // read bytes into a character, convert byte endianness
         it = readbytes(&tmpval, it);
@@ -138,6 +138,13 @@ StringwrapLayer::fillSerialized(BasicMessageLayer::data_iterator buffer) const
     return buffer;
 }
 
+SegmentationLayer::SegmentationLayer(BasicMessageLayer::dataptr_type data)
+    : datasize(data->size())
+{
+    upper_layer = UnknownMessageLayer::ptr_type(
+        new UnknownMessageLayer(DataOwnership(data), data->begin(), datasize)
+    );
+}
 
 BasicMessageLayer::data_iterator
 SegmentationLayer::fillSerialized(BasicMessageLayer::data_iterator buffer) const
