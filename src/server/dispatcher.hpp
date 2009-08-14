@@ -55,12 +55,14 @@ public:
 
 private:
     typedef boost::shared_ptr<boost::asio::ip::tcp::socket> socket_ptr;
+    typedef std::map<RemotePeer::connection_id_t, RemotePeer::ptr_type>
+        peers_list_type;
 
     boost::asio::io_service io_service;
     boost::asio::ip::tcp::acceptor acceptor;
 
     /** A list with connected peers. */
-    std::map<RemotePeer::connection_id_t, RemotePeer::ptr_type> peers_list;
+   peers_list_type peers_list;
 
     static const unsigned short listening_port = 34443;
 
@@ -81,7 +83,7 @@ private:
 
     void distributeMessage(
         RemotePeer::connection_id_t originating_id,
-        SegmentationLayer::dataptr_type data
+        SegmentationLayer::ptr_type data
     );
 
     RemotePeer::connection_id_t getNextConnectionId();

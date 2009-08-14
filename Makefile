@@ -5,7 +5,7 @@ PROJECT_ROOT := .
 include $(PROJECT_ROOT)/build/global.mak
 
 
-all: tests
+all: nuke-ms-serv
 
 nuke-ms-client: nuke-ms-common
 	$(MAKE) -C $(CLIENTDIR)

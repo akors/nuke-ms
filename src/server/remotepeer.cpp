@@ -163,9 +163,12 @@ void RemotePeer::rcvBodyHandler(
     }
     else
     {
+        SegmentationLayer::ptr_type segmlayer = SegmentationLayer::ptr_type(
+            new SegmentationLayer(body_data));
+
         // if the receive was ok, post the passage back to the enclosing entity
         remotepeer.event_callback(
-            ReceivedMessageEvent(remotepeer.connection_id, body_data)
+            ReceivedMessageEvent(remotepeer.connection_id, segmlayer)
         );
 
         // renew receive Call
@@ -176,7 +179,10 @@ void RemotePeer::rcvBodyHandler(
 
 void RemotePeer::sendMessage(const SegmentationLayer& msg) throw()
 {
-    SegmentationLayer::dataptr_type data = msg.serialize();
+    SegmentationLayer::dataptr_type data = SegmentationLayer::dataptr_type(
+        new byte_traits::byte_sequence(msg.getSerializedSize()));
+
+    msg.fillSerialized(data->begin());
 
     // write the Message onto the line
     boost::asio::async_write(
