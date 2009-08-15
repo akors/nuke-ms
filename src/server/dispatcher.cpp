@@ -155,17 +155,14 @@ void DispatchingServer::acceptHandler(
 
 void DispatchingServer::distributeMessage(
     RemotePeer::connection_id_t originating_id,
-    SegmentationLayer::dataptr_type data
+    SegmentationLayer::ptr_type data
 )
 {
-    SegmentationLayer segmlayer_data(*data);
-
-    std::map<RemotePeer::connection_id_t, RemotePeer::ptr_type>::iterator it =
-        peers_list.begin();
+    peers_list_type::iterator it = peers_list.begin();
 
     for(; it != peers_list.end(); ++it )
     {
-        it->second->sendMessage(segmlayer_data);
+        it->second->sendMessage(*data);
     }
 }
 

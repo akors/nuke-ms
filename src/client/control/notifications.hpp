@@ -140,25 +140,19 @@ struct ReportNotification : public ProtocolNotification, public RequestReport
 struct SendReport :
     public ReportNotification<ProtocolNotification::ID_SEND_REPORT>
 {
-    /** The message that was supposed to be sent. */
-    byte_traits::string message;
-
     /** Generate a successful report.
      * @param _message The message that was supposed to be sent.
      */
-    SendReport(byte_traits::string _message)  throw()
-        : ReportNotification<ProtocolNotification::ID_SEND_REPORT>(),
-            message(_message)
+    SendReport()  throw()
+        : ReportNotification<ProtocolNotification::ID_SEND_REPORT>()
     {}
 
     /** Generate a negative report
-     * @param _message The message that was supposed to be sent.
      * @param _failure_reason The reason why the sending failed.
      */
-    SendReport(byte_traits::string _message, byte_traits::string _failure_reason)  throw()
+    SendReport(byte_traits::string _failure_reason)  throw()
         : ReportNotification<ProtocolNotification::ID_SEND_REPORT>(
-            _failure_reason),
-        message(_message)
+            _failure_reason)
     {}
 };
 #endif

@@ -126,7 +126,6 @@ boost::statechart::result StateWaiting::react(const EvtSendMsg& evt)
     context<ProtocolMachine>()
         .notification_callback(
             control::SendReport(
-                StringwrapLayer(*evt.data->getPayload()).getString(),
                 byte_traits::string(L"Not Connected."))
             );
 
@@ -173,7 +172,6 @@ boost::statechart::result StateNegotiating::react(const EvtSendMsg& evt)
     context<ProtocolMachine>()
         .notification_callback(
             control::SendReport(
-                StringwrapLayer(*evt.data->getPayload()).getString(),
                 byte_traits::string(L"Not yet Connected."))
             );
 
@@ -212,8 +210,21 @@ boost::statechart::result StateNegotiating::react(const EvtDisconnectRequest&)
     return transit<StateWaiting>();
 }
 
+boost::statechart::result StateNegotiating::react(const EvtConnectRequest&)
+{
+    context<ProtocolMachine>()
+        .notification_callback(
+            control::ReportNotification
+                <control::ProtocolNotification::ID_CONNECT_REPORT>(
+                    byte_traits::string(L"Currently trying to connect")
+                )
+            );
+
+    return discard_event();
+}
 
 
+#if 0
 void StateNegotiating::tiktakHandler(
     const boost::system::error_code& error,
     boost::shared_ptr<boost::asio::deadline_timer> timer,
@@ -222,6 +233,7 @@ void StateNegotiating::tiktakHandler(
 {
     std::cout<<"Timer went off: "<<error.message()<<'\n';
 }
+#endif
 
 void StateNegotiating::resolveHandler(
     const boost::system::error_code& error,
@@ -269,6 +281,8 @@ void StateNegotiating::resolveHandler(
         )
     );
 }
+
+
 
 
 void StateNegotiating::connectHandler(
@@ -338,8 +352,14 @@ boost::statechart::result StateConnected::react(const EvtDisconnectRequest&)
 
 boost::statechart::result StateConnected::react(const EvtSendMsg& evt)
 {
-    SegmentationLayer segm_layer(*evt.data);
-    SegmentationLayer::dataptr_type data = segm_layer.serialize();
+    // create segmentation layer from the data to be sent
+    SegmentationLayer segm_layer(evt.data);
+
+    // create buffer, fill it with the serialized message
+    SegmentationLayer::dataptr_type data(
+	new byte_traits::byte_sequence(segm_layer.getSerializedSize()));
+
+    segm_layer.fillSerialized(data->begin());
 
     async_write(
         context<ProtocolMachine>().socket,
@@ -368,11 +388,32 @@ boost::statechart::result StateConnected::react(const EvtDisconnected& evt)
 
 boost::statechart::result StateConnected::react(const EvtRcvdMessage& evt)
 {
-     context<ProtocolMachine>()
-        .notification_callback(control::ReceivedMsgNotification(evt.msg));
+    // FIXME data implicitly treated as a string, which might not be
+    // correct
+
+    // create string from received data
+    StringwrapLayer str(*evt.data.getUpperLayer());
+
+     context<ProtocolMachine>().notification_callback(
+	control::ReceivedMsgNotification(str.getString()));
 
     return discard_event();
 }
+
+
+boost::statechart::result StateConnected::react(const EvtConnectRequest&)
+{
+    context<ProtocolMachine>()
+        .notification_callback(
+            control::ReportNotification
+                <control::ProtocolNotification::ID_CONNECT_REPORT>(
+                    byte_traits::string(L"Allready connected")
+                )
+            );
+
+    return discard_event();
+}
+
 
 
 void StateConnected::writeHandler(
@@ -387,9 +428,7 @@ void StateConnected::writeHandler(
     if (!error)
     {
         _outermost_context.notification_callback(
-            control::SendReport(
-                StringwrapLayer(*data).getString()
-            )
+            control::SendReport()
         );
     }
     else
@@ -398,7 +437,6 @@ void StateConnected::writeHandler(
 
         _outermost_context.notification_callback(
             control::SendReport(
-                StringwrapLayer(*data).getString(),
                 byte_traits::string(errmsg.begin(), errmsg.end())
             )
         );
@@ -520,12 +558,12 @@ void StateConnected::receiveSegmentationBodyHandler(
     }
     else // if no error occured, report the received message to the application
     {
-        StringwrapLayer strlayer(*rcvbuf);
+        SegmentationLayer segmlayer(rcvbuf);
 
         _outermost_context.my_scheduler().queue_event(
             _outermost_context.my_handle(),
             boost::intrusive_ptr<EvtRcvdMessage>(
-                new EvtRcvdMessage(strlayer.getString())
+                new EvtRcvdMessage(segmlayer)
             )
         );
 

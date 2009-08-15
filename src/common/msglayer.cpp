@@ -18,132 +18,150 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <algorithm>
 
 #include "bytes.hpp"
 #include "msglayer.hpp"
 
 using namespace nuke_ms;
 
-std::size_t SegmentationLayer::getSerializedSize() const throw()
+
+UnknownMessageLayer::UnknownMessageLayer(
+    DataOwnership _memblock,
+    BasicMessageLayer::const_data_iterator _data_it,
+    std::size_t _datasize,
+    bool new_memory_block
+)
+    : memblock(), data_it(_data_it), datasize(_datasize)
 {
-    return header_length + payload.size();
+    // if we don't want a new memory block, everything is fine
+    if (!new_memory_block)
+    {
+        memblock = _memblock;
+        data_it = _data_it;
+    }
+    // if we do want one, we have to allocate a new buffer and copy the data
+    else
+    {
+        // allocate buffer with appropriate size
+        BasicMessageLayer::dataptr_type data(
+            new byte_traits::byte_sequence(_datasize)
+        );
+
+        // copy buffer
+        std::copy(
+            _data_it,
+            _data_it + _datasize,
+            data->begin()
+        );
+
+        // assign ownership
+        memblock = DataOwnership(data);
+
+        // asign data iterator
+        data_it = data->begin();
+    }
 }
 
 
-BasicMessageLayer::dataptr_type SegmentationLayer::serialize() const throw()
+std::size_t UnknownMessageLayer::getSerializedSize() const throw()
 {
+    // return the size of the memory block
+    return datasize;
+}
 
-    // create empty sequence with the appropriate size
-    BasicMessageLayer::dataptr_type serialized(
-        new byte_traits::byte_sequence(header_length + payload.size())
+
+BasicMessageLayer::data_iterator
+UnknownMessageLayer::fillSerialized(data_iterator buffer) const
+    throw()
+{
+    // copy the maintained data into the specified buffer
+    return std::copy(
+        data_it,
+        data_it + datasize,
+        buffer
     );
-
-
-    byte_traits::byte_sequence::iterator data_iterator = serialized->begin();
-
-    // first byte is the Layer Identifier
-    *data_iterator++ = static_cast<byte_traits::byte_t>(LAYER_ID);
-
-    // second and third bytes are the size of the whole packet
-    data_iterator = writebytes(
-        data_iterator,
-        htonx(static_cast<byte_traits::uint2b_t>(serialized->size()))
-    );
-
-
-    // fourth byte is padded with zeros
-    *data_iterator++ = 0;
-
-    // the rest comes from the data portion
-    std::copy(payload.begin(), payload.end(), data_iterator);
-
-    return serialized;
 }
-
-
-BasicMessageLayer::dataptr_type SegmentationLayer::getPayload() const throw()
-{
-    // create new buffer, copy payload into it
-    BasicMessageLayer::dataptr_type data(
-        new byte_traits::byte_sequence(payload)
-    );
-
-    return data;
-}
-
-
-
-
-BasicMessageLayer::dataptr_type StringwrapLayer::serialize() const throw()
-{
-    // create new buffer, copy payload into it
-    BasicMessageLayer::dataptr_type data(
-        new byte_traits::byte_sequence(payload)
-    );
-
-    return data;
-}
-
-BasicMessageLayer::dataptr_type StringwrapLayer::getPayload() const throw()
-{
-    return this->serialize();
-}
-
-
 
 StringwrapLayer::StringwrapLayer(const byte_traits::string& msg) throw ()
-    : payload(msg.length()*sizeof(byte_traits::string::value_type))
-{
-    // initialize payload to be as big as sizeof(byte_traits::string::value_type)
-    // times the message length
+    : message_string(msg)
+{}
 
-    // one iterator for input, one for output
-    byte_traits::byte_sequence::iterator out_iter = payload.begin();
-    byte_traits::string::const_iterator in_iter = msg.begin();
+
+StringwrapLayer::StringwrapLayer(const UnknownMessageLayer& msg)
+    throw(MsgLayerError)
+{
+    std::size_t datasize = msg.getSerializedSize();
+    const_data_iterator data_it = msg.getDataIterator();
+
+    // bail out if the string is not aligned
+    if (datasize % sizeof(byte_traits::string::value_type) !=0)
+        throw MsgLayerError("Unaligned packet");
+
+    // set message_string to the proper size
+    message_string.resize((datasize)/sizeof(byte_traits::string::value_type));
+
+    // iterator to the message_string
+    byte_traits::string::iterator out_iter = message_string.begin();
+
+    byte_traits::string::value_type tmpval;
+
+    // iterate through all bytes in the sequence
+    for ( const_data_iterator it = data_it; it < data_it + datasize; )
+    {
+        // read bytes into a character, convert byte endianness
+        it = readbytes(&tmpval, it);
+        *out_iter++ = ntohx(tmpval);
+    }
+
+
+}
+
+
+std::size_t StringwrapLayer::getSerializedSize() const throw()
+{
+    return message_string.length() * sizeof(byte_traits::string::value_type);
+}
+
+BasicMessageLayer::data_iterator
+StringwrapLayer::fillSerialized(BasicMessageLayer::data_iterator buffer) const
+    throw()
+{
+    // an iterator to the message of string type
+    byte_traits::string::const_iterator in_iter = message_string.begin();
 
     // write all bytes of one character into the buffer, advance the output
     // iterator
-    for (; in_iter < msg.end(); in_iter++)
-        out_iter = writebytes(out_iter, *in_iter);
+    for (; in_iter < message_string.end(); in_iter++)
+        buffer = writebytes(buffer, htonx(*in_iter));
+
+    return buffer;
 }
 
-
-
-byte_traits::string StringwrapLayer::getString() const throw()
+SegmentationLayer::SegmentationLayer(BasicMessageLayer::dataptr_type data)
+    : datasize(data->size())
 {
-    // assure that the payload length is a multiple of the
-    // size of the character type (granted by the constructor)
-    assert(!(payload.size() % sizeof(byte_traits::string::value_type)));
-
-    // creat a string, initialize with the right size
-    // and create iterator pointing at it
-    byte_traits::string str((payload.size()/sizeof(byte_traits::string::value_type)), 'a');
-    byte_traits::string::iterator out_iter = str.begin();
-
-    // create a temporary value to store one wide character
-    byte_traits::string::value_type tmpval;
-
-    // pointer to the temporary value where the bytes will be written
-    byte_traits::byte_t* tmpval_ptr;
-
-    // iterate through all bytes in the sequence
-    for (byte_traits::byte_sequence::const_iterator in_iter = payload.begin();
-        in_iter < payload.end();)
-    {
-        // fill up the temporary character.
-        // when the character is full, write it to the string.
-        // move the byte pointer forward in each iteration
-        for (tmpval_ptr = reinterpret_cast<byte_traits::byte_t*>(&tmpval);
-            tmpval_ptr < reinterpret_cast<byte_traits::byte_t*>(&tmpval) + sizeof(tmpval);
-            tmpval_ptr++, in_iter++)
-        {
-            *tmpval_ptr = *in_iter;
-        }
-
-        *out_iter++ = tmpval;
-    }
-
-    return str;
+    upper_layer = UnknownMessageLayer::ptr_type(
+        new UnknownMessageLayer(DataOwnership(data), data->begin(), datasize)
+    );
 }
 
+BasicMessageLayer::data_iterator
+SegmentationLayer::fillSerialized(BasicMessageLayer::data_iterator buffer) const
+    throw()
+{
+    // first byte is layer identifier
+    *buffer++ = static_cast<byte_traits::byte_t>(LAYER_ID);
 
+    // second and third bytes are the size of the whole packet
+    buffer = writebytes(
+        buffer,
+        htonx(static_cast<byte_traits::uint2b_t>(datasize+header_length))
+    );
+
+    // fourth byte is a zero
+    *buffer++ = 0;
+
+    // the rest is the message
+    return upper_layer->fillSerialized(buffer);
+}
