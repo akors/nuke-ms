@@ -210,8 +210,21 @@ boost::statechart::result StateNegotiating::react(const EvtDisconnectRequest&)
     return transit<StateWaiting>();
 }
 
+boost::statechart::result StateNegotiating::react(const EvtConnectRequest&)
+{
+    context<ProtocolMachine>()
+        .notification_callback(
+            control::ReportNotification
+                <control::ProtocolNotification::ID_CONNECT_REPORT>(
+                    byte_traits::string(L"Currently trying to connect")
+                )
+            );
+
+    return discard_event();
+}
 
 
+#if 0
 void StateNegotiating::tiktakHandler(
     const boost::system::error_code& error,
     boost::shared_ptr<boost::asio::deadline_timer> timer,
@@ -220,6 +233,7 @@ void StateNegotiating::tiktakHandler(
 {
     std::cout<<"Timer went off: "<<error.message()<<'\n';
 }
+#endif
 
 void StateNegotiating::resolveHandler(
     const boost::system::error_code& error,
@@ -267,6 +281,8 @@ void StateNegotiating::resolveHandler(
         )
     );
 }
+
+
 
 
 void StateNegotiating::connectHandler(
@@ -383,6 +399,21 @@ boost::statechart::result StateConnected::react(const EvtRcvdMessage& evt)
 
     return discard_event();
 }
+
+
+boost::statechart::result StateConnected::react(const EvtConnectRequest&)
+{
+    context<ProtocolMachine>()
+        .notification_callback(
+            control::ReportNotification
+                <control::ProtocolNotification::ID_CONNECT_REPORT>(
+                    byte_traits::string(L"Allready connected")
+                )
+            );
+
+    return discard_event();
+}
+
 
 
 void StateConnected::writeHandler(

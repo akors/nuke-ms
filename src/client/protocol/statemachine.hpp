@@ -238,17 +238,20 @@ struct StateNegotiating :
     typedef boost::mpl::list<
         boost::statechart::custom_reaction< EvtConnectReport >,
         boost::statechart::custom_reaction< EvtDisconnectRequest >,
-        boost::statechart::custom_reaction< EvtSendMsg >
+        boost::statechart::custom_reaction< EvtSendMsg >,
+        boost::statechart::custom_reaction< EvtConnectRequest >
     > reactions;
 
     /** Constructor. To be used only by Boost.Statechart classes. */
     StateNegotiating(my_context ctx);
 
+#if 0
     static void tiktakHandler(
         const boost::system::error_code& error,
         boost::shared_ptr<boost::asio::deadline_timer> timer,
         outermost_context_type& _outermost_context
     );
+#endif
 
     static void resolveHandler(
         const boost::system::error_code& error,
@@ -268,6 +271,7 @@ struct StateNegotiating :
     boost::statechart::result react(const EvtConnectReport& evt);
     boost::statechart::result react(const EvtDisconnectRequest&);
     boost::statechart::result react(const EvtSendMsg& evt);
+    boost::statechart::result react(const EvtConnectRequest& evt);
 };
 
 
@@ -279,7 +283,8 @@ struct StateConnected :
         boost::statechart::custom_reaction<EvtDisconnectRequest>,
         boost::statechart::custom_reaction<EvtSendMsg>,
         boost::statechart::custom_reaction<EvtDisconnected>,
-        boost::statechart::custom_reaction<EvtRcvdMessage>
+        boost::statechart::custom_reaction<EvtRcvdMessage>,
+        boost::statechart::custom_reaction<EvtConnectRequest>
     > reactions;
 
     /** Constructor. To be used only by Boost.Statechart classes. */
@@ -289,6 +294,7 @@ struct StateConnected :
     boost::statechart::result react(const EvtSendMsg& evt);
     boost::statechart::result react(const EvtDisconnected& evt);
     boost::statechart::result react(const EvtRcvdMessage& evt);
+    boost::statechart::result react(const EvtConnectRequest& evt);
 
     static void writeHandler(
         const boost::system::error_code& error,
