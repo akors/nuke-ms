@@ -121,14 +121,14 @@ struct EvtSendMsg : public boost::statechart::event<EvtSendMsg>
 struct EvtRcvdMessage :
     public boost::statechart::event<EvtRcvdMessage>
 {
-    /** The text of the message. */
-    byte_traits::string msg;
+    /** The data of the message. */
+    SegmentationLayer data;
 
     /** Constructor.
     * @param _msg The text of the message.
     */
-    EvtRcvdMessage(const byte_traits::string& _msg)
-        : msg (_msg)
+    EvtRcvdMessage(const SegmentationLayer& _data)
+        : data (_data)
     {}
 };
 

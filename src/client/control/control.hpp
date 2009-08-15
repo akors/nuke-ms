@@ -306,8 +306,8 @@ void AppControl<GuiT, ProtocolT>::handleNotification
                 ;// nothing ...
             else
             {
-                printMessage(L"*  Failed to send message \"" +
-                                rprt.message + L"\": " + rprt.failure_reason);
+                printMessage(L"*  Failed to send message: " +
+                    rprt.failure_reason);
             }
             break;
         }
