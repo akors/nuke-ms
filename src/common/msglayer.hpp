@@ -435,7 +435,8 @@ public:
     * @returns A pointer to an UnknownMessageLayer object containing the
     * data coming from the network.
     *
-    * @throws MessageReusedError when
+    * @throws MessageReusedError when retrieving a message coming from the
+    * application
     */
     const UnknownMessageLayer::ptr_type getUpperLayer() const
         throw(MessageReusedError)

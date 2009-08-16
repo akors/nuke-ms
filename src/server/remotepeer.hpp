@@ -29,7 +29,7 @@
 
 namespace nuke_ms {
 
-class RemotePeer : protected ReferenceCounter<RemotePeer>
+class RemotePeer : public ReferenceCounter<RemotePeer>
 {
     /** Typedef for pointer to a socket */
     typedef boost::shared_ptr<boost::asio::ip::tcp::socket> socket_ptr;
