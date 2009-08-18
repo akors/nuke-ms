@@ -14,3 +14,33 @@ Each room can have other rooms but still can be used for communications.
 A server can "mount" another server under a location in the hierarchy.
  
 File Transfer facilities
+
+
+Command and message history - accessible with PageUp/PageDown.
+Implementation:
+Maintain queue with messages, add new messages (OnEnter), remove if
+size is too big (number of messages? size variable?)
+When typing message and hitting PageUp, message is also appended to the 
+queue.
+
+GUI- Additions:
+"Connection" Menu: 
+ - Connect -> Dialog (Server, port)
+ - Disconnect
+"File" Menu: Quit
+"Help": About...
+
+
+User Identification:
+User identifies not by classical "username/password", but by "private/public"
+keypair. 
+Problem: On webs of servers it is difficult to address users on a different
+servers, because the adresses assigned might not be unique. A username@server
+approach is not feasible, because users would start to depend on the single
+server they are registered in, and that is not what we want.
+A keypair is more secure than username/password when handled properly, 
+but the primary advantage is that on webs of servers a more or less unique
+identification is provided. Also this approach allows proper authentication and
+encryption of endpoints between each other.
+
+
