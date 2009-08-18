@@ -2,7 +2,7 @@
 PROJECT_ROOT := .
 
 # include global makefile
-include $(PROJECT_ROOT)/build/global.mak
+include $(PROJECT_ROOT)/make/global.mak
 
 
 all: nuke-ms-client nuke-ms-serv

@@ -2,7 +2,7 @@
 PROJECT_ROOT := ../..
 
 # include global makefile
-include $(PROJECT_ROOT)/build/global.mak
+include $(PROJECT_ROOT)/make/global.mak
 
 
 # create a variable that contains all source files
