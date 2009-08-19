@@ -3,20 +3,29 @@
 # we need at lest cmake 2.6
 cmake_minimum_required(VERSION 2.6)
 
+# we are compiling nuke-ms, and it's C++-Code
 project(nuke-ms CXX)
 
 
-# We need boost for both programs
+# Not compiling when in source directory
+if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
+    message(FATAL_ERROR "In-source builds not allowed.\nPlease delete the CMakeCache.txt file and the CMakeFiles directory, change into a different directory and start the build from there.")
+endif(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
+
+
+# We need boost for all executeables
 set(Boost_USE_MULTITHREADED ON)
 find_package( Boost 1.35.0 REQUIRED thread system)
 
-# Add Boost libs to linked libraries
+# Add Boost header and library directories
 include_directories(${Boost_INCLUDE_DIRS})
+link_directories(${Boost_LIBRARY_DIRS})
 
-# add nuke-ms-common
+# All executables need the nuke-ms-common library
+link_directories(${nuke-ms_BINARY_DIR}/common)
+include_directories(${nuke-ms_SOURCE_DIR}/common)
+
+# compile nuke-ms-common first
 add_subdirectory(common)
-    link_directories(${nuke-ms_BINARY_DIR}/common)
-    include_directories(${nuke-ms_SOURCE_DIR}/common)
-
 add_subdirectory(client)
 add_subdirectory(server)
