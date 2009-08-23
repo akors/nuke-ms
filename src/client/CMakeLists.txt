@@ -3,7 +3,7 @@
 # directory instead.
 
 # first of all find wxWidgets
-find_package(wxWidgets REQUIRED base core)
+find_package(wxWidgets REQUIRED core base)
 
 # add wxWidgets flags, include dirs and link dirs
 include(${wxWidgets_USE_FILE})
@@ -25,6 +25,7 @@ target_link_libraries(nuke-ms-client
     nuke-ms-common
     ${Boost_LIBRARIES}
     ${wxWidgets_LIBRARIES}
+	${WIN32_NETWORK_LIBS}
 )
 
 # We want our executables to be in the bin/ directory

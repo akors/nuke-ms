@@ -7,7 +7,7 @@ set(SERVER_SRCS dispatcher.cpp main.cpp remotepeer.cpp)
 
 add_executable(nuke-ms-serv ${SERVER_SRCS})
 
-target_link_libraries(nuke-ms-serv nuke-ms-common ${Boost_LIBRARIES})
+target_link_libraries(nuke-ms-serv nuke-ms-common ${Boost_LIBRARIES} ${WIN32_NETWORK_LIBS})
 
 # We want our executables to be in the bin/ directory
 set_target_properties(nuke-ms-serv PROPERTIES

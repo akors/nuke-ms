@@ -25,6 +25,16 @@ link_directories(${Boost_LIBRARY_DIRS})
 link_directories(${nuke-ms_BINARY_DIR}/common)
 include_directories(${nuke-ms_SOURCE_DIR}/common)
 
+
+if(WIN32)
+	# silence win32 warnings when compiling Boost.Asio
+	# Compile the Unicode version (non-win32 cmake is smart enough)
+	add_definitions(-D_WIN32_WINNT=0x0501 -D_UNICODE)
+	
+	# add network libraries that need to be linked
+	set(WIN32_NETWORK_LIBS ws2_32 mswsock)
+endif(WIN32)
+
 # compile nuke-ms-common first
 add_subdirectory(common)
 add_subdirectory(client)
