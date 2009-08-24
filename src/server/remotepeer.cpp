@@ -117,6 +117,13 @@ void RemotePeer::rcvHeaderHandler(
             );
 
 
+
+/// FIXME Magic number, set to something proper or make configurable
+const byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
+
+            if (header.packetsize > MAX_PACKETSIZE)
+                throw InvalidHeaderError();
+
             SegmentationLayer::dataptr_type body_data(
                 new byte_traits::byte_sequence(
                     header.packetsize-SegmentationLayer::header_length
