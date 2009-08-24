@@ -1,20 +1,30 @@
 This is the readme file for the Nuclear Messaging System project. In this file you will find information on how to compile, install and use the application.
 
 The Nuclear Messaging System (nuke-ms) is intended as a reliable and secure distributed instant messaging system available on many platforms.
-Right now it provides only a very rudimentary functionality and is probably only useful for testing and evaluatio purposes.
+Right now it provides only a very rudimentary functionality and is probably only useful for testing and evaluation purposes.
 
-nuke-ms is a free software project hosted on BerliOS Developer, a german organization supporting the development of open source projects. Various services for nuke-ms such as a git repository, a bugtracker or a wiki page. You can browse the nuke-ms project page here: http://developer.berlios.de/projects/nuke-ms/
-    
+nuke-ms is a free software project written by Alexander Korsunsky. It is hosted on BerliOS Developer, a german organization supporting the development of open source projects. Various services for nuke-ms such as a git repository, a bugtracker or a wiki page are hosted there. You can browse the nuke-ms project page here: http://developer.berlios.de/projects/nuke-ms/
+
+================================================================================
+Contents of this file:
+
 1. Where to get nuke-ms
+    1.1 Git Repository
+    1.2 Download the last release from the BerliOS project page TODO!!
+    
 2. Installation
+    2.1 Prerequisites TODO!! (Arch, Fedora)
+    2.2 Compiling
+        2.2.1 Compiling under Unix
+        2.2.2 Compiling under Windows TODO!!
+        
 3. Usage
+
 4. Compatibility notes
-5. Contributing
 
+---------------------------------------------------------------------------------
 
-
-
-1) Where to get nuke-ms
+1) Where to get nuke-ms 
 
 1.1) Git Repository
 
@@ -32,13 +42,15 @@ This will create a folder called "nuke-ms" containing the most recent version al
 
  TODO
  
+---------------------------------------------------------------------------------
  
 2) Installation
 
 nuke-ms is intended to be as portable as possible and it might compile on several platforms, however few were tested. 
 It is mainly distributed as a source code tarball, but a compiled and zipped version for win32 platforms is available for convenience.
 
-To use the win32 version of nuke-ms, simply extract the zip file to a folder. You can find the executables in the bin/ directory.
+To use the win32 version of nuke-ms, you can simply extract the zip file to a folder. You can find the executables in the bin/ directory.
+To compile nuke-ms, install the required prerequisites and follow the compilation instructions below.
 
  
 2.1) Prerequisites
@@ -47,15 +59,15 @@ To compile nuke-ms from source you need to install some libraries and tools. The
 These are the tools, their minimum required versions and their homepages that are needet to build nuke-ms:
 
     C++ Compiler
-    A fairly recent C++ compiler is required to build nuke-ms. GCC is allways a safe bet, however other compilers might also work. It's best to simply try out if you are able to compile nuke-ms.
+    A fairly recent C++ compiler is required to build nuke-ms. GCC is allways a safe bet, however other compilers might work as well. It's best to simply try out if you are able to compile nuke-ms.
 
-    Boost C++ Libraries,    1.35,   http://www.boost.org/
+    Boost C++ Libraries,    1.35,       http://www.boost.org/
     The Boost Libraries are a set of portable high quality libraries of which most are header-only. The libraries that need to be included at link-time are Boost.System and Boost.Thread. 
     
-    wxWidgets,              2.8,    http://www.wxwidgets.org/
+    wxWidgets,              2.8,        http://www.wxwidgets.org/
     wxWidgets is a library for portable GUI programming and allows a native look-and-feel on various platforms. The components used are base and core.
     
-    CMake,                  2.6,    http://www.cmake.org/
+    CMake,                  2.6,        http://www.cmake.org/
     CMake is portable build tool that can create native build files (such as Makefiles or project files) on a variety of platforms.
 
 
@@ -64,18 +76,17 @@ On many GNU/Linux or Unix distributions the tools are packaged and ready to use.
 
 Debian GNU/Linux:
     5.0 ("Lenny"):
-    Testing ("Squeeze"):
-    Unstable ("Sid"):
         Install the following packages and their dependencies: build-essentials cmake libboost-system1.35-dev libboost-thread1.35-dev libwxgtk2.8-dev 
-        For Debian 5.0 "Squeeze", the Boost libraries are not contained in the official archives, however Debian Backpors provides these packages. Follow the instruction on this site to install the necessary packages: http://www.backports.org/dokuwiki/doku.php?id=instructions .
+        The Boost libraries are not contained in the official archives, however Debian Backpors provides these packages. Follow the instruction on this site to install the necessary packages: http://www.backports.org/dokuwiki/doku.php?id=instructions .
+    Testing ("Squeeze"), Unstable ("Sid"):
+        Install the following packages and their dependencies: build-essentials cmake libboost-system1.35-dev libboost-thread1.35-dev libwxgtk2.8-dev 
         
     
 Ubuntu:
-    8.10 ("Intrepid Ibex"):
-    9.04 ("Jaunty Jackalope"):
+    8.10 ("Intrepid Ibex"), 9.04 ("Jaunty Jackalope"):
         Install the following packages and their dependencies: cmake libboost-system1.35-dev libboost-thread1.35-dev libwxgtk2.8-dev
-    8.10 ("Karmic Koala"):
-        TODO
+    9.10 ("Karmic Koala"):
+        Install the following packages and their dependencies: cmake libboost-system-dev libboost-thread-dev libwxgtk2.8-dev
     
 Fedora:
     TODO
@@ -106,23 +117,22 @@ Of course you have to change the path for the project directory according to whe
 
 If the compilation succeeded you will find the executables in the "bin" directory of the directory you built nuke-ms in.
 
-
-
 2.2.2) Compiling under Windows
 
+---------------------------------------------------------------------------------
 
 3) Usage
 
 nuke-ms consists of two programs: a client that sends and receives messages to the server, called nuke-ms-client and a simple dispatching server that receives the messages from the clients and passes them on to other clients, called nuke-ms-serv.
 
 
-Start the server by simply executing the nuke-ms-serv file. It does not take any parameters, shows no graphical or command line interface but simply listens on the port 34443 for incoming connections. To stop the server application you have to interrupt it, for example by hitting Ctrl-C in your console, with the kill program or with the Task Manager.
-
+Start the server by simply executing the nuke-ms-serv file. It does not take any parameters, shows no graphical or command line interface but simply listens on the port 34443 for incoming connections. 
+To stop the server application you have to interrupt it, for example by hitting Ctrl-C in your console, with the kill program or with the Task Manager.
 
 Then start the nuke-ms-client application, it should show a window with two text fields. Connect to a running server by entering the following command into the text input field of the window:
     /connect <host>:<port>
 Replace <host> with the hostname (IP address or DNS name) of the host the server is running on. If this is your local computer, enter "localhost". 
-The <port> is allways 34443. The first letter of the command must be a '/', a slash, otherwise the command will not be recognized.
+The <port> is allways 34443. The first letter of the command must be a '/' (a slash), otherwise the command will not be recognized.
 If you see a message that says something like "Connection succeeded.", you can now start typing messages in the text input field. As soon as you hit Enter the message will be sent. You can send multiline messages by inserting a line break by pressing Shift+Enter. The message you sent will be echoed back to you by the server.
 If the connection attempt fails, a message with the reason will be displayed.
 To tear down a connection, enter the command "/disconnect" into the text input field.
@@ -130,12 +140,13 @@ To close the application either Press on the X on the top right corner of the wi
 
 A note on security:
 BEWARE! nuke-ms does not provide any means of encryption or authentication! The identity of a participant is not at all vouched, and the messages are sent unencryptedly over the network and therefore can be evesdropped. 
-Dont run the server on security critical devices, as it is very easy to perform various attacks on it. In fact, please use nuke-ms only in a trusted environment and only for testing.
+Dont run the server on security critical devices, as it is very easy to perform various attacks on it. Please use nuke-ms only in a trusted environment such as (your home network behind a firewall) and only for testing.
 These problems are based on the fact that no measures have been taken yet to secure the program in this early phase of development. However, security is a major goal to this project and hopefully it will improve much in the future.
 
+---------------------------------------------------------------------------------
 
 4. Compatibility notes
  
-The communication between clients from windows and linux TODO
+Communication between clients on different systems, especially communication between Linux and Windows hosts is not possible. The reason lies in the difference of the default UTF encoding size on both platforms - Linux uses UTF-32 whereas Windows uses UTF-16. This issue will be addressed in near future.
 
-nuke-ms is not yet a mature piece of software. As such, the communication protocol between the clients is also not mature and it is subject to ongoing change. Compatibilities between different versions is not granted at all in this early phase of development, in fact an incompatible change to the protocol is planned for the recent future. To use the program for communication you should allways use the same version for every participant.
+nuke-ms is not yet a mature piece of software. As such, the communication protocol between the clients is also not mature and it is subject to ongoing change. Compatibilities between different versions is not granted at all in this early phase of development, in fact an incompatible change to the protocol is planned for the near future. To use the program for communication you should allways use the same version for every participant.
