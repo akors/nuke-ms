@@ -20,6 +20,7 @@
 
 #include "protocol/statemachine.hpp"
 
+using namespace nuke_ms;
 using namespace nuke_ms::protocol;
 using namespace boost::asio::ip;
 

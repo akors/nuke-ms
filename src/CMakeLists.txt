@@ -10,7 +10,7 @@ project(nuke-ms CXX)
 # Not compiling when in source directory
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
     message(FATAL_ERROR "In-source builds not allowed.\nPlease delete the CMakeCache.txt file and the CMakeFiles directory, change into a different directory and start the build from there.")
-endif(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
+endif()
 
 
 # We need boost for all executeables
@@ -28,12 +28,17 @@ include_directories(${nuke-ms_SOURCE_DIR}/common)
 
 if(WIN32)
 	# silence win32 warnings when compiling Boost.Asio
-	# Compile the Unicode version (non-win32 cmake is smart enough)
+	# Compile the Unicode version (non-win32 cmake is not smart enough)
 	add_definitions(-D_WIN32_WINNT=0x0501 -D_UNICODE)
 	
 	# add network libraries that need to be linked
 	set(WIN32_NETWORK_LIBS ws2_32 mswsock)
-endif(WIN32)
+	
+	# add hack to prevent multiple inclusion of WinSock.h by Boost and wxWidgets
+	if(MSVC)
+		add_definitions(-DWIN32_LEAN_AND_MEAN)
+	endif()
+endif()
 
 # compile nuke-ms-common first
 add_subdirectory(common)
