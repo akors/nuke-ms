@@ -13,7 +13,7 @@ Contents of this file:
     1.2 Download the last release from the BerliOS project page TODO!!
     
 2. Installation
-    2.1 Prerequisites TODO!! (Arch, Fedora)
+    2.1 Prerequisites TODO!! ( Windows)
     2.2 Compiling
         2.2.1 Compiling under Unix
         2.2.2 Compiling under Windows TODO!!
@@ -35,8 +35,8 @@ For this purpose install Git (instructions can be found here: http://git.or.cz/g
     
 This will create a folder called "nuke-ms" containing the most recent version all project files. To keep up with the development of nuke-ms you can download the latest changes by changing into the project directory and pulling from the repository:
 
-    cd nuke-ms
-    git pull
+    $ cd nuke-ms
+    $ git pull
     
 1.2) Download the last release from the BerliOS project page
 
@@ -75,6 +75,10 @@ On many GNU/Linux or Unix distributions the tools are packaged and ready to use.
 
 
 Debian GNU/Linux:
+    4.0 ("Etch"):
+        Install the following packages and their dependencies: build-essentials cmake libboost-system1.35-dev libboost-thread1.35-dev
+        The Boost libraries are not contained in the official archives, however Debian Backpors provides these packages. Follow the instruction on this site to install the necessary packages: http://www.backports.org/dokuwiki/doku.php?id=instructions .
+        Unfortunately, the wxWidgets 2.8 libraries are not included in Debian 4.0, not even in the backports archive. You will have to download them from the wxWidgets website and compile them yourself. Refer to the wxWidgets documentation for details.
     5.0 ("Lenny"):
         Install the following packages and their dependencies: build-essentials cmake libboost-system1.35-dev libboost-thread1.35-dev libwxgtk2.8-dev 
         The Boost libraries are not contained in the official archives, however Debian Backpors provides these packages. Follow the instruction on this site to install the necessary packages: http://www.backports.org/dokuwiki/doku.php?id=instructions .
@@ -89,13 +93,28 @@ Ubuntu:
         Install the following packages and their dependencies: cmake libboost-system-dev libboost-thread-dev libwxgtk2.8-dev
     
 Fedora:
-    TODO
+    Fedora 10 ("Cambridge"):
+        Install the following packages and their dependencies: cmake wxGTK
+        Unfortunately, the Boost libraries included in Fedora 10 are outdated. You will have to download them from the Boost website and compile them yourself. Refer to the Boost documentation for details.
+    Fedora 11 ("Leonidas")
+        Install the following packages and their dependencies: cmake boost wxGTK
     
 Arch Linux:
-    TODO
+    Install the following packages and their dependencies: cmake boost wxgtk
     
+Windows:
+    Prerequisite installation is pretty complicated on Windows. You might want to use the prepacked version of nuke-ms available here: TODO.
+    First of all you have to install CMake, this is the easiest step. Just download the Win32 installer package, double click on it and follow the usual installation dialogue.
+    The second step is to download and install wxWidgets and Boost. For wxWidgets, you come best off installing via the Win32 installer package, as the installer places the Libraries on a good place (somewhere where CMake can find them easily) by default, only the necessary headers and code are installed and because it offers nice buttons for documentation and uninstallation in the start menu. For Boost, you have to download the source package which suits your favourite compression utility best, and uncompress it to a folder.
+    Now comes the tricky part: you have to compile the libraries. This is possible with several compilers, I only tested three. Of course, you have to compile the libraries with the same compiler you want to compile nuke-ms. The instructions for each can be found in the documentation of the libraries. Below are some points that should be mentioned and are specific to nuke-ms:
+        - nuke-ms relies on strings to be unicode. This means that the wxWidgets libraries also have to be built as unicode. This is an option you have to set when compiling wxWidgets.
+        - The linkage should be "consistent" throughout all libraries and nuke-ms. I recommend compiling all libraries as static, and link them statically to the executable. This implies some size overhead but saves you dll-troubles.
+        - Use debugging symbols in all libraries and in nuke-ms, or nowhere. When building nuke-ms you will have the choice of including debugging symbols, and cmake will complain if you don't have the libraries with the right debugging configuration installed.        
+        - When using MinGW, you have to check the "WinAPI" option in the MinGW installer, it is required for the GUI and the Network components. (Of course, g++ and make must be installed too.)
+        - When using Visual Studio 2008 or 2005, you have to install two additional boost libraries, namely date_time and regex. This is because the boost thread library implicitly depends on date_time, which itself depends on regex. Other compilers are smart enough to understand that no symbols from there are used in the project and do not require their presence, but obviously Visual Studio is not.
 
-For Platforms not listed here (such as Windows), please visit the respective websites and follow the instructions to install/compile the tools/libraries that are listed above.
+
+For Platforms not listed here, please visit the respective websites and follow the instructions to install/compile the tools/libraries that are listed above.
 
 2.2) Compiling
 
