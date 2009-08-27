@@ -3,7 +3,9 @@ This is the readme file for the Nuclear Messaging System project. In this file y
 The Nuclear Messaging System (nuke-ms) is intended as a reliable and secure distributed instant messaging system available on many platforms.
 Right now it provides only a very rudimentary functionality and is probably only useful for testing and evaluation purposes.
 
-nuke-ms is a free software project written by Alexander Korsunsky. It is hosted on BerliOS Developer, a german organization supporting the development of open source projects. Various services for nuke-ms such as a git repository, a bugtracker or a wiki page are hosted there. You can browse the nuke-ms project page here: http://developer.berlios.de/projects/nuke-ms/
+nuke-ms is a free software project written by Alexander Korsunsky. You can use, modify and redistribute it under the conditions of the GNU General Public License version 3, a copy of which can be found in the file LICENSE.txt in the doc/ folder.
+
+It is hosted on BerliOS Developer, a german organization supporting the development of open source projects. Various services for nuke-ms such as a git repository, a bugtracker or a wiki page are hosted there. You can browse the nuke-ms project page here: http://developer.berlios.de/projects/nuke-ms/
 
 ================================================================================
 Contents of this file:
