@@ -10,7 +10,7 @@ Contents of this file:
 
 1. Where to get nuke-ms
     1.1 Git Repository
-    1.2 Download the last release from the BerliOS project page TODO!!
+    1.2 Download the latest release from the BerliOS project page
     
 2. Installation
     2.1 Prerequisites TODO!! ( Windows)
@@ -38,9 +38,19 @@ This will create a folder called "nuke-ms" containing the most recent version al
     $ cd nuke-ms
     $ git pull
     
-1.2) Download the last release from the BerliOS project page
+1.2) Download the latest release from the BerliOS project page
 
- TODO
+You can download the source code and a compiled win32 version of nuke-ms on the BerliOS project page from these addresses:
+
+    ftp://ftp.berlios.de/pub/nuke-ms/alpha/nuke-ms-0.1-src.tar.gz
+        This is the source code version of nuke-ms, with unix line endings (LF).
+
+    ftp://ftp.berlios.de/pub/nuke-ms/alpha/nuke-ms-0.1-win32.zip
+        This is the compiled win32 executable, with all text files hafing windows line endings (CR LF).
+
+
+Extract the files to a folder, and proceed with the installation. This means compiling for the source code distribution or doing nothing for the win32 version.
+
  
 ---------------------------------------------------------------------------------
  
@@ -103,7 +113,7 @@ Arch Linux:
     Install the following packages and their dependencies: cmake boost wxgtk
     
 Windows:
-    Prerequisite installation is pretty complicated on Windows. You might want to use the prepacked version of nuke-ms available here: TODO.
+    Prerequisite installation is pretty complicated on Windows. You might want to use the prepacked version of nuke-ms available here: ftp://ftp.berlios.de/pub/nuke-ms/alpha/nuke-ms-0.1-win32.zip
     First of all you have to install CMake, this is the easiest step. Just download the Win32 installer package, double click on it and follow the usual installation dialogue.
     The second step is to download and install wxWidgets and Boost. For wxWidgets, you come best off installing via the Win32 installer package, as the installer places the Libraries on a good place (somewhere where CMake can find them easily) by default, only the necessary headers and code are installed and because it offers nice buttons for documentation and uninstallation in the start menu. For Boost, you have to download the source package which suits your favourite compression utility best, and uncompress it to a folder.
     Now comes the tricky part: you have to compile the libraries. This is possible with several compilers, I only tested three. Of course, you have to compile the libraries with the same compiler you want to compile nuke-ms. The instructions for each can be found in the documentation of the libraries. Below are some points that should be mentioned and are specific to nuke-ms:
