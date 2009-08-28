@@ -80,11 +80,11 @@ Ubuntu:
 
 Fedora:
     Fedora 10 ("Cambridge"):
-        Install the following packages and their dependencies: cmake wxGTK
+        Install the following packages and their dependencies: cmake wxGTK-devel
         Unfortunately, the Boost libraries included in Fedora 10 are outdated. You will have to download them from the Boost website and compile them yourself. Refer to the Boost documentation for details.
 
     Fedora 11 ("Leonidas")
-        Install the following packages and their dependencies: cmake boost wxGTK
+        Install the following packages and their dependencies: cmake boost-devel wxGTK-devel
 
 Arch Linux:
     Install the following packages and their dependencies: cmake boost wxgtk   
@@ -131,6 +131,15 @@ If the compilation succeeded you will find the executables in the "bin" director
 2.2) Compiling under Windows
 
 At this point I want to emphasize that compilation on Windows is a tedious and annoying task. Please install a proper operating system or download the compiled win32 version of nuke-ms from this link: ftp://ftp.berlios.de/pub/nuke-ms/alpha/nuke-ms-0.1-win32.zip .
+
+These are a few links that could help you in case of troubles:
+
+    http://www.cmake.org/Wiki/CMake_FAQ
+    http://www.vtk.org/Wiki/CMake_Generator_Specific_Information
+    http://www.cmake.org/cmake/help/cmake2.6docs.html#module:FindBoost
+    http://www.cmake.org/cmake/help/cmake2.6docs.html#section_Variables%20that%20Control%20the%20Build
+    http://msdn.microsoft.com/en-us/library/8kche8ah(VS.71).aspx
+    http://garrys-brain.blogspot.com/2006/10/boost-library-and-visual-studio-2005.html
 
 
 2.2.1) Using MinGW (Recommended)
