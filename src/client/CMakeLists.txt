@@ -19,7 +19,7 @@ set(CLIENT_SRCS
     protocol/statemachine.cpp
 )
 
-add_executable(nuke-ms-client ${CLIENT_SRCS})
+add_executable(nuke-ms-client WIN32 ${CLIENT_SRCS})
 
 target_link_libraries(nuke-ms-client
     nuke-ms-common
