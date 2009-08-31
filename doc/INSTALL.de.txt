@@ -114,9 +114,9 @@ Jetzt kommt der schwierige Teil: sie müssen die Bibliotheken kompilieren. Dies 
 
 Nachdem sie die Abhängigkeiten installiert haben, können sie beginnen nuke-ms zu kompilieren.
 Wechseln sie in ein Verzeichnis wo sie nuke-ms bauen wollen, dieses Verzeichnis darf nicht das Verzeichnis sein wo der Quellcode liegt. Sie können zu diesem Zweck das "build" Verzeichnis im Projektordner verwenden.
-Rufen sie dann das "cmake" kommando mit dem Verzeichnis wo der Quellcode von nuke-ms liegt - das ist das "src" Verzeichnis der Projektordners - als Argument auf. Vielleicht müssen sie einige zusätzliche Optionen angeben, wie zum Beispiel der Ort der Bibliotheken oder der Generator der verwendet werden soll:
+Rufen sie dann das "cmake" kommando mit dem Verzeichnis wo der Quellcode von nuke-ms liegt - das ist das "src" Verzeichnis der Projektordners - als Argument auf. Vielleicht müssen sie einige zusätzliche Optionen angeben, wie zum Beispiel der Ort der Bibliotheken oder der CMake Generator der verwendet werden soll:
     Fügen sie "-DBOOST_INCLUDEDIR" um das Boost Includeverzeichnis oder "-DBOOST_LIBRARYDIR" um das Bibliotheksverzeichnis anzugeben zur Kommandozeile hinzu wenn CMake Probleme hat Boost zu finden.
-    Fügen sie "-G" und ihre Lieblingstoolkette die von CMake unterstützt ist zur Kommandozeile hinzu um etwas anderes als Makefiles für GNU Make zu generieren. Sehen sie in der CMake manpage nach verfügbaren Generatoren nach.
+    Fügen sie "-G" und ihre Lieblingstoolkette die von CMake unterstützt ist zur Kommandozeile hinzu um etwas anderes als Makefiles für GNU Make zu generieren. Sehen sie in der CMake manpage nach verfügbaren CMake Generatoren nach.
 Schließlich rufen sie ihre Lieblingstoolkette zum kompilieren des Quellcodes auf. Das wird einfach "make" sein, wenn sie CMake keine "-G" option angegeben haben.
 
 Ein einfaches bauen von nuke-ms könnte so aussehen:
@@ -178,7 +178,7 @@ Wechseln sie in das Verzeichnis wo sie nuke-ms bauen wollen, wie z.B. das "build
     > cd nuke-ms\build
 
 Versuchen sie dann CMake aufzurufen um das Visual Studio Projekt zu generieren. Sie müssen ein paar Argumente angeben:
-    -G "Visual Studio 9 2008": Der CMake Generator der verwendet werden soll, in diesem Fall der Visual Studio Project generator.
+    -G "Visual Studio 9 2008": Der CMake Generator der verwendet werden soll, in diesem Fall der Visual Studio Project Generator.
     -DwxWidgets_ROOT_DIR="<pfad\zu\wxwidgets>": Der ort wo sie die wxWidgets Bibliothek installiert haben, im Falle dass der wxWidgets Finder wxWidgets nicht finden kann.Ersetzen sie <pfad\zu\wxwidgets> mit dem Pfad wo sie wxWidgets installiert haben.
     -DwxWidgets_CONFIGURATION=<config>: Die Konfiguration mit der sie wxWidgets kompiliert haben. Fügen sie das nur zur Kommandozeile hinzu, wenn CMake wxWidgets noch immer nicht finden kann; normalerweise wird das aber nicht benötigt. Ersetzen sie <config> mit msw, mswd, mswu, mswunivud oder Ähnlichem. Sie können die Konfiguration mit der sie wxWidgets kompiliert haben herausfinden, indem sie ins Verzeichnis "lib\vc_lib" relativ zu ihrem wxWidgets Installationsverzeichnis schauen. Dort wird es Ordner mit dem selben Namen wie die Konfiguration geben. Erinnern sie sich, dass Unicode benötigt wird um nuke-ms zu kompilieren, also sollte das irgendetwas mit einem "u" im Namen sein.
     -DBOOST_ROOT="<pfad\zu\boost>": Der Ort der Boost Bibliotheken, im (wahrscheinlichen) Falle dass der Boost Finder die Bibliotheken nicht finden kann. Ersetzen sie <pfad\zu\boost> mit dem Pfad wo sie Boost installiert haben.

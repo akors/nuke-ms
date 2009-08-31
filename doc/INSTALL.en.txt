@@ -118,9 +118,9 @@ Now comes the tricky part: you have to compile the libraries. This is possible w
 
 After installing the required prerequisites, you can start compiling nuke-ms.
 To do so, change into a directory where you want to build nuke-ms, this directory can't be the same directory as the one the sourcecode lies in. You might want to use the "build" directory provided in the project root directory for this.
-Then run the "cmake" command with the directory of the nuke-ms source - this is the "src" directory of the project directory - as argument. You might want to specify additional options, such as the location of the libraries or the generator to be used:
+Then run the "cmake" command with the directory of the nuke-ms source - this is the "src" directory of the project directory - as argument. You might want to specify additional options, such as the location of the libraries or the CMake generator to be used:
     add "-DBOOST_INCLUDEDIR" to specify the Boost include directory or "-DBOOST_LIBRARYDIR" to specify the Boost library directory to the command line in case CMake has troubles finding Boost
-    add "-G" and your favourite toolchain supported by cmake to produce something other than makefiles for GNU Make. See the cmake manpage for the available generators.
+    add "-G" and your favourite toolchain supported by cmake to produce something other than makefiles for GNU Make. See the cmake manpage for the available CMake generators.
 Finally call your favourite toolchain to compile the source. This will simply be "make" if you didn't give the "-G" option to cmake.
 
 A simple compilation of nuke-ms might look like this:
@@ -155,7 +155,7 @@ First change into the directory where you want to build nuke-ms, such as the "bu
     > cd nuke-ms\build
 
 Then run CMake to generate the makefiles. You will have to specify a few argument:
-    -G "MinGW Makefiles": The generator to be used, this is the MinGW Makefile generator in this case.
+    -G "MinGW Makefiles": The CMake generator to be used, this is the MinGW Makefile generator in this case.
     -DBOOST_ROOT="<path\to\boost>": The location of the Boost library in case the Boost finder can't find Boost (which is quite likely). Replace <path\to\boost> with the Path where you installed Boost.
     -DwxWidgets_ROOT_DIR="<path\to\wxwidgets>": The location of the wxWidgets library in case the wxWidgets finder can't find wxWidgets. Replace <path\to\boost> with the Path where you installed Boost.
     -DwxWidgets_CONFIGURATION=<config>: The configuration you compiled wxWidgets with. Add this if CMake still can't find wxWidgets, but normally you don't have to. Replace <config> with msw, mswd, mswu, mswunivud or similar. You can find out which configuration you compiled wxWidgets with by looking into the directory "lib\gcc_lib" relative to your wxWidgets installation. It will contain folders with the same name as the configuration. Remember that we need Unicode to compile nuke-ms, so this should be something with a "u" in the name.
@@ -182,7 +182,7 @@ Change into the directory where you want to build nuke-ms, such as the "build" s
     > cd nuke-ms\build
 
 Then try to run CMake to generate a Visual Studio Project. You will have to specify some arguments:
-    -G "Visual Studio 9 2008": The generator to be used, this is the Visual Studio project generator in this case.
+    -G "Visual Studio 9 2008": The CMake generator to be used, this is the Visual Studio project generator in this case.
     -DwxWidgets_ROOT_DIR="<path\to\wxwidgets>": The location of the wxWidgets library in case the wxWidgets finder can't find wxWidgets. Replace <path\to\boost> with the Path where you installed Boost.
     -DwxWidgets_CONFIGURATION=<config>: The configuration you compiled wxWidgets with. Normally you don't have to specify this. Replace <config> with msw, mswd, mswu, mswunivud or similar. You can find out which configuration you compiled wxWidgets with by looking into the directory "lib\vc_lib" relative to your wxWidgets installation. It will contain folders with the same name as the configuration. Remember that we need Unicode to compile wxWidgets, so this should be something with a "u" in the name.
     -DBOOST_ROOT="<path\to\boost>": The location of the Boost library in case the Boost finder can't find Boost (which is quite likely). Replace <path\to\boost> with the Path where you installed Boost.
