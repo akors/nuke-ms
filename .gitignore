@@ -1,0 +1,7 @@
+# Ignore all stuff created by the build process
+CMakeFiles/*
+CMakeCache.txt
+Makefile
+build/*
+bin/*
+cmake_install.cmake

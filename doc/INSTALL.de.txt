@@ -113,7 +113,7 @@ Jetzt kommt der schwierige Teil: sie müssen die Bibliotheken kompilieren. Dies 
 2.1) Kompilieren unter Linux
 
 Nachdem sie die Abhängigkeiten installiert haben, können sie beginnen nuke-ms zu kompilieren.
-Wechseln sie in ein Verzeichnis wo sie nuke-ms bauen wollen, dieses Verzeichnis darf nicht das Verzeichnis sein wo der Quellcode liegt. Sie können zu diesem Zweck das "build" Verzeichnis im Projektordner verwenden.
+Wechseln sie in ein Verzeichnis wo sie nuke-ms bauen wollen. Sie können zu diesem Zweck das "build" Verzeichnis im Projektordner verwenden.
 Rufen sie dann das "cmake" kommando mit dem Verzeichnis wo der Quellcode von nuke-ms liegt - das ist das "src" Verzeichnis der Projektordners - als Argument auf. Vielleicht müssen sie einige zusätzliche Optionen angeben, wie zum Beispiel der Ort der Bibliotheken oder der CMake Generator der verwendet werden soll:
     Fügen sie "-DBOOST_INCLUDEDIR" um das Boost Includeverzeichnis oder "-DBOOST_LIBRARYDIR" um das Bibliotheksverzeichnis anzugeben zur Kommandozeile hinzu wenn CMake Probleme hat Boost zu finden.
     Fügen sie "-G" und ihre Lieblingstoolkette die von CMake unterstützt ist zur Kommandozeile hinzu um etwas anderes als Makefiles für GNU Make zu generieren. Sehen sie in der CMake manpage nach verfügbaren CMake Generatoren nach.
@@ -147,7 +147,7 @@ Dies sind ein paar Links die ihnen bei Problemen helfen könnten:
 
 Um nuke-ms mit MinGW zu kompilieren, folgen sie diesen Anweisungen:
 
-Wechseln sie zuerst in das Verzeichnis wo sie nuke-ms bauen wollen, wie z.B. das "build" Unterverzeichnis des Projektordners. Dieses Verzeichnis darf nicht das Verzeichnis sein wo der Quellcode liegt.
+Wechseln sie zuerst in das Verzeichnis wo sie nuke-ms bauen wollen, wie z.B. das "build" Unterverzeichnis des Projektordners.
     > cd nuke-ms\build
 
 Rufen sie dann CMake auf um die Makefiles zu generieren. Sie müssen ein paar Argumente angeben:

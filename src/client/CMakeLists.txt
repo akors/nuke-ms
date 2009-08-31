@@ -1,5 +1,5 @@
 # CMakeLists.txt file for the client application.
-# Should not be called directly, use top-level cmake file in src/
+# Should not be called directly, use parent level cmake file in src/
 # directory instead.
 
 # first of all find wxWidgets
@@ -25,7 +25,7 @@ target_link_libraries(nuke-ms-client
     nuke-ms-common
     ${Boost_LIBRARIES}
     ${wxWidgets_LIBRARIES}
-	${WIN32_NETWORK_LIBS}
+    ${WIN32_NETWORK_LIBS}
 )
 
 # We want our executables to be in the bin/ directory

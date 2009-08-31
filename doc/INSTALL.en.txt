@@ -117,7 +117,7 @@ Now comes the tricky part: you have to compile the libraries. This is possible w
 2.1) Compiling under Linux
 
 After installing the required prerequisites, you can start compiling nuke-ms.
-To do so, change into a directory where you want to build nuke-ms, this directory can't be the same directory as the one the sourcecode lies in. You might want to use the "build" directory provided in the project root directory for this.
+To do so, change into a directory where you want to build nuke-ms. You might want to use the "build" directory provided in the project root directory for this.
 Then run the "cmake" command with the directory of the nuke-ms source - this is the "src" directory of the project directory - as argument. You might want to specify additional options, such as the location of the libraries or the CMake generator to be used:
     add "-DBOOST_INCLUDEDIR" to specify the Boost include directory or "-DBOOST_LIBRARYDIR" to specify the Boost library directory to the command line in case CMake has troubles finding Boost
     add "-G" and your favourite toolchain supported by cmake to produce something other than makefiles for GNU Make. See the cmake manpage for the available CMake generators.

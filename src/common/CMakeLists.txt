@@ -1,5 +1,5 @@
 # CMakeLists.txt file for the common subroutines library.
-# Should not be called directly, use top-level cmake file in src/
+# Should not be called directly, use parent level cmake file in src/
 # directory instead.
 
 # set library sources
