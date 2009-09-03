@@ -43,4 +43,16 @@ but the primary advantage is that on webs of servers a more or less unique
 identification is provided. Also this approach allows proper authentication and
 encryption of endpoints between each other.
 
+German text I wrote to explain the idea of nuke-ms:
+Es gibt Systeme aus mehreren Teilnehmern, die sich selbst regulieren. Jedes
+einzelne Mitglied handelt für sich, es handelt ohne Sinn für "die Gesellschaft"
+- man könnte fast sagen egoistisch. Und doch führt das Zusammenspiel dieser
+  Egoisten zu einem funktionierenden System. Hält ein Mitglied sich nicht an
+die Regeln, fliegt er raus. Ich glaube daran (und wenn ich nicht daran glauben
+würde, könnte ich gleich aufhören) dass es möglich ist ein solches System zu
+erschaffen. Das Protokoll, die Regeln müssten so ausgelegt und Ausbalanciert
+werden, dass ein Systemzusammenbruch zwar möglich ist (das kann ich nun wirklich
+nicht verhindern), allerdings sehr schwierig. Einen Systemzusammenbruch darf es
+nicht wegen einzelnen Individuen geben sondern nur dann wenn ein großer Teil des
+Netzwerkes sich nicht an die Regeln hält.
 
