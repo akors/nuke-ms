@@ -6,6 +6,9 @@ cmake_minimum_required(VERSION 2.6)
 # we are compiling nuke-ms, and it's C++-Code
 project(nuke-ms)
 
+# ask wether we want to build the test executables
+option(BUILD_TEST_DIR "Build testing executables" OFF)
+
 # We need boost for all executeables
 set(Boost_USE_MULTITHREADED ON)
 find_package( Boost 1.35.0 REQUIRED thread system)
@@ -36,3 +39,7 @@ endif()
 add_subdirectory(common)
 add_subdirectory(client)
 add_subdirectory(server)
+
+if(BUILD_TEST_DIR)
+    add_subdirectory(test)
+endif()
