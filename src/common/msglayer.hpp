@@ -471,7 +471,7 @@ SegmentationLayer::decodeHeader(InputIterator headerbuf)
     // get the size of the packet
     readbytes<byte_traits::uint2b_t>(&headerdata.packetsize, &headerbuf[1]);
 
-    headerdata.packetsize = ntohx(headerdata.packetsize);
+    headerdata.packetsize = to_hostbo(headerdata.packetsize);
 
     if (headerbuf[3] != 0)
         throw InvalidHeaderError();

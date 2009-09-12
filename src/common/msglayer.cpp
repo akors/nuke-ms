@@ -111,7 +111,7 @@ StringwrapLayer::StringwrapLayer(const UnknownMessageLayer& msg)
     {
         // read bytes into a character, convert byte endianness
         it = readbytes(&tmpval, it);
-        *out_iter++ = ntohx(tmpval);
+        *out_iter++ = to_hostbo(tmpval);
     }
 
 
@@ -133,7 +133,7 @@ StringwrapLayer::fillSerialized(BasicMessageLayer::data_iterator buffer) const
     // write all bytes of one character into the buffer, advance the output
     // iterator
     for (; in_iter < message_string.end(); in_iter++)
-        buffer = writebytes(buffer, htonx(*in_iter));
+        buffer = writebytes(buffer, to_netbo(*in_iter));
 
     return buffer;
 }
@@ -156,7 +156,7 @@ SegmentationLayer::fillSerialized(BasicMessageLayer::data_iterator buffer) const
     // second and third bytes are the size of the whole packet
     buffer = writebytes(
         buffer,
-        htonx(static_cast<byte_traits::uint2b_t>(datasize+header_length))
+        to_netbo(static_cast<byte_traits::uint2b_t>(datasize+header_length))
     );
 
     // fourth byte is a zero
