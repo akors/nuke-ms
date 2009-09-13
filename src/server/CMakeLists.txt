@@ -14,3 +14,8 @@ set_target_properties(nuke-ms-serv PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY
     ${CMAKE_BINARY_DIR}/bin
 )
+
+install(TARGETS nuke-ms-serv
+    RUNTIME DESTINATION bin
+)
+
