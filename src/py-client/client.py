@@ -18,7 +18,7 @@ class proto:
 	def convert_to_resv(self, data):
 		pass
 
-	def encode_uft32_no_bom(self, text):
+	def encode_uft32_no_bom_be(self, text):
 		ret = []
 		for c in text:
 			ret.append(chr((ord(c)>>24)&0x000000ff))
@@ -26,11 +26,22 @@ class proto:
 			ret.append(chr((ord(c)>>8)&0x000000ff))
 			ret.append(chr((ord(c)>>0)&0x000000ff))
 		return ''.join(ret)
+	
+	def encode_uft32_no_bom_le(self, text):
+		ret = []
+		for c in text:
+			ret.append(chr((ord(c)>>0)&0x000000ff))
+			ret.append(chr((ord(c)>>8)&0x000000ff))
+			ret.append(chr((ord(c)>>16)&0x000000ff))
+			ret.append(chr((ord(c)>>24)&0x000000ff))
+		return ''.join(ret)
+
+
 
 	def add_layer_0(self, data):
 		size = len(data)
 		format = "4B%ds"%size #0x80,size(short),0x00,data
-		ret = struct.pack(format,0x80,((size+4)>>8)&0x00ff,(size+4)&0x00ff,0x00,data)
+		ret = struct.pack(format,0x80,((size+4))&0x00ff,(size+4>>8)&0x00ff,0x00,data)
 		return ret
 
 	def add_layer_1(self,data):
@@ -38,8 +49,10 @@ class proto:
 
 	def add_layer_2(self, typ, data):
 		ret = ""
-		if(typ == "utf-32"):
-			ret = self.encode_uft32_no_bom(data)
+		if(typ == "utf-32_be"):
+			ret = self.encode_uft32_no_bom_be(data)
+		elif(typ == "utf-32_le"):
+			ret = self.encode_uft32_no_bom_le(data)
 		elif(typ == "uft-8"):
 			ret = data.encode('uft-8')
 		elif(typ =="binary"):
@@ -66,7 +79,7 @@ class client:
 
 	def send_text(self, text):
 		p = proto()
-		to_send = p.convert_to_send("utf-32",text)
+		to_send = p.convert_to_send("utf-32_le",text)
 		self.send(to_send)
 
 
@@ -86,7 +99,7 @@ class client:
 		while not self.stop:
 			try:
 				data = self.s.recv(1024)
-				self.g.out.insert(END,">>"+data[7::4]+"\n","a")
+				self.g.out.insert(END,">>"+data[4::4]+"\n","a")
 			except:
 				pass
 		print "recv thread stop"
