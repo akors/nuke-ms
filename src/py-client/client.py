@@ -95,13 +95,13 @@ class client:
 		self.stop = 1
 
 	def recv(self):
-		self.s.setblocking(0)
+		self.s.setblocking(1)
 		while not self.stop:
 			try:
 				data = self.s.recv(1024)
 				self.g.out.insert(END,">>"+data[4::4]+"\n","a")
 			except:
-				time.sleep(0.1)
+				pass
 		print "recv thread stop"
 
 
