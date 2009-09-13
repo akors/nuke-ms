@@ -95,7 +95,7 @@ class client:
 		self.stop = 1
 
 	def recv(self):
-		self.s.setblocking(1)
+		self.s.settimeout(2)
 		while not self.stop:
 			try:
 				data = self.s.recv(1024)
