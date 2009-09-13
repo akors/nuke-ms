@@ -101,7 +101,7 @@ class client:
 				data = self.s.recv(1024)
 				self.g.out.insert(END,">>"+data[4::4]+"\n","a")
 			except:
-				pass
+				time.sleep(0.1)
 		print "recv thread stop"
 
 
