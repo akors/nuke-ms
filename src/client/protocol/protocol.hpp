@@ -42,11 +42,13 @@
 #include <boost/asio.hpp>
 
 #include <boost/thread/thread.hpp>
+#include <boost/signals2/signal.hpp>
 #include <boost/statechart/asynchronous_state_machine.hpp>
 
 #include "bytes.hpp"
 #include "protocol/errors.hpp"
 #include "control/notifications.hpp"
+#include "control/sigtypes.hpp"
 
 
 
@@ -84,6 +86,16 @@ class NukeMSProtocol
 
     /** How long to wait for the thread to join */
     enum { threadwait_ms = 3000 };
+
+    /**
+    */
+    struct Signals
+    {
+        control::SignalRcvMessage rcvMessage;
+        control::SignalConnectionStatusReport connectStatReport;
+        control::SignalSendReport sendReport;
+    } signals;
+
 public:
 
     /** Constructor.
@@ -97,6 +109,19 @@ public:
     * Stops the Network machine and destroys the thread.
     */
     ~NukeMSProtocol();
+
+    boost::signals2::connection
+    connectRcvMessage(const control::SignalRcvMessage::slot_type& slot)
+    { return signals.rcvMessage.connect(slot); }
+
+    boost::signals2::connection connectConnectionStatusReport(
+        const control::SignalConnectionStatusReport::slot_type& slot)
+    { return signals.connectStatReport.connect(slot); }
+
+    boost::signals2::connection
+    connectSendReport(const control::SignalSendReport::slot_type& slot)
+    { return signals.sendReport.connect(slot); }
+
 
     /** Connect to a remote site.
      * @param id The string representation of the address of the remote site

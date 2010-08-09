@@ -34,6 +34,9 @@
 #define MAIN_HPP_INCLUDED
 
 #include <boost/thread/mutex.hpp>
+#include <boost/signals2/signal.hpp>
+
+
 
 #include <wx/frame.h>
 #include <wx/menu.h>
@@ -41,6 +44,7 @@
 #include <wx/sizer.h>
 
 #include "control/commands.hpp"
+#include "control/sigtypes.hpp"
 
 namespace nuke_ms
 {
@@ -108,6 +112,19 @@ class MainFrame : public wxFrame
     boost::mutex print_mutex;
 
 
+    /**
+    */
+    struct Signals
+    {
+        control::SignalConnectTo connectTo;
+        control::SignalSendMessage sendMessage;
+        control::SignalConnectionStatusQuery connectionStatusQuery;
+        control::SignalDisconnect disconnect;
+        control::SignalExitApp exitApp;
+    } signals;
+
+
+
     /** creates and initializes menu bars*/
     void createMenuBar();
 
@@ -152,6 +169,7 @@ class MainFrame : public wxFrame
     parseCommand(const byte_traits::string& str);
 
 public:
+
     friend class MainFrameWrapper;
 
     /** Constructor.
@@ -164,6 +182,28 @@ public:
     */
     MainFrame(boost::function1<void, const control::ControlCommand&>
                 _commandCallback)  throw();
+
+
+    boost::signals2::connection
+    connectConnectTo(const control::SignalConnectTo::slot_type& slot)
+    { return signals.connectTo.connect(slot); }
+
+    boost::signals2::connection
+    connectSendMessage(const control::SignalSendMessage::slot_type& slot)
+    { return signals.sendMessage.connect(slot); }
+
+    boost::signals2::connection
+    connectConnectionStatusQuery(
+        const control::SignalConnectionStatusQuery::slot_type& slot)
+    { return signals.connectionStatusQuery.connect(slot); }
+
+    boost::signals2::connection
+    connectDisconnect(const control::SignalDisconnect::slot_type& slot)
+    { return signals.disconnect.connect(slot); }
+
+    boost::signals2::connection
+    connectExitApp(const control::SignalExitApp::slot_type& slot)
+    { return signals.exitApp.connect(slot); }
 
     /** Called if the user wants to quit. */
     void OnQuit(wxCommandEvent& event) throw();

@@ -11,7 +11,7 @@ include(TestBigEndian)
 
 # We need boost for all executeables
 set(Boost_USE_MULTITHREADED ON)
-find_package( Boost 1.35.0 REQUIRED thread system)
+find_package( Boost 1.39.0 REQUIRED thread system)
 
 # Add Boost header and library directories
 include_directories(${Boost_INCLUDE_DIRS})

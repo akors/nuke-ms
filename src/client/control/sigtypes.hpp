@@ -97,6 +97,28 @@ struct SSendReport
 };
 
 
+// Signals issued by the GUI
+typedef boost::signals2::signal<void (const control::ServerLocation&)>
+    SignalConnectTo;
+typedef boost::signals2::signal<void (const control::Message&)>
+    SignalSendMessage;
+typedef boost::signals2::signal<void ()> SignalConnectionStatusQuery;
+typedef boost::signals2::signal<void ()> SignalDisconnect;
+typedef boost::signals2::signal<void ()> SignalExitApp;
+
+
+
+// Signals issued by the Protocol
+typedef boost::signals2::signal<void(const control::Message&)> SignalRcvMessage;
+typedef boost::signals2::signal<void (const control::ConnectionStatusReport&)>
+    SignalConnectionStatusReport;
+typedef boost::signals2::signal<void(const control::SSendReport&)>
+    SignalSendReport;
+
+
+
+
+
 } // namespace control
 } // namespace nuke_ms
 
