@@ -22,6 +22,7 @@
 #ifndef SIGTYPES_HPP
 #define SIGTYPES_HPP
 
+#include <boost/shared_ptr.hpp>
 #include "bytes.hpp"
 
 namespace nuke_ms
@@ -33,6 +34,9 @@ namespace control
 /** Identification of the server location */
 struct ServerLocation
 {
+    typedef boost::shared_ptr<ServerLocation> ptr_t;
+    typedef boost::shared_ptr<const ServerLocation> const_ptr_t;
+
     std::string where; /**< String with hostname or ip address */
 };
 
@@ -40,6 +44,9 @@ struct ServerLocation
 */
 struct Message
 {
+    typedef boost::shared_ptr<Message> ptr_t;
+    typedef boost::shared_ptr<const Message> const_ptr_t;
+
     /** Type for unique message ID */
     typedef unsigned short message_id_t;
 
@@ -51,6 +58,9 @@ struct Message
 */
 struct ConnectionStatusReport
 {
+    typedef boost::shared_ptr<ConnectionStatusReport> ptr_t;
+    typedef boost::shared_ptr<const ConnectionStatusReport> const_ptr_t;
+
     /** Type for the current connection state */
     enum connect_state_t
     {
@@ -79,6 +89,9 @@ struct ConnectionStatusReport
 */
 struct SSendReport
 {
+    typedef boost::shared_ptr<SSendReport> ptr_t;
+    typedef boost::shared_ptr<const SSendReport> const_ptr_t;
+
     /** Type for the report of the sent message.
     * All failure reports are guaranteed to have the first bit set to 0,
     * all success reports are guaranteed to have the first bit set to 1
@@ -98,9 +111,9 @@ struct SSendReport
 
 
 // Signals issued by the GUI
-typedef boost::signals2::signal<void (const control::ServerLocation&)>
+typedef boost::signals2::signal<void (control::ServerLocation::const_ptr_t)>
     SignalConnectTo;
-typedef boost::signals2::signal<void (const control::Message&)>
+typedef boost::signals2::signal<void (control::Message::const_ptr_t)>
     SignalSendMessage;
 typedef boost::signals2::signal<void ()> SignalConnectionStatusQuery;
 typedef boost::signals2::signal<void ()> SignalDisconnect;
@@ -109,10 +122,13 @@ typedef boost::signals2::signal<void ()> SignalExitApp;
 
 
 // Signals issued by the Protocol
-typedef boost::signals2::signal<void(const control::Message&)> SignalRcvMessage;
-typedef boost::signals2::signal<void (const control::ConnectionStatusReport&)>
+typedef boost::signals2::signal<void (control::Message::const_ptr_t)>
+    SignalRcvMessage;
+typedef boost::signals2::signal<
+    void (const control::ConnectionStatusReport::const_ptr_t)>
     SignalConnectionStatusReport;
-typedef boost::signals2::signal<void(const control::SSendReport&)>
+typedef boost::signals2::signal<
+    void (control::SSendReport::const_ptr_t)>
     SignalSendReport;
 
 
