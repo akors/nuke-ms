@@ -8,3 +8,6 @@ project(nuke-ms)
 
 # Add source directory, place resulting files in build directory
 add_subdirectory(src build)
+
+# Add doc directory, but exclude from all target
+add_subdirectory(doc EXCLUDE_FROM_ALL)
