@@ -136,13 +136,8 @@ public:
 
     /** Send message to connected remote site.
      * @param msg The message you want to send
-    * @throws std::runtime_error if a ressource could not be allocated.
-    * e.g. a threading resource.
-    * @throws ProtocolError if a networking error occured
      */
-    void send(const byte_traits::string& msg)
-        throw(std::runtime_error, ProtocolError);
-
+    void send(control::Message::const_ptr_t msg) throw();
 
     /** Disconnect from the remote site.
     * @throws std::runtime_error if a ressource could not be allocated.

@@ -143,7 +143,10 @@ public:
     AppControl()
     :  gui(boost::bind(&AppControl::handleCommand, this, _1)),
        protocol(boost::bind(&AppControl::handleNotification, this, _1))
-    { }
+    {
+        // thread gui signals to protocol slots
+        gui.connectSendMessage(boost::bind(&ProtocolT::send, &protocol, _1));
+    }
 
     /** Handle a command.
     * This function should be used as a callback for the GUI.
@@ -224,15 +227,6 @@ void AppControl<GuiT, ProtocolT>::handleCommand(const ControlCommand& cmd)
                 static_cast<const MessageCommand<ControlCommand::ID_PRINT_MSG>&> (cmd);
 
             printMessage(L"<< " + cmd_msg.msg);
-            break;
-        }
-
-        case ControlCommand::ID_SEND_MSG:
-        {
-            const MessageCommand<ControlCommand::ID_SEND_MSG>& cmd_msg =
-                static_cast<const MessageCommand<ControlCommand::ID_SEND_MSG>&> (cmd);
-
-            sendMessage(cmd_msg.msg);
             break;
         }
 

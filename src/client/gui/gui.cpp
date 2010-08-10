@@ -254,9 +254,10 @@ void MainFrame::OnEnter(wxCommandEvent& event)
     }
     else // if it's not a command we try to send it
     {
-        commandCallback(control::MessageCommand
-                            <control::ControlCommand::ID_SEND_MSG>
-                            (input_string));
+        control::Message::ptr_t msg(new control::Message);
+        msg->str = input_string;
+
+        signals.sendMessage(msg);
     }
 
 }

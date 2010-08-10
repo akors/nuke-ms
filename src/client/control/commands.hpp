@@ -57,7 +57,6 @@ struct ControlCommand
         ID_INVALID = 0, /**< Invalid Command */
         ID_EXIT, /**< user asked to exit */
         ID_PRINT_MSG, /**< print a message */
-        ID_SEND_MSG, /**< Send the message to the remote site */
         ID_CONNECT_TO, /**< connect to a remote site */
         ID_DISCONNECT, /**< disconnect from a remote site */
 

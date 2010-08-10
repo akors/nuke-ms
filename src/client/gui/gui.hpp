@@ -231,6 +231,8 @@ class MainFrameWrapper
     /** The actual MainFrame class */
     MainFrame* main_frame;
 
+    /** All outgoing signals */
+    MainFrame::Signals *signals;
 public:
 
     /** Constructor. Creates a new MainFrame object. */
@@ -240,6 +242,7 @@ public:
         : main_frame(NULL)
     {
         main_frame = new MainFrame(commandCallback);
+        signals = &(main_frame->signals);
     }
 
     ~MainFrameWrapper()
@@ -248,6 +251,29 @@ public:
         // MainFrame is derived from wxWindow. As such, simply deleting the
         // object would be incorrect. It has to delete itself.
     }
+
+
+    boost::signals2::connection
+    connectConnectTo(const control::SignalConnectTo::slot_type& slot)
+    { return signals->connectTo.connect(slot); }
+
+    boost::signals2::connection
+    connectSendMessage(const control::SignalSendMessage::slot_type& slot)
+    { return signals->sendMessage.connect(slot); }
+
+    boost::signals2::connection
+    connectConnectionStatusQuery(
+        const control::SignalConnectionStatusQuery::slot_type& slot)
+    { return signals->connectionStatusQuery.connect(slot); }
+
+    boost::signals2::connection
+    connectDisconnect(const control::SignalDisconnect::slot_type& slot)
+    { return signals->disconnect.connect(slot); }
+
+    boost::signals2::connection
+    connectExitApp(const control::SignalExitApp::slot_type& slot)
+    { return signals->exitApp.connect(slot); }
+
 
     /** Print a message.
     * @see MainFrame::printMessage()

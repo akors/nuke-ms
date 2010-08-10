@@ -116,11 +116,11 @@ void NukeMSProtocol::connect_to(const byte_traits::string& id)
 
 
 
-void NukeMSProtocol::send(const byte_traits::string& msg)
-    throw(std::runtime_error, ProtocolError)
+
+void NukeMSProtocol::send(control::Message::const_ptr_t msg) throw()
 {
     // create a Stringwrapper for the message
-    StringwrapLayer::ptr_type data(new StringwrapLayer(msg));
+    StringwrapLayer::ptr_type data(new StringwrapLayer(msg->str));
 
     // Create new Connection request event and dispatch it to the statemachine
     boost::intrusive_ptr<EvtSendMsg>
