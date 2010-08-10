@@ -43,7 +43,6 @@
 #include <wx/textctrl.h>
 #include <wx/sizer.h>
 
-#include "control/commands.hpp"
 #include "control/sigtypes.hpp"
 
 namespace nuke_ms
@@ -105,9 +104,6 @@ class MainFrame : public wxFrame
     /** Input text box */
     wxTextCtrl* text_input_box;
 
-    /** The function object to call when a command was issued by the user */
-    const boost::function1<void,const control::ControlCommand&> commandCallback;
-
     /** The mutex to ensure synchronized access to the display resource*/
     boost::mutex print_mutex;
 
@@ -161,12 +157,9 @@ class MainFrame : public wxFrame
     * function.
     *
     * @param str The string you want to be interpreted as command
-    * @return A pointer to the command that was retrieved from parsing.
-    * ControlCommand::id == ID_INVALID, if the command could not be parsed.
     * @todo add proper parser here
     */
-    static boost::shared_ptr<control::ControlCommand>
-    parseCommand(const byte_traits::string& str);
+    void parseCommand(const byte_traits::string& str);
 
 public:
 
@@ -180,8 +173,7 @@ public:
     * @param _commandCallback A function object that will be called when the
     * user issues a command
     */
-    MainFrame(boost::function1<void, const control::ControlCommand&>
-                _commandCallback)  throw();
+    MainFrame()  throw();
 
 
     boost::signals2::connection
@@ -236,12 +228,10 @@ class MainFrameWrapper
 public:
 
     /** Constructor. Creates a new MainFrame object. */
-    MainFrameWrapper
-        (boost::function1<void, const control::ControlCommand&> commandCallback)
-        throw()
+    MainFrameWrapper() throw()
         : main_frame(NULL)
     {
-        main_frame = new MainFrame(commandCallback);
+        main_frame = new MainFrame;
         signals = &(main_frame->signals);
     }
 

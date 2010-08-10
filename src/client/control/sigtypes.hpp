@@ -37,7 +37,7 @@ struct ServerLocation
     typedef boost::shared_ptr<ServerLocation> ptr_t;
     typedef boost::shared_ptr<const ServerLocation> const_ptr_t;
 
-    std::string where; /**< String with hostname or ip address */
+    byte_traits::string where; /**< String with hostname or ip address */
 };
 
 /** Message that is sent or received over the network.

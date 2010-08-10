@@ -104,8 +104,7 @@ void MainFrame::createTextBoxes()
 }
 
 
-boost::shared_ptr<control::ControlCommand>
-MainFrame::parseCommand(const byte_traits::string& str)
+void MainFrame::parseCommand(const byte_traits::string& str)
 {
     // we are basically dealing only with Control commands, so it would be nice
     // if all the types were in scope
@@ -116,7 +115,7 @@ MainFrame::parseCommand(const byte_traits::string& str)
                              byte_traits::string::const_iterator, byte_traits::string >
         tokenizer;
 
-try {
+
     boost::char_separator<wchar_t> whitespace(L" \t\r\n");
     tokenizer tokens(str, whitespace);
 
@@ -124,44 +123,38 @@ try {
 
     // bail out, if there were no tokens
     if ( tok_iter == tokens.end() )
-        throw false;
+        goto invalid_command;
 
 
-    if  ( !tok_iter->compare( L"/exit" ) )
-        return boost::shared_ptr<ControlCommand>
-            (new ControlCommand(ControlCommand::ID_EXIT));
+    else if  ( !tok_iter->compare( L"/exit" ) )
+    { signals.exitApp(); return; }
 
-    if  ( !tok_iter->compare( L"/disconnect" ) )
-        return boost::shared_ptr<ControlCommand>
-            (new ControlCommand(ControlCommand::ID_DISCONNECT));
-
+    else if  ( !tok_iter->compare( L"/disconnect" ) )
+    { signals.disconnect(); return; }
 
     else if ( !tok_iter->compare( L"/print") )
     {
         if (++tok_iter == tokens.end() )
-            throw false;
+            goto invalid_command;
 
-        return boost::shared_ptr<ControlCommand>
-            (new MessageCommand<ControlCommand::ID_PRINT_MSG>(*tok_iter));
+        printMessage(L"*  " + *tok_iter);
+        return;
     }
 
     else if ( !tok_iter->compare( L"/connect") )
     {
         if (++tok_iter == tokens.end() )
-            throw false;
+            goto invalid_command;
 
-        return boost::shared_ptr<ControlCommand>
-            (new MessageCommand<ControlCommand::ID_CONNECT_TO>(*tok_iter));
+        ServerLocation::ptr_t where(new ServerLocation);
+        where->where = *tok_iter;
+        signals.connectTo(where);
+        return;
     }
 
-
-}
-catch(...) {}
-// if somebody threw something, or if we reached this line,
-// the command is invalid
-
-    return boost::shared_ptr<ControlCommand>
-            (new ControlCommand(ControlCommand::ID_INVALID));
+invalid_command:
+    //  if we reached this line the command is invalid
+    printMessage(L"*  Invalid command syntax!");
 }
 
 
@@ -191,12 +184,8 @@ void MainFrame::printMessage(const byte_traits::string& str)
 ////////////////////////////// MainFrame Public ///////////////////////////////
 
 
-MainFrame::MainFrame
-        (boost::function1<void, const control::ControlCommand&> _commandCallback)
-    throw()
-
-    : wxFrame(NULL, -1, wxT("killer app"), wxDefaultPosition, wxSize(600, 500)),
-    commandCallback(_commandCallback)
+MainFrame::MainFrame() throw()
+    : wxFrame(NULL, -1, wxT("killer app"), wxDefaultPosition, wxSize(600, 500))
 {
 
     // softcoding the window sizes
@@ -237,20 +226,13 @@ void MainFrame::OnEnter(wxCommandEvent& event)
         return;
 
     // print everything the user typed to the screen
-    commandCallback(
-            control::MessageCommand<control::ControlCommand::ID_PRINT_MSG>
-                (input_string)
-        );
+    printMessage(L"<< " + input_string);
 
 
     // check if this is a command
     if ( MainFrame::isCommand(input_string) )
     {
-        // create a shared pointer from the output
-        boost::shared_ptr<control::ControlCommand> cmd =
-            MainFrame::parseCommand(input_string);
-
-        commandCallback(*cmd);
+        MainFrame::parseCommand(input_string);
     }
     else // if it's not a command we try to send it
     {
