@@ -88,13 +88,12 @@ NukeMSProtocol::~NukeMSProtocol()
 }
 
 
-void NukeMSProtocol::connect_to(const byte_traits::string& id)
-    throw(std::runtime_error, ProtocolError)
+void NukeMSProtocol::connect_to(control::ServerLocation::const_ptr_t where)
 {
     // Get Host/Service pair from the destination string
     std::string host, service;
-    if (parseDestinationString(host, service, id)) // on success, pass on event
-    {
+    if (parseDestinationString(host, service, where->where))
+    {  // on success, pass on event
         // Create new Connection request event
         // and dispatch it to the statemachine
         boost::intrusive_ptr<EvtConnectRequest>
@@ -132,8 +131,7 @@ void NukeMSProtocol::send(control::Message::const_ptr_t msg) throw()
 }
 
 
-void NukeMSProtocol::disconnect()
-    throw(std::runtime_error, ProtocolError)
+void NukeMSProtocol::disconnect() throw()
 {
     // Create new Disconnect request event and dispatch it to the statemachine
     boost::intrusive_ptr<EvtDisconnectRequest>

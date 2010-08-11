@@ -77,11 +77,7 @@ private:
 
 
     /** Shut down the application. */
-    void close()
-        throw()
-    {
-        gui.close();
-    }
+    void close() throw() { gui.close(); }
 
 public:
     /** Constructor.
@@ -92,8 +88,13 @@ public:
     AppControl()
     :  protocol(boost::bind(&AppControl::handleNotification, this, _1))
     {
+        // this one's for us
+        gui.connectExitApp(boost::bind(&AppControl::close, this));
+
         // thread gui signals to protocol slots
+        gui.connectConnectTo(boost::bind(&ProtocolT::connect_to,&protocol,_1));
         gui.connectSendMessage(boost::bind(&ProtocolT::send, &protocol, _1));
+        gui.connectDisconnect(boost::bind(&ProtocolT::disconnect,&protocol));
     }
 
 
@@ -108,9 +109,7 @@ public:
     * The main Application might need to access the GUI directly. This is
     * possible by calling this function.
     */
-    GuiT* getGui()
-        throw()
-    { return &gui; }
+    GuiT* getGui() throw() { return &gui; }
 };
 
 

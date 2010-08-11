@@ -76,7 +76,8 @@ struct ConnectionStatusReport
         STCHR_CONNECT_SUCCESSFUL, /**< Connection attempt was successful */
         STCHR_CONNECT_FAILED, /**< Connection attempt failed */
         STCHR_SOCKET_CLOSED, /**< Connection to remote server lost */
-        STCHR_USER_REQUESTED /**< User requested state change */
+        STCHR_USER_REQUESTED, /**< User requested state change */
+        STCHR_INTERNAL_ERROR /**< Internal error has occured, refer to msg */
     };
 
     connect_state_t newstate; /**< current connection state */

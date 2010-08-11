@@ -125,12 +125,8 @@ public:
 
     /** Connect to a remote site.
      * @param id The string representation of the address of the remote site
-    * @throws std::runtime_error if a ressource could not be allocated.
-    * e.g. a threading resource.
-    * @throws ProtocolError if a networking error occured
      */
-    void connect_to(const byte_traits::string& id)
-        throw(std::runtime_error, ProtocolError);
+    void connect_to(control::ServerLocation::const_ptr_t where);
 
 
 
@@ -140,12 +136,8 @@ public:
     void send(control::Message::const_ptr_t msg) throw();
 
     /** Disconnect from the remote site.
-    * @throws std::runtime_error if a ressource could not be allocated.
-    * e.g. a threading resource.
-    * @throws ProtocolError if a networking error occured
     */
-    void disconnect()
-        throw(std::runtime_error, ProtocolError);
+    void disconnect() throw();
 
 };
 
