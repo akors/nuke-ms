@@ -105,7 +105,7 @@ struct SSendReport
         //SS_SERV_ACK = 3, /**< Server received message */
         //SS_USER_NAK = 6, /**< Remote user did not receive message */
         //SS_USER_ACK = 7  /**< Remote user received message */
-    };
+    } send_state;
 
     Message::message_id_t message_id; /**< ID of the message in question */
 };
@@ -126,7 +126,7 @@ typedef boost::signals2::signal<void ()> SignalExitApp;
 typedef boost::signals2::signal<void (control::Message::const_ptr_t)>
     SignalRcvMessage;
 typedef boost::signals2::signal<
-    void (const control::ConnectionStatusReport::const_ptr_t)>
+    void (control::ConnectionStatusReport::const_ptr_t)>
     SignalConnectionStatusReport;
 typedef boost::signals2::signal<
     void (control::SSendReport::const_ptr_t)>
