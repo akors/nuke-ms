@@ -140,6 +140,11 @@ class MainFrame : public wxFrame
 
 
 
+    void slotReceiveMessage(control::Message::const_ptr_t msg) throw();
+    void slotConnectionStatusReport(
+        control::ConnectionStatusReport::const_ptr_t rprt) throw();
+    void slotSendReport(control::SSendReport::const_ptr_t rprt) throw();
+
     /** Check if a string is a command
     *
     * @param str The string you want to be checked

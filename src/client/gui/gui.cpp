@@ -158,6 +158,48 @@ invalid_command:
 }
 
 
+
+void MainFrame::slotReceiveMessage(control::Message::const_ptr_t msg) throw()
+{
+    printMessage(msg->str);
+}
+
+void MainFrame::slotConnectionStatusReport(
+    control::ConnectionStatusReport::const_ptr_t rprt) throw()
+{
+    using namespace control;
+
+    switch(rprt->newstate)
+    {
+    case ConnectionStatusReport::CNST_DISCONNECTED:
+        if (!rprt->statechange_reason)
+            printMessage(L"*  Connection state: disconnected.");
+        else
+            printMessage(L"*  New connection state: disconnected; "+ rprt->msg);
+        break;
+    case ConnectionStatusReport::CNST_CONNECTING:
+        if(!rprt->statechange_reason) // we only care if user wanted to know
+            printMessage(L"*  Connection state: Connecting.");
+        break;
+    case ConnectionStatusReport::CNST_CONNECTED:
+        if (!rprt->statechange_reason)
+            printMessage(L"*  Connection state: connected.");
+        else
+            printMessage(L"*  New connection state: connected.");
+        break;
+    default:
+        printMessage(L"*  Connection state: unknown.");
+    }
+}
+
+
+void MainFrame::slotSendReport(control::SSendReport::const_ptr_t rprt) throw()
+{
+    if (rprt->send_state & 1) // check if first bit is set
+        printMessage(L"*  Failed to send message");
+}
+
+
 void MainFrame::printMessage(const byte_traits::string& str)
     throw (std::runtime_error)
 {
