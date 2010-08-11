@@ -215,6 +215,14 @@ boost::statechart::result StateNegotiating::react(const EvtConnectReport& evt)
 
 boost::statechart::result StateNegotiating::react(const EvtDisconnectRequest&)
 {
+    control::ConnectionStatusReport::ptr_t
+    rprt(new control::ConnectionStatusReport);
+
+    rprt->newstate = control::ConnectionStatusReport::CNST_DISCONNECTED;
+    rprt->statechange_reason =
+        control::ConnectionStatusReport::STCHR_USER_REQUESTED;
+    context<ProtocolMachine>().signals.connectStatReport(rprt);
+
     return transit<StateWaiting>();
 }
 
@@ -355,6 +363,14 @@ StateConnected::StateConnected(my_context ctx)
 
 boost::statechart::result StateConnected::react(const EvtDisconnectRequest&)
 {
+    control::ConnectionStatusReport::ptr_t
+    rprt(new control::ConnectionStatusReport);
+
+    rprt->newstate = control::ConnectionStatusReport::CNST_DISCONNECTED;
+    rprt->statechange_reason =
+        control::ConnectionStatusReport::STCHR_USER_REQUESTED;
+    context<ProtocolMachine>().signals.connectStatReport(rprt);
+
     return transit<StateWaiting>();
 }
 
@@ -458,7 +474,7 @@ void StateConnected::writeHandler(
 
         control::SendReport::ptr_t rprt(new control::SendReport);
         rprt->send_state = false;
-        rprt->reason = control::SendReport::SR_NETWORK_ERROR;
+        rprt->reason = control::SendReport::SR_CONNECTION_ERROR;
         rprt->reason_str = byte_traits::string(errmsg.begin(), errmsg.end());
 
         _outermost_context.signals.sendReport(rprt);

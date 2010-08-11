@@ -78,7 +78,7 @@ struct ConnectionStatusReport
         STCHR_CONNECT_FAILED, /**< Connection attempt failed */
         STCHR_SOCKET_CLOSED, /**< Connection to remote server lost */
         STCHR_USER_REQUESTED, /**< User requested state change */
-        STCHR_BUSY /**< Operation of this type is allready pending */
+        STCHR_BUSY /**< An operation is currently being performed */
     };
 
     connect_state_t newstate; /**< current connection state */
@@ -102,7 +102,7 @@ struct SendReport
     {
         SR_SEND_OK, /**< All cool. */
         SR_SERVER_NOT_CONNECTED, /**< Not connected to server */
-        SR_NETWORK_ERROR /**< Network failure */
+        SR_CONNECTION_ERROR /**< Network failure */
     } reason;
     byte_traits::string reason_str;
 };
@@ -128,10 +128,6 @@ typedef boost::signals2::signal<
 typedef boost::signals2::signal<
     void (control::SendReport::const_ptr_t)>
     SignalSendReport;
-
-
-
-
 
 } // namespace control
 } // namespace nuke_ms
