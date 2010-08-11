@@ -143,7 +143,7 @@ class MainFrame : public wxFrame
     void slotReceiveMessage(control::Message::const_ptr_t msg) throw();
     void slotConnectionStatusReport(
         control::ConnectionStatusReport::const_ptr_t rprt) throw();
-    void slotSendReport(control::SSendReport::const_ptr_t rprt) throw();
+    void slotSendReport(control::SendReport::const_ptr_t rprt) throw();
 
     /** Check if a string is a command
     *
@@ -268,6 +268,23 @@ public:
     boost::signals2::connection
     connectExitApp(const control::SignalExitApp::slot_type& slot)
     { return signals->exitApp.connect(slot); }
+
+
+    void slotReceiveMessage(control::Message::const_ptr_t msg) throw()
+    {
+        main_frame->slotReceiveMessage(msg);
+    }
+
+    void slotConnectionStatusReport(
+        control::ConnectionStatusReport::const_ptr_t rprt) throw()
+    {
+        main_frame->slotConnectionStatusReport(rprt);
+    }
+
+    void slotSendReport(control::SendReport::const_ptr_t rprt) throw()
+    {
+        main_frame->slotSendReport(rprt);
+    }
 
 
     /** Print a message.

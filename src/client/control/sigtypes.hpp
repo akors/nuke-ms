@@ -73,11 +73,12 @@ struct ConnectionStatusReport
     enum statechange_reason_t
     {
         STCHR_NO_REASON = 0, /**<No reason, used for example after state query*/
+        STCHR_INTERNAL_ERROR, /**< Internal error has occured, refer to msg */
         STCHR_CONNECT_SUCCESSFUL, /**< Connection attempt was successful */
         STCHR_CONNECT_FAILED, /**< Connection attempt failed */
         STCHR_SOCKET_CLOSED, /**< Connection to remote server lost */
         STCHR_USER_REQUESTED, /**< User requested state change */
-        STCHR_INTERNAL_ERROR /**< Internal error has occured, refer to msg */
+        STCHR_BUSY /**< Operation of this type is allready pending */
     };
 
     connect_state_t newstate; /**< current connection state */
@@ -88,26 +89,22 @@ struct ConnectionStatusReport
 
 /** Report for sent messages
 */
-struct SSendReport
+struct SendReport
 {
-    typedef boost::shared_ptr<SSendReport> ptr_t;
-    typedef boost::shared_ptr<const SSendReport> const_ptr_t;
+    typedef boost::shared_ptr<SendReport> ptr_t;
+    typedef boost::shared_ptr<const SendReport> const_ptr_t;
 
-    /** Type for the report of the sent message.
-    * All failure reports are guaranteed to have the first bit set to 0,
-    * all success reports are guaranteed to have the first bit set to 1
-    */
-    enum send_state_t
-    {
-        SS_SEND_NAK = 0, /**< Failed to send message */
-        SS_SEND_ACK = 1 /**< Message sent on our end */
-        //SS_SERV_NAK = 2, /**< Server did not receive message */
-        //SS_SERV_ACK = 3, /**< Server received message */
-        //SS_USER_NAK = 6, /**< Remote user did not receive message */
-        //SS_USER_ACK = 7  /**< Remote user received message */
-    } send_state;
 
     Message::message_id_t message_id; /**< ID of the message in question */
+    bool send_state; /** Was it sent or not */
+
+    enum send_rprt_reason_t
+    {
+        SR_SEND_OK, /**< All cool. */
+        SR_SERVER_NOT_CONNECTED, /**< Not connected to server */
+        SR_NETWORK_ERROR /**< Network failure */
+    } reason;
+    byte_traits::string reason_str;
 };
 
 
@@ -129,7 +126,7 @@ typedef boost::signals2::signal<
     void (control::ConnectionStatusReport::const_ptr_t)>
     SignalConnectionStatusReport;
 typedef boost::signals2::signal<
-    void (control::SSendReport::const_ptr_t)>
+    void (control::SendReport::const_ptr_t)>
     SignalSendReport;
 
 

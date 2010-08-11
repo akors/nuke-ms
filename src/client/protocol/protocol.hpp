@@ -47,7 +47,6 @@
 
 #include "bytes.hpp"
 #include "protocol/errors.hpp"
-#include "control/notifications.hpp"
 #include "control/sigtypes.hpp"
 
 
@@ -69,41 +68,18 @@ namespace protocol
 */
 class NukeMSProtocol
 {
-    /** An own thread for the State Machine*/
-    boost::thread machine_thread;
-
-    /** The scheduler for the asynchronous state machine */
-    boost::statechart::fifo_scheduler<> machine_scheduler;
-
-    /** The event processor handle for the state machine */
-    boost::statechart::fifo_scheduler<>::processor_handle event_processor;
-
-    /** The function object that will be called, if an event occurs.*/
-    control::notif_callback_t notification_callback;
-
-    /** The I/O Service object used by all network operations */
-    boost::asio::io_service io_service;
-
-    /** How long to wait for the thread to join */
-    enum { threadwait_ms = 3000 };
-
-    /**
-    */
+public:
     struct Signals
     {
         control::SignalRcvMessage rcvMessage;
         control::SignalConnectionStatusReport connectStatReport;
         control::SignalSendReport sendReport;
-    } signals;
-
-public:
+    };
 
     /** Constructor.
     * Creates a thread and initializes the Network machine.
-    * @param _notification_callback The callback function where the events will
-    * be dispatched
     */
-    NukeMSProtocol(const control::notif_callback_t _notification_callback) throw();
+    NukeMSProtocol() throw();
 
     /** Destructor.
     * Stops the Network machine and destroys the thread.
@@ -139,6 +115,25 @@ public:
     */
     void disconnect() throw();
 
+private:
+
+    /** An own thread for the State Machine*/
+    boost::thread machine_thread;
+
+    /** The scheduler for the asynchronous state machine */
+    boost::statechart::fifo_scheduler<> machine_scheduler;
+
+    /** The event processor handle for the state machine */
+    boost::statechart::fifo_scheduler<>::processor_handle event_processor;
+
+    /** The function object that will be called, if an event occurs.*/
+    Signals signals;
+
+    /** The I/O Service object used by all network operations */
+    boost::asio::io_service io_service;
+
+    /** How long to wait for the thread to join */
+    enum { threadwait_ms = 3000 };
 };
 
 

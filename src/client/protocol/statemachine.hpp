@@ -31,9 +31,7 @@
 #include <boost/ref.hpp>
 
 #include "msglayer.hpp"
-#include "control/notifications.hpp"
-
-
+#include "protocol/protocol.hpp"
 
 namespace nuke_ms
 {
@@ -155,8 +153,8 @@ struct ProtocolMachine :
 {
     enum {thread_timeout = 3000u};
 
-    /** Callback that will be used to inform the application */
-    nuke_ms::control::notif_callback_t notification_callback;
+    /** Callback signals that will be used to inform the application */
+    protocol::NukeMSProtocol::Signals& signals;
 
     /** I/O Service Object */
     boost::asio::io_service io_service;
@@ -174,9 +172,11 @@ struct ProtocolMachine :
     * Passing _io_service by pointer, because passing references to
     * create_processor does not work.
     */
-    ProtocolMachine(my_context ctx,
-                    nuke_ms::control::notif_callback_t _notification_callback);
-
+#ifdef I_HATE_THIS_DAMN_BUGGY_STATECHART_LIBRARY
+    ProtocolMachine(my_context ctx, NukeMSProtocol::Signals&  _signals);
+#else
+    ProtocolMachine(my_context ctx, NukeMSProtocol::Signals*  _signals);
+#endif
 
     /** Destructor. Stops all I/O operations and threads as cleanly as possible.
     */

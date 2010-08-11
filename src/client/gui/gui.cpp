@@ -161,7 +161,7 @@ invalid_command:
 
 void MainFrame::slotReceiveMessage(control::Message::const_ptr_t msg) throw()
 {
-    printMessage(msg->str);
+    printMessage(L">> " + msg->str);
 }
 
 void MainFrame::slotConnectionStatusReport(
@@ -172,8 +172,12 @@ void MainFrame::slotConnectionStatusReport(
     switch(rprt->newstate)
     {
     case ConnectionStatusReport::CNST_DISCONNECTED:
-        if (!rprt->statechange_reason)
+        if (rprt->statechange_reason == ConnectionStatusReport::STCHR_NO_REASON
+            || rprt->statechange_reason ==
+                ConnectionStatusReport::STCHR_USER_REQUESTED)
+        {
             printMessage(L"*  Connection state: disconnected.");
+        }
         else
             printMessage(L"*  New connection state: disconnected; "+ rprt->msg);
         break;
@@ -193,10 +197,10 @@ void MainFrame::slotConnectionStatusReport(
 }
 
 
-void MainFrame::slotSendReport(control::SSendReport::const_ptr_t rprt) throw()
+void MainFrame::slotSendReport(control::SendReport::const_ptr_t rprt) throw()
 {
-    if (rprt->send_state & 1) // check if first bit is set
-        printMessage(L"*  Failed to send message");
+    if (!rprt->send_state)
+        printMessage(L"*  Failed to send message: " + rprt->reason_str);
 }
 
 

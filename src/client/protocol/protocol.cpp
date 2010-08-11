@@ -45,21 +45,23 @@ static bool parseDestinationString(
 );
 
 
-NukeMSProtocol::NukeMSProtocol(const control::notif_callback_t _notification_callback)
-            throw()
-
-    : machine_scheduler(true), notification_callback(_notification_callback)
+NukeMSProtocol::NukeMSProtocol() throw()
+    : machine_scheduler(true)
 {
 
     // create an event processor for our state machine
 
     // Passing _io_service by pointer, because passing references to
     // create_processor does not work.
+#ifdef I_HATE_THIS_DAMN_BUGGY_STATECHART_LIBRARY
     event_processor =
-        machine_scheduler.create_processor<
-            ProtocolMachine,
-            control::notif_callback_t
-        >(notification_callback);
+        machine_scheduler.create_processor<ProtocolMachine, Signals&>(
+        boost::ref(signals));
+#else
+    event_processor =
+        machine_scheduler.create_processor<ProtocolMachine, Signals*>(
+        &signals);
+#endif
 
 
     // initiate the event processor
@@ -103,12 +105,13 @@ void NukeMSProtocol::connect_to(control::ServerLocation::const_ptr_t where)
     }
     else // on failure, report back to application
     {
-        notification_callback(
-            control::ReportNotification
-                <control::ProtocolNotification::ID_CONNECT_REPORT>(
-                    L"Invalid remote site identifier"
-            )
-        );
+        using namespace control;
+        ConnectionStatusReport::ptr_t rprt(new ConnectionStatusReport);
+        rprt->newstate = ConnectionStatusReport::CNST_DISCONNECTED;
+        rprt->statechange_reason = ConnectionStatusReport::STCHR_CONNECT_FAILED;
+        rprt->msg = L"Invalid remote site identifier";
+
+        signals.connectStatReport(rprt);
     }
 
 }
