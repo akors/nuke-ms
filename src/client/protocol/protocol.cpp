@@ -45,21 +45,23 @@ static bool parseDestinationString(
 );
 
 
-NukeMSProtocol::NukeMSProtocol(const control::notif_callback_t _notification_callback)
-            throw()
-
-    : machine_scheduler(true), notification_callback(_notification_callback)
+NukeMSProtocol::NukeMSProtocol() throw()
+    : machine_scheduler(true)
 {
 
     // create an event processor for our state machine
 
     // Passing _io_service by pointer, because passing references to
     // create_processor does not work.
+#ifdef I_HATE_THIS_DAMN_BUGGY_STATECHART_LIBRARY
     event_processor =
-        machine_scheduler.create_processor<
-            ProtocolMachine,
-            control::notif_callback_t
-        >(notification_callback);
+        machine_scheduler.create_processor<ProtocolMachine, Signals&>(
+        boost::ref(signals));
+#else
+    event_processor =
+        machine_scheduler.create_processor<ProtocolMachine, Signals*>(
+        &signals);
+#endif
 
 
     // initiate the event processor
@@ -88,13 +90,12 @@ NukeMSProtocol::~NukeMSProtocol()
 }
 
 
-void NukeMSProtocol::connect_to(const byte_traits::string& id)
-    throw(std::runtime_error, ProtocolError)
+void NukeMSProtocol::connect_to(control::ServerLocation::const_ptr_t where)
 {
     // Get Host/Service pair from the destination string
     std::string host, service;
-    if (parseDestinationString(host, service, id)) // on success, pass on event
-    {
+    if (parseDestinationString(host, service, where->where))
+    {  // on success, pass on event
         // Create new Connection request event
         // and dispatch it to the statemachine
         boost::intrusive_ptr<EvtConnectRequest>
@@ -104,23 +105,24 @@ void NukeMSProtocol::connect_to(const byte_traits::string& id)
     }
     else // on failure, report back to application
     {
-        notification_callback(
-            control::ReportNotification
-                <control::ProtocolNotification::ID_CONNECT_REPORT>(
-                    L"Invalid remote site identifier"
-            )
-        );
+        using namespace control;
+        ConnectionStatusReport::ptr_t rprt(new ConnectionStatusReport);
+        rprt->newstate = ConnectionStatusReport::CNST_DISCONNECTED;
+        rprt->statechange_reason = ConnectionStatusReport::STCHR_CONNECT_FAILED;
+        rprt->msg = L"Invalid remote site identifier";
+
+        signals.connectStatReport(rprt);
     }
 
 }
 
 
 
-void NukeMSProtocol::send(const byte_traits::string& msg)
-    throw(std::runtime_error, ProtocolError)
+
+void NukeMSProtocol::send(control::Message::const_ptr_t msg) throw()
 {
     // create a Stringwrapper for the message
-    StringwrapLayer::ptr_type data(new StringwrapLayer(msg));
+    StringwrapLayer::ptr_type data(new StringwrapLayer(msg->str));
 
     // Create new Connection request event and dispatch it to the statemachine
     boost::intrusive_ptr<EvtSendMsg>
@@ -132,8 +134,7 @@ void NukeMSProtocol::send(const byte_traits::string& msg)
 }
 
 
-void NukeMSProtocol::disconnect()
-    throw(std::runtime_error, ProtocolError)
+void NukeMSProtocol::disconnect() throw()
 {
     // Create new Disconnect request event and dispatch it to the statemachine
     boost::intrusive_ptr<EvtDisconnectRequest>

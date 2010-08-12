@@ -34,13 +34,16 @@
 #define MAIN_HPP_INCLUDED
 
 #include <boost/thread/mutex.hpp>
+#include <boost/signals2/signal.hpp>
+
+
 
 #include <wx/frame.h>
 #include <wx/menu.h>
 #include <wx/textctrl.h>
 #include <wx/sizer.h>
 
-#include "control/commands.hpp"
+#include "control/sigtypes.hpp"
 
 namespace nuke_ms
 {
@@ -101,11 +104,21 @@ class MainFrame : public wxFrame
     /** Input text box */
     wxTextCtrl* text_input_box;
 
-    /** The function object to call when a command was issued by the user */
-    const boost::function1<void,const control::ControlCommand&> commandCallback;
-
     /** The mutex to ensure synchronized access to the display resource*/
     boost::mutex print_mutex;
+
+
+    /**
+    */
+    struct Signals
+    {
+        control::SignalConnectTo connectTo;
+        control::SignalSendMessage sendMessage;
+        control::SignalConnectionStatusQuery connectionStatusQuery;
+        control::SignalDisconnect disconnect;
+        control::SignalExitApp exitApp;
+    } signals;
+
 
 
     /** creates and initializes menu bars*/
@@ -127,6 +140,11 @@ class MainFrame : public wxFrame
 
 
 
+    void slotReceiveMessage(control::Message::const_ptr_t msg) throw();
+    void slotConnectionStatusReport(
+        control::ConnectionStatusReport::const_ptr_t rprt) throw();
+    void slotSendReport(control::SendReport::const_ptr_t rprt) throw();
+
     /** Check if a string is a command
     *
     * @param str The string you want to be checked
@@ -144,14 +162,12 @@ class MainFrame : public wxFrame
     * function.
     *
     * @param str The string you want to be interpreted as command
-    * @return A pointer to the command that was retrieved from parsing.
-    * ControlCommand::id == ID_INVALID, if the command could not be parsed.
     * @todo add proper parser here
     */
-    static boost::shared_ptr<control::ControlCommand>
-    parseCommand(const byte_traits::string& str);
+    void parseCommand(const byte_traits::string& str);
 
 public:
+
     friend class MainFrameWrapper;
 
     /** Constructor.
@@ -162,8 +178,29 @@ public:
     * @param _commandCallback A function object that will be called when the
     * user issues a command
     */
-    MainFrame(boost::function1<void, const control::ControlCommand&>
-                _commandCallback)  throw();
+    MainFrame()  throw();
+
+
+    boost::signals2::connection
+    connectConnectTo(const control::SignalConnectTo::slot_type& slot)
+    { return signals.connectTo.connect(slot); }
+
+    boost::signals2::connection
+    connectSendMessage(const control::SignalSendMessage::slot_type& slot)
+    { return signals.sendMessage.connect(slot); }
+
+    boost::signals2::connection
+    connectConnectionStatusQuery(
+        const control::SignalConnectionStatusQuery::slot_type& slot)
+    { return signals.connectionStatusQuery.connect(slot); }
+
+    boost::signals2::connection
+    connectDisconnect(const control::SignalDisconnect::slot_type& slot)
+    { return signals.disconnect.connect(slot); }
+
+    boost::signals2::connection
+    connectExitApp(const control::SignalExitApp::slot_type& slot)
+    { return signals.exitApp.connect(slot); }
 
     /** Called if the user wants to quit. */
     void OnQuit(wxCommandEvent& event) throw();
@@ -191,15 +228,16 @@ class MainFrameWrapper
     /** The actual MainFrame class */
     MainFrame* main_frame;
 
+    /** All outgoing signals */
+    MainFrame::Signals *signals;
 public:
 
     /** Constructor. Creates a new MainFrame object. */
-    MainFrameWrapper
-        (boost::function1<void, const control::ControlCommand&> commandCallback)
-        throw()
+    MainFrameWrapper() throw()
         : main_frame(NULL)
     {
-        main_frame = new MainFrame(commandCallback);
+        main_frame = new MainFrame;
+        signals = &(main_frame->signals);
     }
 
     ~MainFrameWrapper()
@@ -208,6 +246,46 @@ public:
         // MainFrame is derived from wxWindow. As such, simply deleting the
         // object would be incorrect. It has to delete itself.
     }
+
+
+    boost::signals2::connection
+    connectConnectTo(const control::SignalConnectTo::slot_type& slot)
+    { return signals->connectTo.connect(slot); }
+
+    boost::signals2::connection
+    connectSendMessage(const control::SignalSendMessage::slot_type& slot)
+    { return signals->sendMessage.connect(slot); }
+
+    boost::signals2::connection
+    connectConnectionStatusQuery(
+        const control::SignalConnectionStatusQuery::slot_type& slot)
+    { return signals->connectionStatusQuery.connect(slot); }
+
+    boost::signals2::connection
+    connectDisconnect(const control::SignalDisconnect::slot_type& slot)
+    { return signals->disconnect.connect(slot); }
+
+    boost::signals2::connection
+    connectExitApp(const control::SignalExitApp::slot_type& slot)
+    { return signals->exitApp.connect(slot); }
+
+
+    void slotReceiveMessage(control::Message::const_ptr_t msg) throw()
+    {
+        main_frame->slotReceiveMessage(msg);
+    }
+
+    void slotConnectionStatusReport(
+        control::ConnectionStatusReport::const_ptr_t rprt) throw()
+    {
+        main_frame->slotConnectionStatusReport(rprt);
+    }
+
+    void slotSendReport(control::SendReport::const_ptr_t rprt) throw()
+    {
+        main_frame->slotSendReport(rprt);
+    }
+
 
     /** Print a message.
     * @see MainFrame::printMessage()

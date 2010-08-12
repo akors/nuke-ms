@@ -42,11 +42,12 @@
 #include <boost/asio.hpp>
 
 #include <boost/thread/thread.hpp>
+#include <boost/signals2/signal.hpp>
 #include <boost/statechart/asynchronous_state_machine.hpp>
 
 #include "bytes.hpp"
 #include "protocol/errors.hpp"
-#include "control/notifications.hpp"
+#include "control/sigtypes.hpp"
 
 
 
@@ -67,6 +68,55 @@ namespace protocol
 */
 class NukeMSProtocol
 {
+public:
+    struct Signals
+    {
+        control::SignalRcvMessage rcvMessage;
+        control::SignalConnectionStatusReport connectStatReport;
+        control::SignalSendReport sendReport;
+    };
+
+    /** Constructor.
+    * Creates a thread and initializes the Network machine.
+    */
+    NukeMSProtocol() throw();
+
+    /** Destructor.
+    * Stops the Network machine and destroys the thread.
+    */
+    ~NukeMSProtocol();
+
+    boost::signals2::connection
+    connectRcvMessage(const control::SignalRcvMessage::slot_type& slot)
+    { return signals.rcvMessage.connect(slot); }
+
+    boost::signals2::connection connectConnectionStatusReport(
+        const control::SignalConnectionStatusReport::slot_type& slot)
+    { return signals.connectStatReport.connect(slot); }
+
+    boost::signals2::connection
+    connectSendReport(const control::SignalSendReport::slot_type& slot)
+    { return signals.sendReport.connect(slot); }
+
+
+    /** Connect to a remote site.
+     * @param id The string representation of the address of the remote site
+     */
+    void connect_to(control::ServerLocation::const_ptr_t where);
+
+
+
+    /** Send message to connected remote site.
+     * @param msg The message you want to send
+     */
+    void send(control::Message::const_ptr_t msg) throw();
+
+    /** Disconnect from the remote site.
+    */
+    void disconnect() throw();
+
+private:
+
     /** An own thread for the State Machine*/
     boost::thread machine_thread;
 
@@ -77,56 +127,13 @@ class NukeMSProtocol
     boost::statechart::fifo_scheduler<>::processor_handle event_processor;
 
     /** The function object that will be called, if an event occurs.*/
-    control::notif_callback_t notification_callback;
+    Signals signals;
 
     /** The I/O Service object used by all network operations */
     boost::asio::io_service io_service;
 
     /** How long to wait for the thread to join */
     enum { threadwait_ms = 3000 };
-public:
-
-    /** Constructor.
-    * Creates a thread and initializes the Network machine.
-    * @param _notification_callback The callback function where the events will
-    * be dispatched
-    */
-    NukeMSProtocol(const control::notif_callback_t _notification_callback) throw();
-
-    /** Destructor.
-    * Stops the Network machine and destroys the thread.
-    */
-    ~NukeMSProtocol();
-
-    /** Connect to a remote site.
-     * @param id The string representation of the address of the remote site
-    * @throws std::runtime_error if a ressource could not be allocated.
-    * e.g. a threading resource.
-    * @throws ProtocolError if a networking error occured
-     */
-    void connect_to(const byte_traits::string& id)
-        throw(std::runtime_error, ProtocolError);
-
-
-
-    /** Send message to connected remote site.
-     * @param msg The message you want to send
-    * @throws std::runtime_error if a ressource could not be allocated.
-    * e.g. a threading resource.
-    * @throws ProtocolError if a networking error occured
-     */
-    void send(const byte_traits::string& msg)
-        throw(std::runtime_error, ProtocolError);
-
-
-    /** Disconnect from the remote site.
-    * @throws std::runtime_error if a ressource could not be allocated.
-    * e.g. a threading resource.
-    * @throws ProtocolError if a networking error occured
-    */
-    void disconnect()
-        throw(std::runtime_error, ProtocolError);
-
 };
 
 
