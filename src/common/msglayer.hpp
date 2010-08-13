@@ -2,7 +2,7 @@
 
 /*
  *   nuke-ms - Nuclear Messaging System
- *   Copyright (C) 2008, 2009  Alexander Korsunsky
+ *   Copyright (C) 2008, 2009, 2010  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -163,26 +163,6 @@ struct InvalidHeaderError : public MsgLayerError
     {}
 };
 
-// this exception is thrown when putting a MessageLayer message into a
-// SegmentationLayer message and then retrieving it again.
-// This does not make much sense
-struct MessageReusedError  : public std::logic_error
-{
-    MessageReusedError() throw()
-        : std::logic_error(
-            "Retrieved layer message originating from application.")
-    {}
-
-    /** Return error message as char array.
-    * @return A null- terminated character array containg the error message
-    */
-    virtual const char* what() const throw()
-    { return std::logic_error::what(); }
-
-    virtual ~MessageReusedError() throw()
-    { }
-};
-
 
 
 /** Object holding an ownership to memory.
@@ -222,21 +202,31 @@ public:
 };
 
 
+// forward declaration for SerializedData
+class SerializedData;
+
 /** Message Layer base class.
 *
 * This virtual base class presents a basic interface to it's deriving classes.
 * Derived classes are said to represent "layers" of the communication pipeline,
 * and objects of these deriving classes represent "messages" of their layer
 * in the communication pipeline.
+* <br>
+* Derived classes should override the virtual functions according to the
+* documentation.
+* Also, they should at least provide a constructor that creates an instance of
+* the derived class from serialized data. If this data is malformed, the
+* constructor should throw an instance of MsgLayerError.
 */
 class BasicMessageLayer
 {
 public:
-    typedef boost::shared_ptr<BasicMessageLayer> ptr_type;
-    typedef boost::shared_ptr<byte_traits::byte_sequence> dataptr_type;
+    typedef boost::shared_ptr<BasicMessageLayer> ptr_t;
+    typedef boost::shared_ptr<BasicMessageLayer> const_ptr_t;
+    typedef boost::shared_ptr<byte_traits::byte_sequence> dataptr_t;
 
-    typedef byte_traits::byte_sequence::iterator data_iterator;
-    typedef byte_traits::byte_sequence::const_iterator const_data_iterator;
+    typedef byte_traits::byte_sequence::iterator data_it;
+    typedef byte_traits::byte_sequence::const_iterator const_data_it;
 
     /** Virtual destructor */
     virtual ~BasicMessageLayer()
@@ -249,6 +239,7 @@ public:
      * @return The number of bytes the serialized byte sequence would have.
     */
     virtual std::size_t getSerializedSize() const throw() = 0;
+
 
     /** Fill a buffer with the serialized version of this object.
     * This function serializes this layer (and its upper layers) and writes
@@ -264,35 +255,44 @@ public:
     * is the same iterator as buffer but it is incremented getSerializedSize()
     * times.
     */
-    virtual data_iterator fillSerialized(data_iterator buffer) const throw()= 0;
+    virtual data_it fillSerialized(data_it buffer) const throw()= 0;
+
+    /** Retrieve serialized version of the current message layer.
+     * Ensures that an appropriate amount of memory is allocated and writes a
+     * serialized version of the current message layer to the memory location.
+     *
+     * @return Serialized version of current message layer, holding ownership
+     * of the underlying _memblock
+    */
+    virtual SerializedData getSerializedData() const throw();
 };
 
 
-typedef MemoryOwnership<BasicMessageLayer::dataptr_type> DataOwnership;
+typedef MemoryOwnership<BasicMessageLayer::dataptr_t> DataOwnership;
+
+
 
 /** Message of an unknown message layer.
-* This class should be used when a new message arrives and its real message
-* layer class is not determined yet. It holds only the reference to the
-* memory block and an iterator to the data.
+* This class should be used to hold a serialized message of an unknown type.
+* It holds only the reference to the memory block and an iterator to the data.
 * It provides a possibility to access the contained data to determine the real
 * message layer class.
 */
-class UnknownMessageLayer : public BasicMessageLayer
+class SerializedData : public BasicMessageLayer
 {
     DataOwnership memblock; /**< Ownership to the memory block */
-    const_data_iterator data_it; /**< Iterater to the data */
+    const_data_it begin_it; /**< Iterater to the beginning data */
     std::size_t datasize; /**< Size of the data */
 
 public:
-
-    typedef boost::shared_ptr<UnknownMessageLayer> ptr_type;
+    typedef boost::shared_ptr<SerializedData> ptr_t;
 
 
     /** Constructor.
     * Constructs a new object and passes memory ownership, data iterator and
-    * data size. Note that the memory block can contain other data than is
-    * accessible with the data iterator. If desired, a new block of memory can
-    * be allocated by setting the new_memory_block parameter to true.
+    * data size. Note that the memory block can contain more data than is
+    * accessible with the data iterator. To ensure the validity of _begin_it,
+    * you have to pass a memory ownership object.
     *
     * @param _memblock Ownership of a memory block that ensures that _data_it is
     * valid
@@ -300,28 +300,40 @@ public:
     * block
     * @param _datasize size of the message in bytes
     */
-    UnknownMessageLayer(
+    SerializedData(
         DataOwnership _memblock,
-        const_data_iterator _data_it,
-        std::size_t _datasize,
-        bool new_memory_block = false
-    );
+        const_data_it _begin_it,
+        std::size_t _datasize
+    )
+        : memblock(_memblock), begin_it(_begin_it), datasize(_datasize)
+    {}
 
     // overriding base class version
     virtual std::size_t getSerializedSize() const throw();
 
     // overriding base class version
-    virtual data_iterator fillSerialized(data_iterator buffer) const throw();
+    virtual data_it fillSerialized(data_it buffer) const throw();
+
+    /** Retrieve serialized version of the current message layer.
+     * As opposed to the base class version of this method, this version simply
+     * returns a copy of this object.
+     *
+     * @return Serialized version of current message layer, holding ownership
+     * of the underlying _memblock
+    */
+    virtual SerializedData getSerializedData() const throw();
 
     /** Get iterator to message data.
-    * This function can be used to access the buffer directly, so that
-    * other layers can construct themselves from data coming from the network.
+    * This function can be used to access the buffer directly, either to copy
+    * the contained data into a buffer or to construct a message of an upper
+    * layer.
     *
     * @returns An iterator to the message data. This iterator is valid as long
-    * as this object is alive.
+    * as the underlying memory block that was passed to the constructor
+    * SerializedData() or this object is alive.
     */
-    const_data_iterator getDataIterator() const throw()
-    { return data_it; }
+    const_data_it getDataIterator() const throw()
+    { return begin_it; }
 
     /** Get ownership to message data.
     * This function returns the ownership object that ensures that the data
@@ -329,10 +341,57 @@ public:
     *
     * @returns An ownership object ensuring that a pointer returned by
     * getDataIterator() is valid.
-    *
     */
     DataOwnership getOwnership() const throw()
-    { return  memblock; }
+    { return memblock; }
+};
+
+
+/** Message Layer containing another layer
+ * This abstract base class is used to denote a non-atomic message. This means
+ * this class holds a reference to an upper layer message.
+*/
+class ContainingLayer : public BasicMessageLayer
+{
+protected:
+    BasicMessageLayer::ptr_t upper_layer; /**< Message of an upper layer */
+
+    /** Constructor.
+     * @param _upper_layer Message of an upper layer this message holds
+    */
+    ContainingLayer(BasicMessageLayer::ptr_t _upper_layer)
+        : upper_layer(_upper_layer)
+    {}
+
+public:
+
+    /** Get upper layer message.
+     * @note it might not be usefull to call this function on objects coming
+     * from the application. You would lose type information and have to create
+     * the upper layer message from a SerializedData object.
+     *
+     * @return Pointer to the upper layer message
+    */
+    BasicMessageLayer::ptr_t getUpperLayer() throw()
+    {
+        return upper_layer;
+    }
+
+    /** Get upper layer message.
+     * @note it might not be usefull to call this function on objects coming
+     * from the application. You would lose type information and have to create
+     * the upper layer message from a SerializedData object.
+     *
+     * @return Pointer to the upper layer message
+    */
+    BasicMessageLayer::const_ptr_t getUpperLayer() const throw()
+    {
+        return upper_layer;
+    }
+
+    /** Virtual destructor */
+    virtual ~ContainingLayer()
+    {}
 };
 
 /** Layer ensuring correct segmentation of messages
@@ -347,15 +406,13 @@ public:
 * 3:      Zero, Value 0x0
 *
 */
-class SegmentationLayer : public BasicMessageLayer
+class SegmentationLayer : public ContainingLayer
 {
-
-    BasicMessageLayer::ptr_type upper_layer; /**< Upper layer */
-    std::size_t datasize; /**< size of the data for fast access */
+    std::size_t serializedsize; /**< size of the data for fast access */
 
 public:
     /** Type of pointer to this class. */
-    typedef boost::shared_ptr<SegmentationLayer> ptr_type;
+    typedef boost::shared_ptr<SegmentationLayer> ptr_t;
 
     enum { LAYER_ID = 0x80 }; /**< Layer Identifier */
     enum { header_length = 4 };
@@ -382,21 +439,23 @@ public:
     static HeaderType decodeHeader(InputIterator headerbuf)
         throw(InvalidHeaderError);
 
+
     /** Constructor.
     * Construct a SegmentationLayer message from an upper layer, say a message
     * coming from the application.
     *
     * @note To pass an upper layer, you have to static_cast the pointer to the
-    * message to the base class Pointer, BasicMessageLayer::ptr_type. Otherwise
-    * the overload with SegmentationLayer(BasicMessageLayer::dataptr_type)
-    * will not resolve. This is because overloads of function with different
+    * message to the base class Pointer, BasicMessageLayer::ptr_t. Otherwise
+    * the overload with SegmentationLayer(BasicMessageLayer::dataptr_t)
+    * will not resolve. This is because overloads of functions with different
     * instantiations of boost::shared_ptr<> do not resolve with base class
     * pointers.
     *
     * @param _upper_layer The message of the upper layer you want to send.
     */
-    SegmentationLayer(BasicMessageLayer::ptr_type _upper_layer)
-        : upper_layer(_upper_layer), datasize(upper_layer->getSerializedSize())
+    SegmentationLayer(BasicMessageLayer::ptr_t _upper_layer)
+        : serializedsize(_upper_layer->getSerializedSize() + header_length),
+          ContainingLayer(_upper_layer)
     { }
 
 
@@ -404,53 +463,20 @@ public:
     * Construct a SegmentationLayer message from network data, say a message
     * coming directly from the network.
     *
-    * @param data A BasicMessageLayer::ptr_type, a shared pointer to a vector of
+    * @param data A BasicMessageLayer::ptr_t, a shared pointer to a vector of
     * bytes. This vector has to contain the body of the message (not the
     * header).
     *
-    * @note To pass an upper layer, you have to static_cast the pointer to the
-    * message to the base class Pointer, BasicMessageLayer::ptr_type. Otherwise
-    * the overload with SegmentationLayer(BasicMessageLayer::ptr_type)
-    * will not resolve. This is because overloads of function with different
-    * instantiations of boost::shared_ptr<> do not resolve with base class
     * pointers.
     */
-    SegmentationLayer(BasicMessageLayer::dataptr_type data);
+    SegmentationLayer(BasicMessageLayer::dataptr_t data);
 
     // overriding base class version
     virtual std::size_t getSerializedSize() const throw()
-    { return datasize + header_length; }
+    { return serializedsize; }
 
     // overriding base class version
-    virtual data_iterator fillSerialized(data_iterator buffer) const throw();
-
-    /** Return a pointer to the message contained in this layer.
-    * This function is used to retrieve a Message that was constructed from
-    * incoming network data.
-    * If the message contained in this layer is not constructed from network
-    * data but instead from a message coming from the application, a
-    * MessageReusedError exception is thrown.
-    *
-    * @returns A pointer to an UnknownMessageLayer object containing the
-    * data coming from the network.
-    *
-    * @throws MessageReusedError when retrieving a message coming from the
-    * application
-    */
-    const UnknownMessageLayer::ptr_type getUpperLayer() const
-        throw(MessageReusedError)
-    {
-        // cast to unknown message layer
-        UnknownMessageLayer::ptr_type unknown =
-            boost::dynamic_pointer_cast<UnknownMessageLayer>(upper_layer);
-
-        // if the cast failed, throw an exception
-        if (!unknown)
-            throw MessageReusedError();
-
-        return unknown;
-    }
-
+    virtual data_it fillSerialized(data_it buffer) const throw();
 };
 
 
@@ -492,7 +518,7 @@ class StringwrapLayer : public BasicMessageLayer
 
 public:
     /** Typedef for this shared pointer*/
-    typedef boost::shared_ptr<StringwrapLayer> ptr_type;
+    typedef boost::shared_ptr<StringwrapLayer> ptr_t;
 
 
     /** Constructor.
@@ -500,7 +526,9 @@ public:
     *
     * @param msg msg The string the message shall contain.
     */
-    StringwrapLayer(const byte_traits::string& msg) throw ();
+    StringwrapLayer(const byte_traits::string& msg) throw ()
+        : message_string(msg)
+    {}
 
     /** Constructor.
     * Create a StringwrapLayer from a message of unknown message layer, for
@@ -514,13 +542,13 @@ public:
     * @throws MsgLayerError if the bytesize is not a multiple of the character
     * size.
     */
-    StringwrapLayer(const UnknownMessageLayer& msg) throw(MsgLayerError);
+    StringwrapLayer(const SerializedData& msg) throw(MsgLayerError);
 
     // overriding base class version
     virtual std::size_t getSerializedSize() const throw();
 
     // overriding base class version
-    virtual data_iterator fillSerialized(data_iterator buffer) const throw();
+    virtual data_it fillSerialized(data_it buffer) const throw();
 
     /** Return the string contained in the layer message.
     *
@@ -534,7 +562,6 @@ public:
     */
     const byte_traits::string& getString() const throw()
     { return message_string; }
-
 
 };
 
