@@ -114,7 +114,6 @@ typedef boost::signals2::signal<void (control::Message::const_ptr_t)>
     SignalSendMessage;
 typedef boost::signals2::signal<void ()> SignalConnectionStatusQuery;
 typedef boost::signals2::signal<void ()> SignalDisconnect;
-typedef boost::signals2::signal<void ()> SignalExitApp;
 
 
 

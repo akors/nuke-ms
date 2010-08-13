@@ -26,9 +26,9 @@
 *
 */
 
+#include <iostream>
 #include <wx/app.h>
 
-#include "control/control.hpp"
 #include "gui/gui.hpp"
 #include "protocol/protocol.hpp"
 
@@ -46,9 +46,11 @@ using namespace gui;
 */
 class MainApp : public wxApp
 {
-
-    /** Application control object*/
-    control::AppControl<MainFrameWrapper, protocol::NukeMSProtocol>* app_control;
+	/** Network protocol object */
+	protocol::NukeMSProtocol protocol;
+	
+	/** Main GUI window */
+	gui::MainFrame *main_frame;
 
 public:
 
@@ -94,7 +96,7 @@ bool MainApp::ProcessEvent(wxEvent& event)
                 )
             {
                 wxCommandEvent cmd_evt(wxEVT_COMMAND_ENTER);
-                app_control->getGui()->OnEnter(cmd_evt);
+                main_frame->OnEnter(cmd_evt);
                 return true;
             }
         }
@@ -126,10 +128,31 @@ bool MainApp::ProcessEvent(wxEvent& event)
 bool MainApp::OnInit()
     throw()
 {
-    // Create AppControl object, which creates its components
+    
     try {
-        app_control =
-            new control::AppControl<MainFrameWrapper, protocol::NukeMSProtocol>;
+	// Create main_frame gui object
+	main_frame = new gui::MainFrame;
+	
+	// connect all signals to the appropriate slots		
+
+	// thread gui signals to protocol slots
+	main_frame->connectConnectTo(
+		boost::bind(&protocol::NukeMSProtocol::connect_to,&protocol,_1));
+	main_frame->connectSendMessage(
+		boost::bind(&protocol::NukeMSProtocol::send, &protocol, _1));
+	main_frame->connectDisconnect(
+		boost::bind(&protocol::NukeMSProtocol::disconnect,&protocol));
+
+	// thread protocol signals to gui slots
+	protocol.connectRcvMessage(
+		boost::bind(&gui::MainFrame::slotReceiveMessage,main_frame,_1));
+	protocol.connectConnectionStatusReport(
+		boost::bind(&gui::MainFrame::slotConnectionStatusReport,main_frame,_1));
+	protocol.connectSendReport(
+		boost::bind(&gui::MainFrame::slotSendReport,main_frame,_1));
+		
+		
+		
     } // say goodbye if initialization failed
     catch(const std::exception& e)
     {
@@ -148,7 +171,7 @@ bool MainApp::OnInit()
 int MainApp::OnExit()
     throw()
 {
-    delete app_control;
+    // we do not delete main_frame; wxWidgets magic does it for us
     return wxApp::OnExit();
 }
 

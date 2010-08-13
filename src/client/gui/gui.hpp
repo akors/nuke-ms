@@ -115,7 +115,6 @@ class MainFrame : public wxFrame
         control::SignalSendMessage sendMessage;
         control::SignalConnectionStatusQuery connectionStatusQuery;
         control::SignalDisconnect disconnect;
-        control::SignalExitApp exitApp;
     } signals;
 
 
@@ -137,12 +136,6 @@ class MainFrame : public wxFrame
     void printMessage(const byte_traits::string& str)
         throw(std::runtime_error);
 
-
-
-    void slotReceiveMessage(control::Message::const_ptr_t msg) throw();
-    void slotConnectionStatusReport(
-        control::ConnectionStatusReport::const_ptr_t rprt) throw();
-    void slotSendReport(control::SendReport::const_ptr_t rprt) throw();
 
     /** Check if a string is a command
     *
@@ -166,8 +159,6 @@ class MainFrame : public wxFrame
     void parseCommand(const byte_traits::string& str);
 
 public:
-
-    friend class MainFrameWrapper;
 
     /** Constructor.
     *
@@ -197,9 +188,12 @@ public:
     connectDisconnect(const control::SignalDisconnect::slot_type& slot)
     { return signals.disconnect.connect(slot); }
 
-    boost::signals2::connection
-    connectExitApp(const control::SignalExitApp::slot_type& slot)
-    { return signals.exitApp.connect(slot); }
+
+    void slotReceiveMessage(control::Message::const_ptr_t msg) throw();
+    void slotConnectionStatusReport(
+        control::ConnectionStatusReport::const_ptr_t rprt) throw();
+    void slotSendReport(control::SendReport::const_ptr_t rprt) throw();
+
 
     /** Called if the user wants to quit. */
     void OnQuit(wxCommandEvent& event) throw();
@@ -215,103 +209,7 @@ public:
     DECLARE_EVENT_TABLE()
 };
 
-/** Wrapper around the MainFrame class, to be used by the AppControl object.
-* @ingroup gui
-* This class is needed, because wxWindow objects (from which MainFrame is
-* derived) can only be created by allocating it with new. However, AppControl
-* stores the gui object locally.
-* @see MainFrame
-*/
-class MainFrameWrapper
-{
-    /** The actual MainFrame class */
-    MainFrame* main_frame;
 
-    /** All outgoing signals */
-    MainFrame::Signals *signals;
-public:
-
-    /** Constructor. Creates a new MainFrame object. */
-    MainFrameWrapper() throw()
-        : main_frame(NULL)
-    {
-        main_frame = new MainFrame;
-        signals = &(main_frame->signals);
-    }
-
-    ~MainFrameWrapper()
-        throw()
-    {
-        // MainFrame is derived from wxWindow. As such, simply deleting the
-        // object would be incorrect. It has to delete itself.
-    }
-
-
-    boost::signals2::connection
-    connectConnectTo(const control::SignalConnectTo::slot_type& slot)
-    { return signals->connectTo.connect(slot); }
-
-    boost::signals2::connection
-    connectSendMessage(const control::SignalSendMessage::slot_type& slot)
-    { return signals->sendMessage.connect(slot); }
-
-    boost::signals2::connection
-    connectConnectionStatusQuery(
-        const control::SignalConnectionStatusQuery::slot_type& slot)
-    { return signals->connectionStatusQuery.connect(slot); }
-
-    boost::signals2::connection
-    connectDisconnect(const control::SignalDisconnect::slot_type& slot)
-    { return signals->disconnect.connect(slot); }
-
-    boost::signals2::connection
-    connectExitApp(const control::SignalExitApp::slot_type& slot)
-    { return signals->exitApp.connect(slot); }
-
-
-    void slotReceiveMessage(control::Message::const_ptr_t msg) throw()
-    {
-        main_frame->slotReceiveMessage(msg);
-    }
-
-    void slotConnectionStatusReport(
-        control::ConnectionStatusReport::const_ptr_t rprt) throw()
-    {
-        main_frame->slotConnectionStatusReport(rprt);
-    }
-
-    void slotSendReport(control::SendReport::const_ptr_t rprt) throw()
-    {
-        main_frame->slotSendReport(rprt);
-    }
-
-
-    /** Print a message.
-    * @see MainFrame::printMessage()
-    * @throws std::runtime_error if a ressource could not be allocated.
-    * e.g. a threading resource.
-    */
-    void printMessage(const byte_traits::string& str)
-        throw (std::runtime_error)
-    {
-        main_frame->printMessage(str);
-    }
-
-    /** Closes the Main Frame. @see MainFrame::Close() */
-    void close() throw()
-    {
-        main_frame->Close(false);
-    }
-
-    /** Called when the user hits the return key without
-    * holding down the shift or ctrl. key
-    */
-    void OnEnter(wxCommandEvent& event) throw()
-    {
-        main_frame->OnEnter(event);
-    }
-
-};
 
 
 // declare the new event type for printing messages

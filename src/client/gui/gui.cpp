@@ -23,7 +23,6 @@
 
 #include "gui/gui.hpp"
 
-#include "control/control.hpp"
 
 namespace nuke_ms
 {
@@ -126,7 +125,7 @@ void MainFrame::parseCommand(const byte_traits::string& str)
 
 
     else if  ( !tok_iter->compare( L"/exit" ) )
-    { signals.exitApp(); return; }
+    { Close(); return; }
 
     else if  ( !tok_iter->compare( L"/disconnect" ) )
     { signals.disconnect(); return; }
