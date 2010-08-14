@@ -121,7 +121,7 @@ void NukeMSProtocol::connect_to(control::ServerLocation::const_ptr_t where)
 void NukeMSProtocol::send(control::Message::const_ptr_t msg) throw()
 {
     // create a Stringwrapper for the message
-    StringwrapLayer::ptr_type data(new StringwrapLayer(msg->str));
+    StringwrapLayer::ptr_t data(new StringwrapLayer(msg->str));
 
     // Create new Connection request event and dispatch it to the statemachine
     boost::intrusive_ptr<EvtSendMsg>

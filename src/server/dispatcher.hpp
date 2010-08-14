@@ -54,7 +54,7 @@ public:
 
 private:
     typedef boost::shared_ptr<boost::asio::ip::tcp::socket> socket_ptr;
-    typedef std::map<RemotePeer::connection_id_t, RemotePeer::ptr_type>
+    typedef std::map<RemotePeer::connection_id_t, RemotePeer::ptr_t>
         peers_list_type;
 
     boost::asio::io_service io_service;
@@ -82,7 +82,7 @@ private:
 
     void distributeMessage(
         RemotePeer::connection_id_t originating_id,
-        SegmentationLayer::ptr_type data
+        SegmentationLayer::ptr_t data
     );
 
     RemotePeer::connection_id_t getNextConnectionId();

@@ -132,7 +132,7 @@ void DispatchingServer::acceptHandler(
         RemotePeer::connection_id_t connection_id = getNextConnectionId();
 
         // create new peer object
-        RemotePeer::ptr_type remote_peer(
+        RemotePeer::ptr_t remote_peer(
             new RemotePeer(
                 peer_socket,
                 connection_id,
@@ -155,7 +155,7 @@ void DispatchingServer::acceptHandler(
 
 void DispatchingServer::distributeMessage(
     RemotePeer::connection_id_t originating_id,
-    SegmentationLayer::ptr_type data
+    SegmentationLayer::ptr_t data
 )
 {
     peers_list_type::iterator it = peers_list.begin();

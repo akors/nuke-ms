@@ -88,7 +88,7 @@ struct ServerEvent1Parm : public BasicServerEvent
 
 /** Typedef for received message. */
 typedef ServerEvent1Parm<
-    BasicServerEvent::ID_MSG_RECEIVED, SegmentationLayer::ptr_type>
+    BasicServerEvent::ID_MSG_RECEIVED, SegmentationLayer::ptr_t>
     ReceivedMessageEvent;
 
 /** Typedef for Disconnection events. */

@@ -104,12 +104,12 @@ struct EvtDisconnected :
 struct EvtSendMsg : public boost::statechart::event<EvtSendMsg>
 {
     /** The data of the message */
-    BasicMessageLayer::ptr_type data;
+    BasicMessageLayer::ptr_t data;
 
     /** Constructor.
     * @param _data The text of the message.
     */
-    EvtSendMsg(BasicMessageLayer::ptr_type _data)
+    EvtSendMsg(BasicMessageLayer::ptr_t _data)
         : data (_data)
     {}
 };
@@ -299,7 +299,7 @@ struct StateConnected :
         const boost::system::error_code& error,
         std::size_t bytes_transferred,
         outermost_context_type& _outermost_context,
-        SegmentationLayer::dataptr_type data
+        SegmentationLayer::dataptr_t data
     );
 
     static void receiveSegmentationHeaderHandler(
@@ -313,7 +313,7 @@ struct StateConnected :
         const boost::system::error_code& error,
         std::size_t bytes_transferred,
         outermost_context_type& _outermost_context,
-        SegmentationLayer::dataptr_type rcvbuf
+        SegmentationLayer::dataptr_t rcvbuf
     );
 
 };

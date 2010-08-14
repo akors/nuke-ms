@@ -380,7 +380,7 @@ boost::statechart::result StateConnected::react(const EvtSendMsg& evt)
     SegmentationLayer segm_layer(evt.data);
 
     // create buffer, fill it with the serialized message
-    SegmentationLayer::dataptr_type data(
+    SegmentationLayer::dataptr_t data(
 	new byte_traits::byte_sequence(segm_layer.getSerializedSize()));
 
     segm_layer.fillSerialized(data->begin());
@@ -422,7 +422,7 @@ boost::statechart::result StateConnected::react(const EvtRcvdMessage& evt)
     // correct
 
     // create string from received data
-    StringwrapLayer str(*evt.data.getUpperLayer());
+    StringwrapLayer str(evt.data.getUpperLayer()->getSerializedData());
 
     control::Message::ptr_t msg(new control::Message);
     msg->str = str.getString();
@@ -453,7 +453,7 @@ void StateConnected::writeHandler(
     const boost::system::error_code& error,
     std::size_t bytes_transferred,
     outermost_context_type& _outermost_context,
-    SegmentationLayer::dataptr_type data
+    SegmentationLayer::dataptr_t data
 )
 {
     std::cout<<"writeHandler invoked.\n";
@@ -526,7 +526,7 @@ const byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
                 throw MsgLayerError("Oversized packet.");
 
 
-            SegmentationLayer::dataptr_type body_buf(
+            SegmentationLayer::dataptr_t body_buf(
                 new byte_traits::byte_sequence(
                     header_data.packetsize-SegmentationLayer::header_length
                 )
@@ -577,7 +577,7 @@ void StateConnected::receiveSegmentationBodyHandler(
     const boost::system::error_code& error,
     std::size_t bytes_transferred,
     outermost_context_type& _outermost_context,
-    SegmentationLayer::dataptr_type rcvbuf
+    SegmentationLayer::dataptr_t rcvbuf
 )
 {
     // if there was an error,

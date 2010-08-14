@@ -77,7 +77,7 @@ void RemotePeer::sendHandler(
     const boost::system::error_code& error,
     std::size_t bytes_transferred,
     ReferenceCounter<RemotePeer>::CountedReference peer_reference,
-    SegmentationLayer::dataptr_type sendbuf
+    SegmentationLayer::dataptr_t sendbuf
 ) throw()
 {
     // import reference for convenience
@@ -123,7 +123,7 @@ const byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
             if (header.packetsize > MAX_PACKETSIZE)
                 throw InvalidHeaderError();
 
-            SegmentationLayer::dataptr_type body_data(
+            SegmentationLayer::dataptr_t body_data(
                 new byte_traits::byte_sequence(
                     header.packetsize-SegmentationLayer::header_length
                 )
@@ -155,7 +155,7 @@ void RemotePeer::rcvBodyHandler(
     const boost::system::error_code& error,
     std::size_t bytes_transferred,
     ReferenceCounter<RemotePeer>::CountedReference peer_reference,
-    SegmentationLayer::dataptr_type body_data
+    SegmentationLayer::dataptr_t body_data
 ) throw()
 {
     RemotePeer& remotepeer = peer_reference;
@@ -169,7 +169,7 @@ void RemotePeer::rcvBodyHandler(
     }
     else
     {
-        SegmentationLayer::ptr_type segmlayer = SegmentationLayer::ptr_type(
+        SegmentationLayer::ptr_t segmlayer = SegmentationLayer::ptr_t(
             new SegmentationLayer(body_data));
 
         // if the receive was ok, post the passage back to the enclosing entity
@@ -185,7 +185,7 @@ void RemotePeer::rcvBodyHandler(
 
 void RemotePeer::sendMessage(const SegmentationLayer& msg) throw()
 {
-    SegmentationLayer::dataptr_type data = SegmentationLayer::dataptr_type(
+    SegmentationLayer::dataptr_t data = SegmentationLayer::dataptr_t(
         new byte_traits::byte_sequence(msg.getSerializedSize()));
 
     msg.fillSerialized(data->begin());

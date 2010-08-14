@@ -39,7 +39,7 @@ public:
     typedef BasicServerEvent::connection_id_t connection_id_t;
 
 
-    typedef boost::shared_ptr<RemotePeer> ptr_type;
+    typedef boost::shared_ptr<RemotePeer> ptr_t;
 
 
     RemotePeer(
@@ -96,7 +96,7 @@ private:
         const boost::system::error_code& e,
         std::size_t bytes_transferred,
         ReferenceCounter<RemotePeer>::CountedReference peer_reference,
-        SegmentationLayer::dataptr_type sendbuf
+        SegmentationLayer::dataptr_t sendbuf
     ) throw();
 
     static void rcvHeaderHandler(
@@ -109,7 +109,7 @@ private:
         const boost::system::error_code& error,
         std::size_t bytes_transferred,
         ReferenceCounter<RemotePeer>::CountedReference peer_reference,
-        SegmentationLayer::dataptr_type body_data
+        SegmentationLayer::dataptr_t body_data
     ) throw();
 
     // no copy construction allowed.
