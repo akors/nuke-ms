@@ -26,7 +26,7 @@ int main()
         stringwrap_down.getSerializedSize()<<"\n";
 
     // serialize string
-    nuke_ms::BasicMessageLayer::dataptr_type bytewise(
+    nuke_ms::BasicMessageLayer::dataptr_t bytewise(
         new nuke_ms::byte_traits::byte_sequence(
             stringwrap_down.getSerializedSize()
         )
@@ -38,7 +38,7 @@ int main()
         printbytes(bytewise->begin(), bytewise->end())<<'\n';
 
     // create Unknown messagelayer from buffer
-    nuke_ms::UnknownMessageLayer unknown(
+    nuke_ms::SerializedData unknown(
         nuke_ms::DataOwnership(bytewise),
         bytewise->begin(),
         bytewise->size()

@@ -17,7 +17,7 @@ int main()
     // first down the pipeline
 
     // create stringwrap from string
-    StringwrapLayer::ptr_type stringwrap_down(new StringwrapLayer(s));
+    StringwrapLayer::ptr_t stringwrap_down(new StringwrapLayer(s));
 
     // check string length
     std::cout<<"stringwrap_down->getSerializedSize() == "<<
@@ -26,9 +26,9 @@ int main()
     // create SegmentationLayer object from stringwrap
     // ugly static cast is needed, because otherwise call would be ambiguous
     SegmentationLayer
-    segmlayer(static_cast<BasicMessageLayer::ptr_type>(stringwrap_down));
+    segmlayer(static_cast<BasicMessageLayer::ptr_t>(stringwrap_down));
 
-    BasicMessageLayer::dataptr_type bytewise(
+    BasicMessageLayer::dataptr_t bytewise(
         new nuke_ms::byte_traits::byte_sequence(
             segmlayer.getSerializedSize()
         )
@@ -57,7 +57,7 @@ int main()
 
     // stringwrap from unknown layer
     try {
-        StringwrapLayer s2(*segmlayer_up.getUpperLayer());
+        StringwrapLayer s2(segmlayer_up.getUpperLayer()->getSerializedData());
 
         std::cout<<"The sent string has size "<<std::dec<<
             s2.getString().size()<<" and was: ";
