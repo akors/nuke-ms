@@ -8,7 +8,6 @@ using namespace nuke_ms;
 
 int main()
 {
-
     byte_traits::string s(L"This is a wide char string");
     std::cout<<"Original string (length "<<s.length()<<"): \n"<<
         printbytes(s.begin(), s.end())<<'\n';
@@ -28,17 +27,19 @@ int main()
     SegmentationLayer
     segmlayer(static_cast<BasicMessageLayer::ptr_t>(stringwrap_down));
 
+
+    SerializedData serialized = segmlayer.getSerializedData();
+
     BasicMessageLayer::dataptr_t bytewise(
         new nuke_ms::byte_traits::byte_sequence(
-            segmlayer.getSerializedSize()
+            serialized.getSerializedSize()
         )
     );
 
-    segmlayer.fillSerialized(bytewise->begin());
+    serialized.fillSerialized(bytewise->begin());
 
     std::cout<<"serialized segmlayer (size "<<bytewise->size()<<"):\n"<<
         hexprint(bytewise->begin(), bytewise->end())<<'\n';
-
 
     // now up the pipeline
 
@@ -51,18 +52,26 @@ int main()
     catch(const InvalidHeaderError&)
     { std::cout<<"Error reading packet header.\n"; }
 
-    // construct segmentation layer from the unknonw message layer
+    // when getting messages from the network, we first parse the header and
+    // then we get the rest of the message.
+    BasicMessageLayer::dataptr_t rest_msg(
+        new nuke_ms::byte_traits::byte_sequence(
+            bytewise->begin()+SegmentationLayer::header_length, bytewise->end()
+        )
+    );
+
+    // construct segmentation layer from the unknown message layer
     SegmentationLayer
-    segmlayer_up((bytewise));
+    segmlayer_up(rest_msg);
 
     // stringwrap from unknown layer
     try {
         StringwrapLayer s2(segmlayer_up.getUpperLayer()->getSerializedData());
 
         std::cout<<"The sent string has size "<<std::dec<<
-            s2.getString().size()<<" and was: ";
+            s2.getString().size()<<" and was: \"";
 
-        std::wcout<<s2.getString()<<std::endl;
+        std::wcout<<s2.getString()<<'\"'<<std::endl;
     }
     catch(const MsgLayerError&)
     { std::cout<<"Error constructing stringwrap package\n"; }

@@ -45,15 +45,17 @@ int main()
 
         {
             nuke_ms::MemoryOwnership<boost::shared_ptr<A> > own_a2 = own_a1;
-
+            // no new A should be constructed
             {
                 nuke_ms::MemoryOwnership<boost::shared_ptr<A> > own_a3 = own_a1;
                 std::cout<<"giving away third ownership\n";
+                // own_a0 should NOT die when going out of scope
             }
             std::cout<<"giving away second ownership\n";
         }
 
         own_a0 = own_a1; std::cout<<"Assigning ownership.\n";
+        // a0 should die now
     }
 
     std::cout<<"own_a1 and a_ptr out of scope.\n";
