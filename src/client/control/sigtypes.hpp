@@ -107,15 +107,6 @@ struct SendReport
 };
 
 
-// Signals issued by the GUI
-typedef boost::signals2::signal<void (control::ServerLocation::const_ptr_t)>
-    SignalConnectTo;
-typedef boost::signals2::signal<void (control::Message::const_ptr_t)>
-    SignalSendMessage;
-typedef boost::signals2::signal<void ()> SignalConnectionStatusQuery;
-typedef boost::signals2::signal<void ()> SignalDisconnect;
-
-
 
 // Signals issued by the Protocol
 typedef boost::signals2::signal<void (control::Message::const_ptr_t)>

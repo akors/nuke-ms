@@ -42,6 +42,7 @@
 #include <wx/textctrl.h>
 #include <wx/sizer.h>
 
+#include "protocol/protocol.hpp"
 #include "control/sigtypes.hpp"
 
 namespace nuke_ms
@@ -106,16 +107,8 @@ class MainFrame : public wxFrame
     /** The mutex to ensure synchronized access to the display resource*/
     boost::mutex print_mutex;
 
-
-    /**
-    */
-    struct Signals
-    {
-        control::SignalConnectTo connectTo;
-        control::SignalSendMessage sendMessage;
-        control::SignalConnectionStatusQuery connectionStatusQuery;
-        control::SignalDisconnect disconnect;
-    } signals;
+    /** Network Protocol object */
+    protocol::NukeMSProtocol protocol;
 
 
 
@@ -163,30 +156,10 @@ public:
     /** Constructor.
     *
     * Initialize base class, set scales,
-    * create menu bar and text boxes.
-    *
-    * @param _commandCallback A function object that will be called when the
-    * user issues a command
+    * create menu bar and text boxes, connect protocol signals and slots.
     */
-    MainFrame()  throw();
+    MainFrame() throw();
 
-
-    boost::signals2::connection
-    connectConnectTo(const control::SignalConnectTo::slot_type& slot)
-    { return signals.connectTo.connect(slot); }
-
-    boost::signals2::connection
-    connectSendMessage(const control::SignalSendMessage::slot_type& slot)
-    { return signals.sendMessage.connect(slot); }
-
-    boost::signals2::connection
-    connectConnectionStatusQuery(
-        const control::SignalConnectionStatusQuery::slot_type& slot)
-    { return signals.connectionStatusQuery.connect(slot); }
-
-    boost::signals2::connection
-    connectDisconnect(const control::SignalDisconnect::slot_type& slot)
-    { return signals.disconnect.connect(slot); }
 
 
     void slotReceiveMessage(control::Message::const_ptr_t msg) throw();

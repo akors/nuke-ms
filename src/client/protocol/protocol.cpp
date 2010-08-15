@@ -89,7 +89,7 @@ NukeMSProtocol::~NukeMSProtocol()
 }
 
 
-void NukeMSProtocol::connect_to(control::ServerLocation::const_ptr_t where)
+void NukeMSProtocol::connectTo(control::ServerLocation::const_ptr_t where)
 {
     // Get Host/Service pair from the destination string
     std::string host, service;

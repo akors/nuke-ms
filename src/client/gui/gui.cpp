@@ -128,7 +128,7 @@ void MainFrame::parseCommand(const byte_traits::string& str)
     { Close(); return; }
 
     else if  ( !tok_iter->compare( L"/disconnect" ) )
-    { signals.disconnect(); return; }
+    { protocol.disconnect(); return; }
 
     else if ( !tok_iter->compare( L"/print") )
     {
@@ -146,7 +146,7 @@ void MainFrame::parseCommand(const byte_traits::string& str)
 
         ServerLocation::ptr_t where(new ServerLocation);
         where->where = *tok_iter;
-        signals.connectTo(where);
+        protocol.connectTo(where);
         return;
     }
 
@@ -231,6 +231,13 @@ void MainFrame::printMessage(const byte_traits::string& str)
 MainFrame::MainFrame() throw()
     : wxFrame(NULL, -1, wxT("killer app"), wxDefaultPosition, wxSize(600, 500))
 {
+	// thread protocol signals to gui slots
+	protocol.connectRcvMessage(
+		boost::bind(&MainFrame::slotReceiveMessage, this, _1));
+	protocol.connectConnectionStatusReport(
+		boost::bind(&MainFrame::slotConnectionStatusReport, this, _1));
+	protocol.connectSendReport(
+		boost::bind(&MainFrame::slotSendReport, this, _1));
 
     // softcoding the window sizes
     scales.border_width = 10;
@@ -283,7 +290,7 @@ void MainFrame::OnEnter(wxCommandEvent& event)
         control::Message::ptr_t msg(new control::Message);
         msg->str = input_string;
 
-        signals.sendMessage(msg);
+        protocol.send(msg);
     }
 
 }

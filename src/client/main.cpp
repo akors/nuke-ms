@@ -30,12 +30,10 @@
 #include <wx/app.h>
 
 #include "gui/gui.hpp"
-#include "protocol/protocol.hpp"
 
 
 using namespace nuke_ms;
 using namespace gui;
-
 
 
 /** Application entry point.
@@ -46,9 +44,6 @@ using namespace gui;
 */
 class MainApp : public wxApp
 {
-	/** Network protocol object */
-	protocol::NukeMSProtocol protocol;
-	
 	/** Main GUI window */
 	gui::MainFrame *main_frame;
 
@@ -128,31 +123,10 @@ bool MainApp::ProcessEvent(wxEvent& event)
 bool MainApp::OnInit()
     throw()
 {
-    
     try {
 	// Create main_frame gui object
 	main_frame = new gui::MainFrame;
-	
-	// connect all signals to the appropriate slots		
 
-	// thread gui signals to protocol slots
-	main_frame->connectConnectTo(
-		boost::bind(&protocol::NukeMSProtocol::connect_to,&protocol,_1));
-	main_frame->connectSendMessage(
-		boost::bind(&protocol::NukeMSProtocol::send, &protocol, _1));
-	main_frame->connectDisconnect(
-		boost::bind(&protocol::NukeMSProtocol::disconnect,&protocol));
-
-	// thread protocol signals to gui slots
-	protocol.connectRcvMessage(
-		boost::bind(&gui::MainFrame::slotReceiveMessage,main_frame,_1));
-	protocol.connectConnectionStatusReport(
-		boost::bind(&gui::MainFrame::slotConnectionStatusReport,main_frame,_1));
-	protocol.connectSendReport(
-		boost::bind(&gui::MainFrame::slotSendReport,main_frame,_1));
-		
-		
-		
     } // say goodbye if initialization failed
     catch(const std::exception& e)
     {

@@ -101,7 +101,7 @@ public:
     /** Connect to a remote site.
      * @param id The string representation of the address of the remote site
      */
-    void connect_to(control::ServerLocation::const_ptr_t where);
+    void connectTo(control::ServerLocation::const_ptr_t where);
 
 
 
