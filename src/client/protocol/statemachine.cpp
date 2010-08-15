@@ -381,7 +381,8 @@ boost::statechart::result StateConnected::react(const EvtSendMsg& evt)
 
     // create buffer, fill it with the serialized message
     SegmentationLayer::dataptr_t data(
-	new byte_traits::byte_sequence(segm_layer.getSerializedSize()));
+        new byte_traits::byte_sequence(segm_layer.getSerializedSize())
+    );
 
     segm_layer.fillSerialized(data->begin());
 
@@ -456,7 +457,7 @@ void StateConnected::writeHandler(
     SegmentationLayer::dataptr_t data
 )
 {
-    std::cout<<"writeHandler invoked.\n";
+    std::cout<<"Sending message finished\n";
 
 
     if (!error)
@@ -497,7 +498,7 @@ void StateConnected::receiveSegmentationHeaderHandler(
     byte_traits::byte_t rcvbuf[SegmentationLayer::header_length]
 )
 {
-    std::cout<<"StateConnected::receiveSegmentationHeaderHandler invoked\n";
+    std::cout<<"Reveived message\n";
 
     // if there was an error,
     // tear down the connection by posting a disconnection event
@@ -519,7 +520,7 @@ void StateConnected::receiveSegmentationHeaderHandler(
             SegmentationLayer::HeaderType header_data
                 = SegmentationLayer::decodeHeader(rcvbuf);
 
-/// FIXME Magic number, set to something proper or make configurable
+/// @fixme Magic number, set to something proper or make configurable
 const byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
 
             if (header_data.packetsize > MAX_PACKETSIZE)
