@@ -514,7 +514,7 @@ SegmentationLayer::decodeHeader(InputIterator headerbuf)
 class StringwrapLayer : public BasicMessageLayer
 {
     /** The actual text message */
-    byte_traits::string message_string;
+    byte_traits::msg_string message_string;
 
 public:
     /** Typedef for this shared pointer*/
@@ -522,11 +522,11 @@ public:
 
 
     /** Constructor.
-    * Create a StringwrapLayer message from an byte_traits::string.
+    * Create a StringwrapLayer message from an byte_traits::msg_string.
     *
     * @param msg msg The string the message shall contain.
     */
-    StringwrapLayer(const byte_traits::string& msg) throw ()
+    StringwrapLayer(const byte_traits::msg_string& msg) throw ()
         : message_string(msg)
     {}
 
@@ -560,7 +560,7 @@ public:
     *
     * @returns A constant reference to the string contained in this message
     */
-    const byte_traits::string& getString() const throw()
+    const byte_traits::msg_string& getString() const throw()
     { return message_string; }
 
 };

@@ -93,7 +93,7 @@ typedef ServerEvent1Parm<
 
 /** Typedef for Disconnection events. */
 typedef ServerEvent1Parm<
-    BasicServerEvent::ID_CONNECTION_ERROR, byte_traits::string>
+    BasicServerEvent::ID_CONNECTION_ERROR, byte_traits::native_string>
     ConnectionErrorEvent;
 
 

@@ -38,9 +38,9 @@ using namespace protocol;
 
 
 static bool parseDestinationString(
-    std::string& host,
-    std::string& service,
-    const byte_traits::string& where
+    byte_traits::native_string& host,
+    byte_traits::native_string& service,
+    const byte_traits::native_string& where
 );
 
 
@@ -92,7 +92,7 @@ NukeMSProtocol::~NukeMSProtocol()
 void NukeMSProtocol::connectTo(control::ServerLocation::const_ptr_t where)
 {
     // Get Host/Service pair from the destination string
-    std::string host, service;
+    byte_traits::native_string host, service;
     if (parseDestinationString(host, service, where->where))
     {  // on success, pass on event
         // Create new Connection request event
@@ -108,7 +108,7 @@ void NukeMSProtocol::connectTo(control::ServerLocation::const_ptr_t where)
         ConnectionStatusReport::ptr_t rprt(new ConnectionStatusReport);
         rprt->newstate = ConnectionStatusReport::CNST_DISCONNECTED;
         rprt->statechange_reason = ConnectionStatusReport::STCHR_CONNECT_FAILED;
-        rprt->msg = L"Invalid remote site identifier";
+        rprt->msg = "Invalid remote site identifier";
 
         signals.connectStatReport(rprt);
     }
@@ -159,14 +159,17 @@ void NukeMSProtocol::disconnect() throw()
 * @return true on success, false on failure.
 */
 static bool parseDestinationString(
-    std::string& host,
-    std::string& service,
-    const byte_traits::string& where
+    byte_traits::native_string& host,
+    byte_traits::native_string& service,
+    const byte_traits::native_string& where
 )
 {
     // get ourself a tokenizer
-    typedef boost::tokenizer<boost::char_separator<wchar_t>,
-                            byte_traits::string::const_iterator, byte_traits::string>
+    typedef boost::tokenizer<
+        boost::char_separator<wchar_t>,
+        byte_traits::native_string::const_iterator,
+        byte_traits::native_string
+    >
         tokenizer;
 
     // get the part before the colon and the part after the colon

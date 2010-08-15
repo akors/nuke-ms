@@ -70,7 +70,7 @@ void DispatchingServer::handleServerEvent(const BasicServerEvent& evt) throw()
 
             std::cout<<"An error with the connection("<<
                 error_evt.connection_id<<") occured: "<<
-                std::string(error_evt.parm.begin(), error_evt.parm.end())<<
+                byte_traits::native_string(error_evt.parm.begin(), error_evt.parm.end())<<
                 ". Closing this connection."<<std::endl;
 
             peers_list[error_evt.connection_id]->shutdownConnection();

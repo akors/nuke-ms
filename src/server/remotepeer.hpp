@@ -90,7 +90,7 @@ private:
     */
     void canDelete();
 
-    void postError(const byte_traits::string& errmsg);
+    void postError(const byte_traits::native_string& errmsg);
 
     static void sendHandler(
         const boost::system::error_code& e,

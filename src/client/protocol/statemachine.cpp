@@ -131,7 +131,7 @@ boost::statechart::result StateWaiting::react(const EvtSendMsg& evt)
     control::SendReport::ptr_t rprt(new control::SendReport);
     rprt->send_state = false;
     rprt->reason = control::SendReport::SR_SERVER_NOT_CONNECTED;
-    rprt->reason_str = L"Not Connected.";
+    rprt->reason_str = "Not Connected.";
 
     context<ProtocolMachine>().signals.sendReport(rprt);
 
@@ -150,24 +150,14 @@ StateNegotiating::StateNegotiating(my_context ctx)
     }
     catch(const std::exception& e)
     {
-        std::string errmsg(e.what());
+        byte_traits::native_string errmsg(e.what());
         errmsg = "Internal error:" + errmsg;
 
-        post_event(
-            EvtConnectReport(
-                false,
-                byte_traits::string(errmsg.begin(), errmsg.end())
-            )
-        );
+        post_event(EvtConnectReport(false, errmsg));
     }
     catch(...)
     {
-        post_event(
-            EvtConnectReport(
-                false,
-                byte_traits::string(L"Unknown internal Error")
-            )
-        );
+        post_event(EvtConnectReport(false,"Unknown internal Error"));
     }
 
 }
@@ -177,7 +167,7 @@ boost::statechart::result StateNegotiating::react(const EvtSendMsg& evt)
     control::SendReport::ptr_t rprt(new control::SendReport);
     rprt->send_state = false;
     rprt->reason = control::SendReport::SR_SERVER_NOT_CONNECTED;
-    rprt->reason_str = L"Not yet Connected.";
+    rprt->reason_str = "Not yet Connected.";
 
     context<ProtocolMachine>().signals.sendReport(rprt);
 
@@ -195,7 +185,7 @@ boost::statechart::result StateNegotiating::react(const EvtConnectReport& evt)
         rprt->newstate = control::ConnectionStatusReport::CNST_CONNECTED;
         rprt->statechange_reason =
             control::ConnectionStatusReport::STCHR_USER_REQUESTED;
-        rprt->msg = byte_traits::string(evt.message);
+        rprt->msg = evt.message;
         context<ProtocolMachine>().signals.connectStatReport(rprt);
 
         return transit<StateConnected>();
@@ -205,7 +195,7 @@ boost::statechart::result StateNegotiating::react(const EvtConnectReport& evt)
         rprt->newstate = control::ConnectionStatusReport::CNST_DISCONNECTED;
         rprt->statechange_reason =
             control::ConnectionStatusReport::STCHR_CONNECT_FAILED;
-        rprt->msg = byte_traits::string(evt.message);
+        rprt->msg = evt.message;
         context<ProtocolMachine>().signals.connectStatReport(rprt);
 
         return transit<StateWaiting>();
@@ -233,7 +223,7 @@ boost::statechart::result StateNegotiating::react(const EvtConnectRequest&)
     rprt->newstate = control::ConnectionStatusReport::CNST_CONNECTING;
     rprt->statechange_reason =
         control::ConnectionStatusReport::STCHR_BUSY;
-    rprt->msg = L"Currently trying to connect";
+    rprt->msg = "Currently trying to connect";
     context<ProtocolMachine>().signals.connectStatReport(rprt);
 
     return discard_event();
@@ -264,7 +254,7 @@ void StateNegotiating::resolveHandler(
     // if there was an error, report it
     if (endpoint_iterator == tcp::resolver::iterator() )
     {
-        std::string errmsg;
+        byte_traits::native_string errmsg;
 
         if (error)
             errmsg = error.message();
@@ -274,10 +264,7 @@ void StateNegotiating::resolveHandler(
         _outermost_context.my_scheduler().queue_event(
             _outermost_context.my_handle(),
             boost::intrusive_ptr<EvtConnectReport> (
-                new EvtConnectReport(
-                    false,
-                    byte_traits::string(errmsg.begin(),errmsg.end())
-                )
+                new EvtConnectReport(false, errmsg)
             )
         );
 
@@ -313,19 +300,13 @@ void StateNegotiating::connectHandler(
     // if there was an error, create a negative reply
     if (error)
     {
-        std::string errmsg(error.message());
+        byte_traits::native_string errmsg(error.message());
 
-        evt_rprt = new EvtConnectReport(
-            false,
-            byte_traits::string(errmsg.begin(), errmsg.end())
-        );
+        evt_rprt = new EvtConnectReport(false, errmsg);
     }
     else // if there was no error, create a positive reply
     {
-        evt_rprt = new EvtConnectReport(
-            true,
-            byte_traits::string(L"Connection succeeded.")
-        );
+        evt_rprt = new EvtConnectReport(true,"Connection succeeded.");
 
         // create a receive buffer
         byte_traits::byte_t* rcvbuf =
@@ -442,7 +423,7 @@ boost::statechart::result StateConnected::react(const EvtConnectRequest&)
     rprt->newstate = control::ConnectionStatusReport::CNST_CONNECTED;
     rprt->statechange_reason =
         control::ConnectionStatusReport::STCHR_BUSY;
-    rprt->msg = L"Allready connected";
+    rprt->msg = "Allready connected";
     context<ProtocolMachine>().signals.connectStatReport(rprt);
 
     return discard_event();
@@ -470,22 +451,18 @@ void StateConnected::writeHandler(
     }
     else
     {
-        std::string errmsg(error.message());
+        byte_traits::native_string errmsg(error.message());
 
         control::SendReport::ptr_t rprt(new control::SendReport);
         rprt->send_state = false;
         rprt->reason = control::SendReport::SR_CONNECTION_ERROR;
-        rprt->reason_str = byte_traits::string(errmsg.begin(), errmsg.end());
+        rprt->reason_str = errmsg;
 
         _outermost_context.signals.sendReport(rprt);
 
         _outermost_context.my_scheduler().queue_event(
             _outermost_context.my_handle(),
-            boost::intrusive_ptr<EvtDisconnected> (
-                new EvtDisconnected(
-                    byte_traits::string(errmsg.begin(), errmsg.end())
-                )
-            )
+            boost::intrusive_ptr<EvtDisconnected> (new EvtDisconnected(errmsg))
         );
 
     }
@@ -504,13 +481,11 @@ void StateConnected::receiveSegmentationHeaderHandler(
     // tear down the connection by posting a disconnection event
     if (error || bytes_transferred != SegmentationLayer::header_length)
     {
-        std::string errmsg(error.message());
+        byte_traits::native_string errmsg(error.message());
 
         _outermost_context.my_scheduler().queue_event(
             _outermost_context.my_handle(),
-            boost::intrusive_ptr<EvtDisconnected>(
-                new EvtDisconnected(byte_traits::string(errmsg.begin(),errmsg.end()))
-            )
+            boost::intrusive_ptr<EvtDisconnected>(new EvtDisconnected(errmsg))
         );
     }
     else // if no error occured, try to decode the header
@@ -549,14 +524,10 @@ const byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
         // on failure, report back to application
         catch (const std::exception& e)
         {
-            std::string errmsg(e.what());
-
             _outermost_context.my_scheduler().queue_event(
                 _outermost_context.my_handle(),
                 boost::intrusive_ptr<EvtDisconnected>(
-                    new EvtDisconnected(
-                        byte_traits::string(errmsg.begin(),errmsg.end())
-                    )
+                    new EvtDisconnected(e.what())
                 )
             );
         }
@@ -565,7 +536,7 @@ const byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
             _outermost_context.my_scheduler().queue_event(
                 _outermost_context.my_handle(),
                 boost::intrusive_ptr<EvtDisconnected>(
-                    new EvtDisconnected(L"Unknown Error")
+                    new EvtDisconnected("Unknown Error")
                 )
             );
         }
@@ -585,12 +556,10 @@ void StateConnected::receiveSegmentationBodyHandler(
     // tear down the connection by posting a disconnection event
     if (error)
     {
-        std::string errmsg(error.message());
-
         _outermost_context.my_scheduler().queue_event(
             _outermost_context.my_handle(),
             boost::intrusive_ptr<EvtDisconnected>(
-                new EvtDisconnected(byte_traits::string(errmsg.begin(),errmsg.end()))
+                new EvtDisconnected(error.message())
             )
         );
     }

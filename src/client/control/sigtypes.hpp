@@ -36,7 +36,7 @@ struct ServerLocation
     typedef boost::shared_ptr<ServerLocation> ptr_t;
     typedef boost::shared_ptr<const ServerLocation> const_ptr_t;
 
-    byte_traits::string where; /**< String with hostname or ip address */
+    byte_traits::native_string where; /**< String with hostname or ip address */
 };
 
 /** Message that is sent or received over the network.
@@ -50,7 +50,7 @@ struct Message
     typedef unsigned short message_id_t;
 
     message_id_t id; /**< Unique message ID */
-    byte_traits::string str; /**< Message string */
+    byte_traits::msg_string str; /**< Message string */
 };
 
 /** Status report of connection state changes
@@ -82,7 +82,7 @@ struct ConnectionStatusReport
 
     connect_state_t newstate; /**< current connection state */
     statechange_reason_t statechange_reason; /**< reason for state change */
-    byte_traits::string msg; /**< Optional message describing the reason */
+    byte_traits::native_string msg;/**< Optional message describing the reason*/
 };
 
 
@@ -103,7 +103,7 @@ struct SendReport
         SR_SERVER_NOT_CONNECTED, /**< Not connected to server */
         SR_CONNECTION_ERROR /**< Network failure */
     } reason;
-    byte_traits::string reason_str;
+    byte_traits::native_string reason_str;
 };
 
 

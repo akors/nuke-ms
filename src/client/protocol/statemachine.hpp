@@ -45,12 +45,13 @@ namespace protocol
 struct EvtConnectRequest : public boost::statechart::event<EvtConnectRequest>
 {
     /** Where to connect to. */
-    std::string host;
-    std::string service;
+    byte_traits::native_string host;
+    byte_traits::native_string service;
 
     /** Constructor.
     * @param _where Where to connect to. */
-    EvtConnectRequest(const std::string& _host, const std::string& _service)
+    EvtConnectRequest(const byte_traits::native_string& _host,
+        const byte_traits::native_string& _service)
         : host (_host), service(_service)
     {}
 };
@@ -62,13 +63,13 @@ struct EvtConnectRequest : public boost::statechart::event<EvtConnectRequest>
 struct EvtConnectReport : public boost::statechart::event<EvtConnectReport>
 {
     bool success; /**< true on success, false on failure */
-    byte_traits::string message; /**< Message commenting the outcome. */
+    byte_traits::native_string message; /**< Message commenting the outcome. */
 
     /** Constructor. Initializes members.
     * @param _success true on success, false on failure
     * @param _message Message commenting the outcome.
     */
-    EvtConnectReport(bool _success, const byte_traits::string& _message)
+    EvtConnectReport(bool _success, const byte_traits::native_string& _message)
         : success(_success), message (_message)
     {}
 };
@@ -87,13 +88,13 @@ struct EvtDisconnectRequest :
 struct EvtDisconnected :
     public boost::statechart::event<EvtDisconnected>
 {
-    /** The text of the message. */
-    byte_traits::string msg;
+    /** The reason of the disconnection event */
+    byte_traits::native_string msg;
 
     /** Constructor.
     * @param _msg The text of the message.
     */
-    EvtDisconnected(const byte_traits::string& _msg)
+    EvtDisconnected(const byte_traits::native_string& _msg)
         : msg (_msg)
     {}
 };

@@ -60,7 +60,7 @@ void RemotePeer::canDelete()
         );
 }
 
-void RemotePeer::postError(const byte_traits::string& errmsg)
+void RemotePeer::postError(const byte_traits::native_string& errmsg)
 {
     if (!error_happened)
     {
@@ -88,8 +88,7 @@ void RemotePeer::sendHandler(
         return;
 
     // otherwise report error
-    std::string errmsg(error.message());
-    remotepeer.postError(byte_traits::string(errmsg.begin(), errmsg.end()));
+    remotepeer.postError(error.message());
 }
 
 void RemotePeer::rcvHeaderHandler(
@@ -104,8 +103,7 @@ void RemotePeer::rcvHeaderHandler(
     if (error)
     {
         // report error
-        std::string errmsg(error.message());
-        remotepeer.postError(byte_traits::string(errmsg.begin(), errmsg.end()));
+        remotepeer.postError(error.message());
     }
     else
     {
@@ -144,8 +142,7 @@ const byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
         }
         catch(const InvalidHeaderError& e)
         {
-            std::string errmsg(e.what());
-            remotepeer.postError(byte_traits::string(errmsg.begin(), errmsg.end()));
+            remotepeer.postError(e.what());
         }
 
     }
@@ -164,8 +161,7 @@ void RemotePeer::rcvBodyHandler(
     // counter.
     if (error)
     {
-        std::string errmsg(error.message());
-        remotepeer.postError(byte_traits::string(errmsg.begin(), errmsg.end()));
+        remotepeer.postError(error.message());
     }
     else
     {

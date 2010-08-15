@@ -121,16 +121,16 @@ StringwrapLayer::StringwrapLayer(const SerializedData& msg)
     const_data_it data_it = msg.getDataIterator();
 
     // bail out if the string is not aligned
-    if (datasize % sizeof(byte_traits::string::value_type) !=0)
+    if (datasize % sizeof(byte_traits::msg_string::value_type) !=0)
         throw MsgLayerError("Unaligned packet");
 
     // set message_string to the proper size
-    message_string.resize((datasize)/sizeof(byte_traits::string::value_type));
+    message_string.resize((datasize)/sizeof(byte_traits::msg_string::value_type));
 
     // iterator to the message_string
-    byte_traits::string::iterator out_iter = message_string.begin();
+    byte_traits::msg_string::iterator out_iter = message_string.begin();
 
-    byte_traits::string::value_type tmpval;
+    byte_traits::msg_string::value_type tmpval;
 
     // iterate through all bytes in the sequence
     for ( const_data_it it = data_it; it < data_it + datasize; )
@@ -145,7 +145,7 @@ StringwrapLayer::StringwrapLayer(const SerializedData& msg)
 
 std::size_t StringwrapLayer::getSerializedSize() const throw()
 {
-    return message_string.length() * sizeof(byte_traits::string::value_type);
+    return message_string.length() * sizeof(byte_traits::msg_string::value_type);
 }
 
 BasicMessageLayer::data_it
@@ -153,7 +153,7 @@ StringwrapLayer::fillSerialized(BasicMessageLayer::data_it buffer) const
     throw()
 {
     // an iterator to the message of string type
-    byte_traits::string::const_iterator in_iter = message_string.begin();
+    byte_traits::msg_string::const_iterator in_iter = message_string.begin();
 
     // write all bytes of one character into the buffer, advance the output
     // iterator

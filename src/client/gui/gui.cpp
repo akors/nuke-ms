@@ -102,7 +102,7 @@ void MainFrame::createTextBoxes()
 }
 
 
-void MainFrame::parseCommand(const byte_traits::string& str)
+void MainFrame::parseCommand(const byte_traits::msg_string& str)
 {
     // we are basically dealing only with Control commands, so it would be nice
     // if all the types were in scope
@@ -110,7 +110,7 @@ void MainFrame::parseCommand(const byte_traits::string& str)
 
     // get ourself a tokenizer
     typedef boost::tokenizer<boost::char_separator<wchar_t>,
-                             byte_traits::string::const_iterator, byte_traits::string >
+                             byte_traits::msg_string::const_iterator, byte_traits::msg_string >
         tokenizer;
 
 
@@ -144,8 +144,10 @@ void MainFrame::parseCommand(const byte_traits::string& str)
         if (++tok_iter == tokens.end() )
             goto invalid_command;
 
+        byte_traits::native_string wherestr(tok_iter->begin(), tok_iter->end());
+
         ServerLocation::ptr_t where(new ServerLocation);
-        where->where = *tok_iter;
+        where->where = wherestr;
         protocol.connectTo(where);
         return;
     }
@@ -177,7 +179,8 @@ void MainFrame::slotConnectionStatusReport(
             printMessage(L"*  Connection state: disconnected.");
         }
         else
-            printMessage(L"*  New connection state: disconnected; "+ rprt->msg);
+            printMessage(L"*  New connection state: disconnected; "+
+                byte_traits::msg_string(rprt->msg.begin(), rprt->msg.end()));
         break;
     case ConnectionStatusReport::CNST_CONNECTING:
         if(!rprt->statechange_reason) // we only care if user wanted to know
@@ -198,11 +201,14 @@ void MainFrame::slotConnectionStatusReport(
 void MainFrame::slotSendReport(control::SendReport::const_ptr_t rprt) throw()
 {
     if (!rprt->send_state)
-        printMessage(L"*  Failed to send message: " + rprt->reason_str);
+        printMessage(L"*  Failed to send message: " +
+            byte_traits::msg_string(
+            rprt->reason_str.begin(), rprt->reason_str.end())
+        );
 }
 
 
-void MainFrame::printMessage(const byte_traits::string& str)
+void MainFrame::printMessage(const byte_traits::msg_string& str)
     throw (std::runtime_error)
 {
     // wxEvtHandler::AddPendingEvent is explicitly thread-safe, so we don't
@@ -214,7 +220,7 @@ void MainFrame::printMessage(const byte_traits::string& str)
     // set the event object that shall receive the event
     event.SetEventObject( this );
 
-    // create the wxString from byte_traits::string, and perform conversion
+    // create the wxString from byte_traits::msg_string, and perform conversion
     wxString msg(str.c_str(), wxConvLocal);
 
     // attach the string to the event object
@@ -265,8 +271,8 @@ void MainFrame::OnQuit(wxCommandEvent& event)
 void MainFrame::OnEnter(wxCommandEvent& event)
     throw()
 {
-    // create reference to a byte_traits::string
-    const byte_traits::string& input_string =
+    // create reference to a byte_traits::msg_string
+    const byte_traits::msg_string& input_string =
         wxString2wstring(text_input_box->GetValue() );
 
     // clear input box
