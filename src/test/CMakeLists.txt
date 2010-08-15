@@ -5,7 +5,7 @@
 add_executable(testownership testownership.cpp)
 target_link_libraries(testownership nuke-ms-common)
 
-add_executable(testsegmlayer testsegmlayer.cpp byteprinter.cpp)
-target_link_libraries(testsegmlayer nuke-ms-common)
+add_executable(testmsglayer testmsglayer.cpp byteprinter.cpp)
+target_link_libraries(testmsglayer nuke-ms-common)
 
 add_executable(testbyteorder testbyteorder.cpp byteprinter.cpp)
