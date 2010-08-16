@@ -35,9 +35,25 @@ if(WIN32)
     # add network libraries that need to be linked
     set(WIN32_NETWORK_LIBS ws2_32 mswsock)
 
-    # add hack to prevent multiple inclusion of WinSock.h by Boost and wxWidgets
     if(MSVC)
+		# add hack to prevent multiple inclusion of WinSock.h by Boost and 
+		# wxWidgets
         add_definitions(-DWIN32_LEAN_AND_MEAN)
+		
+		# Turn off boosts autolinking "feature", we do NOT need regex and 
+		# date_time
+		add_definitions(-DBOOST_ALL_NO_LIB)
+		
+		# Disable MSVC's paranoia about std::copy
+		add_definitions(/wd4996)
+		
+		# try to guess the value of _WIN32_WINNT macro
+		# note for the future: should MS get to version numbers >= 10, this 
+		# regex wont work anymore
+		string(REGEX REPLACE 
+			"([0123456789])\\.([0123456789])" "0x0\\10\\2" 
+			WINNTDEF ${CMAKE_HOST_SYSTEM_VERSION})
+		add_definitions(-D_WIN32_WINNT=${WINNTDEF})
     endif()
 endif()
 
