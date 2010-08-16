@@ -102,19 +102,18 @@ void MainFrame::createTextBoxes()
 }
 
 
-void MainFrame::parseCommand(const byte_traits::msg_string& str)
+void MainFrame::parseCommand(const wxString& str)
 {
     // we are basically dealing only with Control commands, so it would be nice
     // if all the types were in scope
     using namespace control;
 
     // get ourself a tokenizer
-    typedef boost::tokenizer<boost::char_separator<wchar_t>,
-                             byte_traits::msg_string::const_iterator, byte_traits::msg_string >
+    typedef boost::tokenizer<boost::char_separator<wxChar>, const wxChar*, wxString >
         tokenizer;
 
 
-    boost::char_separator<wchar_t> whitespace(L" \t\r\n");
+    boost::char_separator<wxChar> whitespace(wxT(" \t\r\n"));
     tokenizer tokens(str, whitespace);
 
     tokenizer::iterator tok_iter = tokens.begin();
@@ -124,22 +123,22 @@ void MainFrame::parseCommand(const byte_traits::msg_string& str)
         goto invalid_command;
 
 
-    else if  ( !tok_iter->compare( L"/exit" ) )
+    else if  ( !tok_iter->compare(wxT("/exit")) )
     { Close(); return; }
 
-    else if  ( !tok_iter->compare( L"/disconnect" ) )
+    else if  ( !tok_iter->compare(wxT("/disconnect")) )
     { protocol.disconnect(); return; }
 
-    else if ( !tok_iter->compare( L"/print") )
+    else if ( !tok_iter->compare(wxT("/print")) )
     {
         if (++tok_iter == tokens.end() )
             goto invalid_command;
 
-        printMessage(L"*  " + *tok_iter);
+        printMessage(wxT("*  " + *tok_iter));
         return;
     }
 
-    else if ( !tok_iter->compare( L"/connect") )
+    else if ( !tok_iter->compare(wxT("/connect")) )
     {
         if (++tok_iter == tokens.end() )
             goto invalid_command;
@@ -161,7 +160,7 @@ invalid_command:
 
 void MainFrame::slotReceiveMessage(control::Message::const_ptr_t msg) throw()
 {
-    printMessage(L">> " + msg->str);
+    printMessage(wxT(">> ") + wxString::FromUTF8(msg->str.c_str()));
 }
 
 void MainFrame::slotConnectionStatusReport(
@@ -176,24 +175,29 @@ void MainFrame::slotConnectionStatusReport(
             || rprt->statechange_reason ==
                 ConnectionStatusReport::STCHR_USER_REQUESTED)
         {
-            printMessage(L"*  Connection state: disconnected.");
+            printMessage(wxT("*  Connection state: disconnected."));
         }
         else
-            printMessage(L"*  New connection state: disconnected; "+
-                byte_traits::msg_string(rprt->msg.begin(), rprt->msg.end()));
+        {
+            wxString rprtmsg;
+            str2wxString(rprtmsg,rprt->msg);
+
+            printMessage(
+                wxT("*  New connection state: disconnected; ")+rprtmsg);
+        }
         break;
     case ConnectionStatusReport::CNST_CONNECTING:
         if(!rprt->statechange_reason) // we only care if user wanted to know
-            printMessage(L"*  Connection state: Connecting.");
+            printMessage(wxT("*  Connection state: Connecting."));
         break;
     case ConnectionStatusReport::CNST_CONNECTED:
         if (!rprt->statechange_reason)
-            printMessage(L"*  Connection state: connected.");
+            printMessage(wxT("*  Connection state: connected."));
         else
-            printMessage(L"*  New connection state: connected.");
+            printMessage(wxT("*  New connection state: connected."));
         break;
     default:
-        printMessage(L"*  Connection state: unknown.");
+        printMessage(wxT("*  Connection state: unknown."));
     }
 }
 
@@ -201,14 +205,16 @@ void MainFrame::slotConnectionStatusReport(
 void MainFrame::slotSendReport(control::SendReport::const_ptr_t rprt) throw()
 {
     if (!rprt->send_state)
-        printMessage(L"*  Failed to send message: " +
-            byte_traits::msg_string(
-            rprt->reason_str.begin(), rprt->reason_str.end())
-        );
+    {
+        wxString rprtmsg;
+        str2wxString(rprtmsg,rprt->reason_str);
+
+        printMessage(wxT("*  Failed to send message: ") + rprtmsg);
+    }
 }
 
 
-void MainFrame::printMessage(const byte_traits::msg_string& str)
+void MainFrame::printMessage(const wxString& str)
     throw (std::runtime_error)
 {
     // wxEvtHandler::AddPendingEvent is explicitly thread-safe, so we don't
@@ -220,11 +226,8 @@ void MainFrame::printMessage(const byte_traits::msg_string& str)
     // set the event object that shall receive the event
     event.SetEventObject( this );
 
-    // create the wxString from byte_traits::msg_string, and perform conversion
-    wxString msg(str.c_str(), wxConvLocal);
-
     // attach the string to the event object
-    event.SetString(msg);
+    event.SetString(str);
 
     // send the event to the event processor
     GetEventHandler()->AddPendingEvent( event );
@@ -271,19 +274,17 @@ void MainFrame::OnQuit(wxCommandEvent& event)
 void MainFrame::OnEnter(wxCommandEvent& event)
     throw()
 {
-    // create reference to a byte_traits::msg_string
-    const byte_traits::msg_string& input_string =
-        wxString2wstring(text_input_box->GetValue() );
+    wxString input_string(text_input_box->GetValue());
 
     // clear input box
     text_input_box->Clear();
 
     // nothing to do if the user entered nothing
-    if ( input_string.empty() )
+    if ( !input_string )
         return;
 
     // print everything the user typed to the screen
-    printMessage(L"<< " + input_string);
+    printMessage(wxT("<< ") + input_string);
 
 
     // check if this is a command
@@ -294,7 +295,7 @@ void MainFrame::OnEnter(wxCommandEvent& event)
     else // if it's not a command we try to send it
     {
         control::Message::ptr_t msg(new control::Message);
-        msg->str = input_string;
+        wxString2str(msg->str,input_string);
 
         protocol.send(msg);
     }

@@ -126,7 +126,7 @@ class MainFrame : public wxFrame
     * @throws std::runtime_error if a ressource could not be allocated.
     * e.g. a threading resource.
     */
-    void printMessage(const byte_traits::msg_string& str)
+    void printMessage(const wxString& str)
         throw(std::runtime_error);
 
 
@@ -135,10 +135,10 @@ class MainFrame : public wxFrame
     * @param str The string you want to be checked
     * @todo Add proper checking here
     */
-    inline static bool isCommand(const byte_traits::msg_string& str)
+    inline static bool isCommand(const wxString& str)
         throw()
     {
-        return ((str.size() != 0) && (str[0] == L'/'));
+        return ((str.size() != 0) && (str[0] == wxT('/')));
     }
 
 
@@ -149,7 +149,7 @@ class MainFrame : public wxFrame
     * @param str The string you want to be interpreted as command
     * @todo add proper parser here
     */
-    void parseCommand(const byte_traits::msg_string& str);
+    void parseCommand(const wxString& str);
 
 public:
 
@@ -193,14 +193,14 @@ DECLARE_EVENT_TYPE( nuke_msEVT_PRINT_MESSAGE, -1 )
 
 /** create a byte_traits::msg_string object from a wxString.
 *
-* @param str The string you want to convert
-* @return the output string
+* @param wxstr The string you want to convert
+* @param str the output string
 * @warning Probably not portable
 */
-inline byte_traits::msg_string wxString2wstring(const wxString& str)
+inline void wxString2str(byte_traits::msg_string& str, const wxString& wxstr)
     throw()
 {
-    return byte_traits::msg_string( str.wc_str(wxConvLocal) );
+    str.assign(wxstr.ToUTF8().data());
 }
 
 
@@ -210,10 +210,10 @@ inline byte_traits::msg_string wxString2wstring(const wxString& str)
 * @return the output string
 * @warning Probably not portable
 */
-inline wxString wstring2wxString(const byte_traits::msg_string& str)
+inline void str2wxString(wxString& wxstr, const byte_traits::msg_string& str)
     throw()
 {
-    return wxString( str.c_str() );
+    wxstr = wxString::FromUTF8(str.c_str());
 }
 
 

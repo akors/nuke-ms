@@ -8,7 +8,7 @@ using namespace nuke_ms;
 
 int main()
 {
-    byte_traits::string s(L"This is a wide char string");
+    byte_traits::msg_string s("This is a narrow char string");
     std::cout<<"Original string (length "<<s.length()<<"): \n"<<
         printbytes(s.begin(), s.end())<<'\n';
 
@@ -71,7 +71,7 @@ int main()
         std::cout<<"The sent string has size "<<std::dec<<
             s2.getString().size()<<" and was: \"";
 
-        std::wcout<<s2.getString()<<'\"'<<std::endl;
+        std::cout<<s2.getString()<<'\"'<<std::endl;
     }
     catch(const MsgLayerError&)
     { std::cout<<"Error constructing stringwrap package\n"; }

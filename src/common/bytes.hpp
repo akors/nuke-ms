@@ -54,8 +54,7 @@ struct byte_traits
     typedef std::string native_string;
 
     /** Strings that should be transmitted over the network */
-    typedef std::basic_string<wchar_t, std::char_traits<wchar_t> >
-    msg_string;
+    typedef std::basic_string<char, std::char_traits<char> > msg_string;
 };
 
 /** Reverse the bytes of a POD variable.
