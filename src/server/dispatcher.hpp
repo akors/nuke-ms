@@ -48,9 +48,9 @@ public:
     * server has finished or an error occured.
     * No exception will be thrown, however output may occur.
     */
-    void run() throw();
+    void run();
 
-    void handleServerEvent(const BasicServerEvent& evt) throw();
+    void handleServerEvent(const BasicServerEvent& evt);
 
 private:
     typedef boost::shared_ptr<boost::asio::ip::tcp::socket> socket_ptr;
@@ -70,7 +70,7 @@ private:
     /** Dispatch an asynchronous accept request.
     * The request will be processed when the run() member function is run.
     */
-    void startAccept() throw();
+    void startAccept();
 
     /**
     * Callback function for completed accept requests.
@@ -78,7 +78,7 @@ private:
     void acceptHandler(
         const boost::system::error_code& e,
         socket_ptr peer_socket
-    ) throw();
+    );
 
     void distributeMessage(
         RemotePeer::connection_id_t originating_id,

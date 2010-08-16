@@ -36,12 +36,12 @@ DispatchingServer::DispatchingServer()
     startAccept();
 }
 
-void DispatchingServer::run() throw()
+void DispatchingServer::run()
 {
     io_service.run();
 }
 
-void DispatchingServer::handleServerEvent(const BasicServerEvent& evt) throw()
+void DispatchingServer::handleServerEvent(const BasicServerEvent& evt)
 {
     // ignore everything that is not in the list
     if (! peers_list.count(evt.connection_id) )
@@ -95,7 +95,7 @@ void DispatchingServer::handleServerEvent(const BasicServerEvent& evt) throw()
     }
 }
 
-void DispatchingServer::startAccept() throw()
+void DispatchingServer::startAccept()
 {
     // create new socket
     socket_ptr socket(new tcp::socket(io_service));
@@ -116,7 +116,7 @@ void DispatchingServer::startAccept() throw()
 void DispatchingServer::acceptHandler(
     const boost::system::error_code& e,
     socket_ptr peer_socket
-) throw()
+)
 {
     if (e)
     {

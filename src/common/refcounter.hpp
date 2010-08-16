@@ -89,7 +89,7 @@ public:
         * associated with.
         * @see ReferenceCounter::increaseRefCount()
         */
-        CountedReference(ReferenceCounter& _referencecounter)  throw()
+        CountedReference(ReferenceCounter& _referencecounter)
             : referencecounter(_referencecounter)
         { referencecounter.increaseRefCount(); }
 
@@ -101,7 +101,7 @@ public:
         * other will be used as this ReferenceCounter object.
         * @see ReferenceCounter::increaseRefCount()
         */
-        CountedReference(const CountedReference& other) throw()
+        CountedReference(const CountedReference& other)
             : referencecounter(other.referencecounter)
         { referencecounter.increaseRefCount(); }
 
@@ -115,7 +115,7 @@ public:
         *
         * @see ReferenceCounter::decreaseRefCount()
         */
-        ~CountedReference() throw()
+        ~CountedReference()
         { referencecounter.decreaseRefCount(); }
 
         /** Cast operator.
@@ -142,7 +142,7 @@ protected:
     */
     ReferenceCounter(
         boost::function<void ()> _action = boost::function<void ()>()
-    ) throw()
+    )
         : action(_action), reference_count(0u)
     {}
 

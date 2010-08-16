@@ -49,8 +49,8 @@ class MainApp : public wxApp
 
 public:
 
-    bool OnInit() throw(); /**< gets called when the application starts */
-    int OnExit() throw(); /**< gets called when the application terminates*/
+    bool OnInit(); /**< gets called when the application starts */
+    int OnExit(); /**< gets called when the application terminates*/
 
     /** Process a wxWidget event
     *
@@ -65,7 +65,7 @@ public:
     * If any of these conditions are not true, the function calls the base
     * class version of itself and returns.
     */
-    virtual bool ProcessEvent(wxEvent& event) throw();
+    virtual bool ProcessEvent(wxEvent& event);
 };
 
 
@@ -77,7 +77,6 @@ public:
 
 
 bool MainApp::ProcessEvent(wxEvent& event)
-    throw()
 {
     bool baseclass_result;
     try {
@@ -121,7 +120,6 @@ bool MainApp::ProcessEvent(wxEvent& event)
 
 
 bool MainApp::OnInit()
-    throw()
 {
     try {
 	// Create main_frame gui object
@@ -143,7 +141,6 @@ bool MainApp::OnInit()
 }
 
 int MainApp::OnExit()
-    throw()
 {
     // we do not delete main_frame; wxWidgets magic does it for us
     return wxApp::OnExit();

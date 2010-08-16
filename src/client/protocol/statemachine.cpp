@@ -41,7 +41,6 @@ ProtocolMachine::~ProtocolMachine()
 }
 
 void ProtocolMachine::startIOOperations()
-    throw(std::exception)
 {
     // start a new thread that processes all asynchronous operations
     io_thread = boost::thread(
@@ -52,7 +51,7 @@ void ProtocolMachine::startIOOperations()
     );
 }
 
-void ProtocolMachine::stopIOOperations() throw()
+void ProtocolMachine::stopIOOperations()
 {
     boost::system::error_code dontcare;
 

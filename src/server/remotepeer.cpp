@@ -28,7 +28,7 @@ RemotePeer::RemotePeer(
     socket_ptr _peer_socket,
     connection_id_t _connection_id,
     event_callback_t _event_callback
-) throw()
+)
     : ReferenceCounter<RemotePeer>(boost::bind(&RemotePeer::canDelete, this)),
     peer_socket(_peer_socket), connection_id(_connection_id),
     event_callback(_event_callback), error_happened(false)
@@ -78,7 +78,7 @@ void RemotePeer::sendHandler(
     std::size_t bytes_transferred,
     ReferenceCounter<RemotePeer>::CountedReference peer_reference,
     SegmentationLayer::dataptr_t sendbuf
-) throw()
+)
 {
     // import reference for convenience
     RemotePeer& remotepeer = peer_reference;
@@ -95,7 +95,7 @@ void RemotePeer::rcvHeaderHandler(
     const boost::system::error_code& error,
     std::size_t bytes_transferred,
     ReferenceCounter<RemotePeer>::CountedReference peer_reference
-) throw()
+)
 {
     // import reference for convenience
     RemotePeer& remotepeer = peer_reference;
@@ -153,7 +153,7 @@ void RemotePeer::rcvBodyHandler(
     std::size_t bytes_transferred,
     ReferenceCounter<RemotePeer>::CountedReference peer_reference,
     SegmentationLayer::dataptr_t body_data
-) throw()
+)
 {
     RemotePeer& remotepeer = peer_reference;
 
@@ -179,7 +179,7 @@ void RemotePeer::rcvBodyHandler(
 }
 
 
-void RemotePeer::sendMessage(const SegmentationLayer& msg) throw()
+void RemotePeer::sendMessage(const SegmentationLayer& msg)
 {
     SegmentationLayer::dataptr_t data = SegmentationLayer::dataptr_t(
         new byte_traits::byte_sequence(msg.getSerializedSize()));
@@ -200,7 +200,7 @@ void RemotePeer::sendMessage(const SegmentationLayer& msg) throw()
     );
 }
 
-void RemotePeer::shutdownConnection() throw()
+void RemotePeer::shutdownConnection()
 {
     boost::system::error_code dontcare;
 

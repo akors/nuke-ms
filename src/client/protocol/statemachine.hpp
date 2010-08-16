@@ -188,13 +188,13 @@ struct ProtocolMachine :
     *
     * @throws std::exception if an error creating the thread occurs.
     */
-    void startIOOperations() throw(std::exception);
+    void startIOOperations();
 
     /** Stops I/O Operations.
     * This function stops the IO- Service Object and joins the thread if
     * they are running.
     */
-    void stopIOOperations() throw();
+    void stopIOOperations();
 };
 
 
@@ -320,7 +320,7 @@ struct StateConnected :
 };
 
 // this function is declared in protocol.hpp and defined in protocol.hpp
-extern void catchThread(boost::thread& thread, unsigned threadwait_ms) throw();
+extern void catchThread(boost::thread& thread, unsigned threadwait_ms);
 
 
 } // namespace protocol

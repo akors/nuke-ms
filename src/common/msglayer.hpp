@@ -158,7 +158,7 @@ public:
 
 struct InvalidHeaderError : public MsgLayerError
 {
-    InvalidHeaderError() throw()
+    InvalidHeaderError()
         : MsgLayerError("Invalid packet header")
     {}
 };
@@ -238,7 +238,7 @@ public:
      *
      * @return The number of bytes the serialized byte sequence would have.
     */
-    virtual std::size_t getSerializedSize() const throw() = 0;
+    virtual std::size_t getSerializedSize() const = 0;
 
 
     /** Fill a buffer with the serialized version of this object.
@@ -255,7 +255,7 @@ public:
     * is the same iterator as buffer but it is incremented getSerializedSize()
     * times.
     */
-    virtual data_it fillSerialized(data_it buffer) const throw()= 0;
+    virtual data_it fillSerialized(data_it buffer) const= 0;
 
     /** Retrieve serialized version of the current message layer.
      * Ensures that an appropriate amount of memory is allocated and writes a
@@ -264,7 +264,7 @@ public:
      * @return Serialized version of current message layer, holding ownership
      * of the underlying _memblock
     */
-    virtual SerializedData getSerializedData() const throw();
+    virtual SerializedData getSerializedData() const;
 };
 
 
@@ -309,10 +309,10 @@ public:
     {}
 
     // overriding base class version
-    virtual std::size_t getSerializedSize() const throw();
+    virtual std::size_t getSerializedSize() const;
 
     // overriding base class version
-    virtual data_it fillSerialized(data_it buffer) const throw();
+    virtual data_it fillSerialized(data_it buffer) const;
 
     /** Retrieve serialized version of the current message layer.
      * As opposed to the base class version of this method, this version simply
@@ -321,7 +321,7 @@ public:
      * @return Serialized version of current message layer, holding ownership
      * of the underlying _memblock
     */
-    virtual SerializedData getSerializedData() const throw();
+    virtual SerializedData getSerializedData() const;
 
     /** Get iterator to message data.
     * This function can be used to access the buffer directly, either to copy
@@ -332,7 +332,7 @@ public:
     * as the underlying memory block that was passed to the constructor
     * SerializedData() or this object is alive.
     */
-    const_data_it getDataIterator() const throw()
+    const_data_it getDataIterator() const
     { return begin_it; }
 
     /** Get ownership to message data.
@@ -342,7 +342,7 @@ public:
     * @returns An ownership object ensuring that a pointer returned by
     * getDataIterator() is valid.
     */
-    DataOwnership getOwnership() const throw()
+    DataOwnership getOwnership() const
     { return memblock; }
 };
 
@@ -372,7 +372,7 @@ public:
      *
      * @return Pointer to the upper layer message
     */
-    BasicMessageLayer::ptr_t getUpperLayer() throw()
+    BasicMessageLayer::ptr_t getUpperLayer()
     {
         return upper_layer;
     }
@@ -384,7 +384,7 @@ public:
      *
      * @return Pointer to the upper layer message
     */
-    BasicMessageLayer::const_ptr_t getUpperLayer() const throw()
+    BasicMessageLayer::const_ptr_t getUpperLayer() const
     {
         return upper_layer;
     }
@@ -436,8 +436,7 @@ public:
     * long.
     */
     template <typename InputIterator>
-    static HeaderType decodeHeader(InputIterator headerbuf)
-        throw(InvalidHeaderError);
+    static HeaderType decodeHeader(InputIterator headerbuf);
 
 
     /** Constructor.
@@ -472,11 +471,11 @@ public:
     SegmentationLayer(BasicMessageLayer::dataptr_t data);
 
     // overriding base class version
-    virtual std::size_t getSerializedSize() const throw()
+    virtual std::size_t getSerializedSize() const
     { return serializedsize; }
 
     // overriding base class version
-    virtual data_it fillSerialized(data_it buffer) const throw();
+    virtual data_it fillSerialized(data_it buffer) const;
 };
 
 
@@ -484,7 +483,6 @@ public:
 template <typename InputIterator>
 SegmentationLayer::HeaderType
 SegmentationLayer::decodeHeader(InputIterator headerbuf)
-    throw(InvalidHeaderError)
 {
     HeaderType headerdata;
 
@@ -542,13 +540,13 @@ public:
     * @throws MsgLayerError if the bytesize is not a multiple of the character
     * size.
     */
-    StringwrapLayer(const SerializedData& msg) throw(MsgLayerError);
+    StringwrapLayer(const SerializedData& msg);
 
     // overriding base class version
-    virtual std::size_t getSerializedSize() const throw();
+    virtual std::size_t getSerializedSize() const;
 
     // overriding base class version
-    virtual data_it fillSerialized(data_it buffer) const throw();
+    virtual data_it fillSerialized(data_it buffer) const;
 
     /** Return the string contained in the layer message.
     *
@@ -560,7 +558,7 @@ public:
     *
     * @returns A constant reference to the string contained in this message
     */
-    const byte_traits::msg_string& getString() const throw()
+    const byte_traits::msg_string& getString() const
     { return message_string; }
 
 };

@@ -79,7 +79,7 @@ struct ServerEvent1Parm : public BasicServerEvent
     ServerEvent1Parm(
         BasicServerEvent::connection_id_t _connection_id,
         const ParmType& _parm
-    )  throw()
+    )
         :  BasicServerEvent(EventKind, _connection_id), parm(_parm)
     {}
 

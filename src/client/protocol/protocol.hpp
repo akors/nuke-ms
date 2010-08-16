@@ -78,7 +78,7 @@ public:
     /** Constructor.
     * Creates a thread and initializes the Network machine.
     */
-    NukeMSProtocol() throw();
+    NukeMSProtocol();
 
     /** Destructor.
     * Stops the Network machine and destroys the thread.
@@ -108,11 +108,11 @@ public:
     /** Send message to connected remote site.
      * @param msg The message you want to send
      */
-    void send(control::Message::const_ptr_t msg) throw();
+    void send(control::Message::const_ptr_t msg);
 
     /** Disconnect from the remote site.
     */
-    void disconnect() throw();
+    void disconnect();
 
 private:
 
@@ -149,7 +149,7 @@ private:
  * @post thread does not refer to a thread anymore.
  *
 */
-void catchThread(boost::thread& thread, unsigned threadwait_ms) throw();
+void catchThread(boost::thread& thread, unsigned threadwait_ms);
 
 
 

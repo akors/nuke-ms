@@ -46,10 +46,10 @@ public:
         socket_ptr _peer_socket,
         connection_id_t _connection_id,
         event_callback_t _event_callback
-    ) throw();
+    );
 
 
-    void sendMessage(const SegmentationLayer& msg) throw();
+    void sendMessage(const SegmentationLayer& msg);
 
 
     /** Shutdown the connection to the remote peer.
@@ -59,7 +59,7 @@ public:
     * When this has happened, an event with eventtype ID_CAN_DELETE
     * will be sent to the callback specified in the constructor.
     */
-    void shutdownConnection() throw();
+    void shutdownConnection();
 
 private:
 
@@ -97,20 +97,20 @@ private:
         std::size_t bytes_transferred,
         ReferenceCounter<RemotePeer>::CountedReference peer_reference,
         SegmentationLayer::dataptr_t sendbuf
-    ) throw();
+    );
 
     static void rcvHeaderHandler(
         const boost::system::error_code& error,
         std::size_t bytes_transferred,
         ReferenceCounter<RemotePeer>::CountedReference peer_reference
-    ) throw();
+    );
 
     static void rcvBodyHandler(
         const boost::system::error_code& error,
         std::size_t bytes_transferred,
         ReferenceCounter<RemotePeer>::CountedReference peer_reference,
         SegmentationLayer::dataptr_t body_data
-    ) throw();
+    );
 
     // no copy construction allowed.
     RemotePeer(const RemotePeer&);

@@ -162,13 +162,13 @@ invalid_command:
 
 
 
-void MainFrame::slotReceiveMessage(control::Message::const_ptr_t msg) throw()
+void MainFrame::slotReceiveMessage(control::Message::const_ptr_t msg)
 {
     printMessage(wxT(">> ") + wxString::FromUTF8(msg->str.c_str()));
 }
 
 void MainFrame::slotConnectionStatusReport(
-    control::ConnectionStatusReport::const_ptr_t rprt) throw()
+    control::ConnectionStatusReport::const_ptr_t rprt)
 {
     using namespace control;
 
@@ -206,7 +206,7 @@ void MainFrame::slotConnectionStatusReport(
 }
 
 
-void MainFrame::slotSendReport(control::SendReport::const_ptr_t rprt) throw()
+void MainFrame::slotSendReport(control::SendReport::const_ptr_t rprt)
 {
     if (!rprt->send_state)
     {
@@ -219,7 +219,6 @@ void MainFrame::slotSendReport(control::SendReport::const_ptr_t rprt) throw()
 
 
 void MainFrame::printMessage(const wxString& str)
-    throw (std::runtime_error)
 {
     // wxEvtHandler::AddPendingEvent is explicitly thread-safe, so we don't
     // need any mutexes and locking here.
@@ -241,7 +240,7 @@ void MainFrame::printMessage(const wxString& str)
 ////////////////////////////// MainFrame Public ///////////////////////////////
 
 
-MainFrame::MainFrame() throw()
+MainFrame::MainFrame()
     : wxFrame(NULL, -1, wxT("killer app"), wxDefaultPosition, wxSize(600, 500))
 {
 	// thread protocol signals to gui slots
@@ -268,7 +267,6 @@ MainFrame::MainFrame() throw()
 
 
 void MainFrame::OnQuit(wxCommandEvent& event)
-    throw()
 {
     protocol.disconnect(); // WORKAROUND!!!
     Close(true);
@@ -277,7 +275,6 @@ void MainFrame::OnQuit(wxCommandEvent& event)
 
 
 void MainFrame::OnEnter(wxCommandEvent& event)
-    throw()
 {
     wxString input_string(text_input_box->GetValue());
 
@@ -307,7 +304,7 @@ void MainFrame::OnEnter(wxCommandEvent& event)
 
 }
 
-void MainFrame::OnPrintMessage(wxCommandEvent& event) throw()
+void MainFrame::OnPrintMessage(wxCommandEvent& event)
 {
     text_display_box->AppendText( event.GetString() + wxT('\n') );
 }

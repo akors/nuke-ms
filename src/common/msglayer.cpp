@@ -30,7 +30,6 @@ using namespace nuke_ms;
 ///////////////////////////// BasicMessageLayer ////////////////////////////////
 
 SerializedData BasicMessageLayer::getSerializedData() const
-    throw()
 {
     std::size_t serializedsize = this->getSerializedSize();
 
@@ -49,7 +48,7 @@ SerializedData BasicMessageLayer::getSerializedData() const
 /////////////////////////////// SerializedData /////////////////////////////////
 
 
-std::size_t SerializedData::getSerializedSize() const throw()
+std::size_t SerializedData::getSerializedSize() const
 {
     // return the size of the memory block
     return datasize;
@@ -58,7 +57,6 @@ std::size_t SerializedData::getSerializedSize() const throw()
 
 BasicMessageLayer::data_it
 SerializedData::fillSerialized(data_it buffer) const
-    throw()
 {
     // copy the maintained data into the specified buffer
     return std::copy(
@@ -70,7 +68,6 @@ SerializedData::fillSerialized(data_it buffer) const
 
 
 SerializedData SerializedData::getSerializedData() const
-    throw()
 {
     // this is a no-op, just copy the iterators and memory block
     return *this;
@@ -92,7 +89,6 @@ SegmentationLayer::SegmentationLayer(BasicMessageLayer::dataptr_t data)
 
 BasicMessageLayer::data_it
 SegmentationLayer::fillSerialized(BasicMessageLayer::data_it buffer) const
-    throw()
 {
     // first byte is layer identifier
     *buffer++ = static_cast<byte_traits::byte_t>(LAYER_ID);
@@ -115,7 +111,6 @@ SegmentationLayer::fillSerialized(BasicMessageLayer::data_it buffer) const
 ////////////////////////////// StringwrapLayer /////////////////////////////////
 
 StringwrapLayer::StringwrapLayer(const SerializedData& msg)
-    throw(MsgLayerError)
 {
     std::size_t datasize = msg.getSerializedSize();
     const_data_it data_it = msg.getDataIterator();
@@ -143,14 +138,13 @@ StringwrapLayer::StringwrapLayer(const SerializedData& msg)
 }
 
 
-std::size_t StringwrapLayer::getSerializedSize() const throw()
+std::size_t StringwrapLayer::getSerializedSize() const
 {
     return message_string.length() * sizeof(byte_traits::msg_string::value_type);
 }
 
 BasicMessageLayer::data_it
 StringwrapLayer::fillSerialized(BasicMessageLayer::data_it buffer) const
-    throw()
 {
     // an iterator to the message of string type
     byte_traits::msg_string::const_iterator in_iter = message_string.begin();

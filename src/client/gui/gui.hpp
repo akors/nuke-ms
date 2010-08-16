@@ -126,8 +126,7 @@ class MainFrame : public wxFrame
     * @throws std::runtime_error if a ressource could not be allocated.
     * e.g. a threading resource.
     */
-    void printMessage(const wxString& str)
-        throw(std::runtime_error);
+    void printMessage(const wxString& str);
 
 
     /** Check if a string is a command
@@ -136,7 +135,6 @@ class MainFrame : public wxFrame
     * @todo Add proper checking here
     */
     inline static bool isCommand(const wxString& str)
-        throw()
     {
         return ((str.size() != 0) && (str[0] == wxT('/')));
     }
@@ -158,26 +156,26 @@ public:
     * Initialize base class, set scales,
     * create menu bar and text boxes, connect protocol signals and slots.
     */
-    MainFrame() throw();
+    MainFrame();
 
 
 
-    void slotReceiveMessage(control::Message::const_ptr_t msg) throw();
+    void slotReceiveMessage(control::Message::const_ptr_t msg);
     void slotConnectionStatusReport(
-        control::ConnectionStatusReport::const_ptr_t rprt) throw();
-    void slotSendReport(control::SendReport::const_ptr_t rprt) throw();
+        control::ConnectionStatusReport::const_ptr_t rprt);
+    void slotSendReport(control::SendReport::const_ptr_t rprt);
 
 
     /** Called if the user wants to quit. */
-    void OnQuit(wxCommandEvent& event) throw();
+    void OnQuit(wxCommandEvent& event);
 
     /** Called when the user hits the return key without
     * holding down the shift or ctrl. key
     */
-    void OnEnter(wxCommandEvent& event) throw();
+    void OnEnter(wxCommandEvent& event);
 
     /** Called internally, if there is a message to be printed */
-    void OnPrintMessage(wxCommandEvent& event) throw();
+    void OnPrintMessage(wxCommandEvent& event);
 
     DECLARE_EVENT_TABLE()
 };
@@ -198,7 +196,6 @@ DECLARE_EVENT_TYPE( nuke_msEVT_PRINT_MESSAGE, -1 )
 * @warning Probably not portable
 */
 inline void wxString2str(byte_traits::msg_string& str, const wxString& wxstr)
-    throw()
 {
     str.assign(wxstr.ToUTF8().data());
 }
@@ -211,7 +208,6 @@ inline void wxString2str(byte_traits::msg_string& str, const wxString& wxstr)
 * @warning Probably not portable
 */
 inline void str2wxString(wxString& wxstr, const byte_traits::msg_string& str)
-    throw()
 {
     wxstr = wxString::FromUTF8(str.c_str());
 }

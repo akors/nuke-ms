@@ -44,7 +44,7 @@ static bool parseDestinationString(
 );
 
 
-NukeMSProtocol::NukeMSProtocol() throw()
+NukeMSProtocol::NukeMSProtocol()
     : machine_scheduler(true)
 {
 
@@ -118,7 +118,7 @@ void NukeMSProtocol::connectTo(control::ServerLocation::const_ptr_t where)
 
 
 
-void NukeMSProtocol::send(control::Message::const_ptr_t msg) throw()
+void NukeMSProtocol::send(control::Message::const_ptr_t msg)
 {
     // create a Stringwrapper for the message
     StringwrapLayer::ptr_t data(new StringwrapLayer(msg->str));
@@ -133,7 +133,7 @@ void NukeMSProtocol::send(control::Message::const_ptr_t msg) throw()
 }
 
 
-void NukeMSProtocol::disconnect() throw()
+void NukeMSProtocol::disconnect()
 {
     // Create new Disconnect request event and dispatch it to the statemachine
     boost::intrusive_ptr<EvtDisconnectRequest>
@@ -201,7 +201,6 @@ static bool parseDestinationString(
 
 
 void nuke_ms::protocol::catchThread(boost::thread& thread, unsigned threadwait_ms)
-    throw()
 {
     // a thread id that compares equal to "not-a-thread"
     boost::thread::id not_a_thread;
