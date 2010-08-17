@@ -184,7 +184,7 @@ public:
 
 
 // declare the new event type for printing messages
-DECLARE_EVENT_TYPE( nuke_msEVT_PRINT_MESSAGE, -1 )
+DECLARE_LOCAL_EVENT_TYPE( nuke_msEVT_PRINT_MESSAGE, -1 )
 
 
 

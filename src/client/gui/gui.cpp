@@ -311,7 +311,7 @@ void MainFrame::OnPrintMessage(wxCommandEvent& event)
 
 
 // define the new event type for printing messages
-DEFINE_EVENT_TYPE( nuke_msEVT_PRINT_MESSAGE )
+DEFINE_LOCAL_EVENT_TYPE( nuke_msEVT_PRINT_MESSAGE )
 
 } // namespace gui
 } // namespace nuke_ms
