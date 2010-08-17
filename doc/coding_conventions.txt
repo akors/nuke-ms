@@ -67,5 +67,13 @@ std::logic_error.
 These error shall not be declared in the function header and
 must not be caught by callers, but must only be caught by top- level functions
 (such as main(), or thread entry points).
-a
 
+
+Compiler warnings:
+Don't ignore compiler warnings. Compiler warnings may be a hint to a real issue,
+and a warning on one compiler might become an error on another.
+Don't just disable the warning or don't just apply a "pseudo-fix" which you
+found by googling for 3 minutes. Try to understand the issue; if you don't, 
+ask on the mailing list.
+Some warnings should really be silenced, they should however be discussed on
+the mailing list. Use your brain!
