@@ -361,7 +361,7 @@ boost::statechart::result StateConnected::react(const EvtSendMsg& evt)
 
     // create buffer, fill it with the serialized message
     SegmentationLayer::dataptr_t data(
-        new byte_traits::byte_sequence(segm_layer.getSerializedSize())
+        new byte_traits::byte_sequence(segm_layer.size())
     );
 
     segm_layer.fillSerialized(data->begin());

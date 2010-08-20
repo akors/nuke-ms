@@ -31,7 +31,7 @@ using namespace nuke_ms;
 
 SerializedData BasicMessageLayer::getSerializedData() const
 {
-    std::size_t serializedsize = this->getSerializedSize();
+    std::size_t serializedsize = this->size();
 
     // allocate buffer with appropriate size
     dataptr_t data(new byte_traits::byte_sequence(serializedsize));
@@ -48,7 +48,7 @@ SerializedData BasicMessageLayer::getSerializedData() const
 /////////////////////////////// SerializedData /////////////////////////////////
 
 
-std::size_t SerializedData::getSerializedSize() const
+std::size_t SerializedData::size() const
 {
     // return the size of the memory block
     return datasize;
@@ -112,7 +112,7 @@ SegmentationLayer::fillSerialized(BasicMessageLayer::data_it buffer) const
 
 StringwrapLayer::StringwrapLayer(const SerializedData& msg)
 {
-    std::size_t datasize = msg.getSerializedSize();
+    std::size_t datasize = msg.size();
     const_data_it data_it = msg.getDataIterator();
 
     // bail out if the string is not aligned
@@ -138,7 +138,7 @@ StringwrapLayer::StringwrapLayer(const SerializedData& msg)
 }
 
 
-std::size_t StringwrapLayer::getSerializedSize() const
+std::size_t StringwrapLayer::size() const
 {
     return message_string.length() * sizeof(byte_traits::msg_string::value_type);
 }

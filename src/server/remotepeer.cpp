@@ -182,7 +182,7 @@ void RemotePeer::rcvBodyHandler(
 void RemotePeer::sendMessage(const SegmentationLayer& msg)
 {
     SegmentationLayer::dataptr_t data = SegmentationLayer::dataptr_t(
-        new byte_traits::byte_sequence(msg.getSerializedSize()));
+        new byte_traits::byte_sequence(msg.size()));
 
     msg.fillSerialized(data->begin());
 

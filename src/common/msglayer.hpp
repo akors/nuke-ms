@@ -238,21 +238,21 @@ public:
      *
      * @return The number of bytes the serialized byte sequence would have.
     */
-    virtual std::size_t getSerializedSize() const = 0;
+    virtual std::size_t size() const = 0;
 
 
     /** Fill a buffer with the serialized version of this object.
     * This function serializes this layer (and its upper layers) and writes
     * the bytes into a buffer that is pointed to by buffer.
     * The buffer has to have at least the size that is returned by the
-    * getSerializedSize() functions. Beware! No checks will be performed
-    * to assure proper buffer size. Use the function getSerializedSize() to
+    * size() functions. Beware! No checks will be performed
+    * to assure proper buffer size. Use the function size() to
     * obtain the minimal required size.
     *
     * @param buffer An iterator pointing to a range in the buffer that will be
     * filled
     * @returns An iterator pointing past the filled range in the buffer. This
-    * is the same iterator as buffer but it is incremented getSerializedSize()
+    * is the same iterator as buffer but it is incremented size()
     * times.
     */
     virtual data_it fillSerialized(data_it buffer) const= 0;
@@ -309,7 +309,7 @@ public:
     {}
 
     // overriding base class version
-    virtual std::size_t getSerializedSize() const;
+    virtual std::size_t size() const;
 
     // overriding base class version
     virtual data_it fillSerialized(data_it buffer) const;
@@ -453,7 +453,7 @@ public:
     * @param _upper_layer The message of the upper layer you want to send.
     */
     SegmentationLayer(BasicMessageLayer::ptr_t _upper_layer)
-        : serializedsize(_upper_layer->getSerializedSize() + header_length),
+        : serializedsize(_upper_layer->size() + header_length),
           ContainingLayer(_upper_layer)
     { }
 
@@ -471,7 +471,7 @@ public:
     SegmentationLayer(BasicMessageLayer::dataptr_t data);
 
     // overriding base class version
-    virtual std::size_t getSerializedSize() const
+    virtual std::size_t size() const
     { return serializedsize; }
 
     // overriding base class version
@@ -543,7 +543,7 @@ public:
     StringwrapLayer(const SerializedData& msg);
 
     // overriding base class version
-    virtual std::size_t getSerializedSize() const;
+    virtual std::size_t size() const;
 
     // overriding base class version
     virtual data_it fillSerialized(data_it buffer) const;
