@@ -399,16 +399,28 @@ boost::statechart::result StateConnected::react(const EvtDisconnected& evt)
 
 boost::statechart::result StateConnected::react(const EvtRcvdMessage& evt)
 {
-    // FIXME data implicitly treated as a string, which might not be
-    // correct
+    // whatever it is, we need a SerializedData object from it
+    SerializedData data(evt.data.getUpperLayer()->getSerializedData());
 
-    // create string from received data
-    StringwrapLayer str(evt.data.getUpperLayer()->getSerializedData());
 
-    control::Message::ptr_t msg(new control::Message);
-    msg->str = str.getString();
-
-    context<ProtocolMachine>().signals.rcvMessage(msg);
+    try {
+        // check out the layer identifier if it's a string, dispatch it.
+        // If not, discard
+        if (*data.getDataIterator() ==
+            static_cast<byte_traits::byte_t>(NearUserMessage::LAYER_ID))
+        {
+            NearUserMessage::ptr_t usermsg(new NearUserMessage(data));
+            context<ProtocolMachine>().signals.rcvMessage(usermsg);
+        }
+        else
+            std::cout<<"Received packet with unknown layer identifier! "
+                "Discarding.\n";
+    }
+    catch(const MsgLayerError& e)
+    {
+        std::cout<<"Reiceived packet but failed to create Message object: "<<
+            e.what()<<'\n';
+    }
 
     return discard_event();
 }

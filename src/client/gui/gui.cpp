@@ -162,9 +162,9 @@ invalid_command:
 
 
 
-void MainFrame::slotReceiveMessage(control::Message::const_ptr_t msg)
+void MainFrame::slotReceiveMessage(NearUserMessage::const_ptr_t msg)
 {
-    printMessage(wxT(">> ") + wxString::FromUTF8(msg->str.c_str()));
+    printMessage(wxT(">> ") + wxString::FromUTF8(msg->getString().c_str()));
 }
 
 void MainFrame::slotConnectionStatusReport(
@@ -296,10 +296,12 @@ void MainFrame::OnEnter(wxCommandEvent& event)
     }
     else // if it's not a command we try to send it
     {
-        control::Message::ptr_t msg(new control::Message);
-        wxString2str(msg->str,input_string);
+        byte_traits::msg_string msg;
+        wxString2str(msg,input_string);
 
-        protocol.send(msg);
+        NearUserMessage::ptr_t usermsg(new NearUserMessage(msg));
+
+        protocol.send(usermsg);
     }
 
 }

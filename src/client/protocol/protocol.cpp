@@ -118,17 +118,10 @@ void NukeMSProtocol::connectTo(control::ServerLocation::const_ptr_t where)
 
 
 
-void NukeMSProtocol::send(control::Message::const_ptr_t msg)
+void NukeMSProtocol::send(NearUserMessage::ptr_t msg)
 {
-    // create a Stringwrapper for the message
-    StringwrapLayer::ptr_t data(new StringwrapLayer(msg->str));
-
     // Create new Connection request event and dispatch it to the statemachine
-    boost::intrusive_ptr<EvtSendMsg>
-    send_evt(
-        new EvtSendMsg(data)
-    );
-
+    boost::intrusive_ptr<EvtSendMsg> send_evt(new EvtSendMsg(msg));
     machine_scheduler.queue_event(event_processor, send_evt);
 }
 

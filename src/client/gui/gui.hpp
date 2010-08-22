@@ -44,6 +44,7 @@
 
 #include "protocol/protocol.hpp"
 #include "control/sigtypes.hpp"
+#include "neartypes.hpp"
 
 namespace nuke_ms
 {
@@ -160,7 +161,7 @@ public:
 
 
 
-    void slotReceiveMessage(control::Message::const_ptr_t msg);
+    void slotReceiveMessage(NearUserMessage::const_ptr_t msg);
     void slotConnectionStatusReport(
         control::ConnectionStatusReport::const_ptr_t rprt);
     void slotSendReport(control::SendReport::const_ptr_t rprt);

@@ -31,7 +31,6 @@
 namespace nuke_ms
 {
 
-typedef byte_traits::uint4b_t msg_id_t;
 
 /** Class that identifies a user uniquely.
  * @note Although this class provides a similar interface to the MessageLayer
@@ -88,6 +87,9 @@ class NearUserMessage : public BasicMessageLayer
 public:
     typedef boost::shared_ptr<NearUserMessage> ptr_t;
     typedef boost::shared_ptr<NearUserMessage> const_ptr_t;
+
+    /** Type for a more or less unique message identifier */
+    typedef byte_traits::uint4b_t msg_id_t;
 
     enum { LAYER_ID = 0x41  /**< Layer Identifier */ };
     enum { header_length =

@@ -45,6 +45,7 @@
 #include <boost/statechart/asynchronous_state_machine.hpp>
 
 #include "bytes.hpp"
+#include "neartypes.hpp"
 #include "protocol/errors.hpp"
 #include "control/sigtypes.hpp"
 
@@ -108,7 +109,7 @@ public:
     /** Send message to connected remote site.
      * @param msg The message you want to send
      */
-    void send(control::Message::const_ptr_t msg);
+    void send(NearUserMessage::ptr_t msg);
 
     /** Disconnect from the remote site.
     */

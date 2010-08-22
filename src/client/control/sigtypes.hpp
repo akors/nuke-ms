@@ -23,6 +23,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include "bytes.hpp"
+#include "neartypes.hpp"
 
 namespace nuke_ms
 {
@@ -37,20 +38,6 @@ struct ServerLocation
     typedef boost::shared_ptr<const ServerLocation> const_ptr_t;
 
     byte_traits::native_string where; /**< String with hostname or ip address */
-};
-
-/** Message that is sent or received over the network.
-*/
-struct Message
-{
-    typedef boost::shared_ptr<Message> ptr_t;
-    typedef boost::shared_ptr<const Message> const_ptr_t;
-
-    /** Type for unique message ID */
-    typedef unsigned short message_id_t;
-
-    message_id_t id; /**< Unique message ID */
-    byte_traits::msg_string str; /**< Message string */
 };
 
 /** Status report of connection state changes
@@ -94,7 +81,7 @@ struct SendReport
     typedef boost::shared_ptr<const SendReport> const_ptr_t;
 
 
-    Message::message_id_t message_id; /**< ID of the message in question */
+    NearUserMessage::msg_id_t message_id; /**< ID of the message in question */
     bool send_state; /** Was it sent or not */
 
     enum send_rprt_reason_t
@@ -109,7 +96,7 @@ struct SendReport
 
 
 // Signals issued by the Protocol
-typedef boost::signals2::signal<void (control::Message::const_ptr_t)>
+typedef boost::signals2::signal<void (NearUserMessage::const_ptr_t)>
     SignalRcvMessage;
 typedef boost::signals2::signal<
     void (control::ConnectionStatusReport::const_ptr_t)>
