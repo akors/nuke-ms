@@ -88,11 +88,8 @@ struct UniqueUserID
  * This class shall be used, whenever a client sends a message to another client
  * that is connected to the same server.
 */
-class NearUserMessage : public BasicMessageLayer
+struct NearUserMessage : public ContainingLayer
 {
-    /** The string contained in this message */
-    StringwrapLayer::ptr_t upper_layer;
-public:
     typedef boost::shared_ptr<NearUserMessage> ptr_t;
     typedef boost::shared_ptr<NearUserMessage> const_ptr_t;
 
@@ -133,7 +130,7 @@ public:
         const UniqueUserID& from = UniqueUserID(),
         msg_id_t _msg_id = msg_id_t()
     )
-        : upper_layer(stringwrap), recipient(to), sender(from),
+        : ContainingLayer(stringwrap), recipient(to), sender(from),
             msg_id(_msg_id)
     {}
 
@@ -148,15 +145,14 @@ public:
         const UniqueUserID& from = UniqueUserID(),
         msg_id_t _msg_id = msg_id_t()
     )
-        : upper_layer(StringwrapLayer::ptr_t(new StringwrapLayer(msg))),
+        : ContainingLayer(StringwrapLayer::ptr_t(new StringwrapLayer(msg))),
             recipient(to), sender(from), msg_id(_msg_id)
     {}
 
     /** Construct from serialized Data
      *
      * @param data Serialized Data layer
-     * @throws InvalidHeaderError when the stringwrap message is not aligned
-     * @throws UndersizedPacketError when the datasize is less than the minimum
+     * @throw UndersizedPacketError when the datasize is less than the minimum
      * packet header
     */
     NearUserMessage(const SerializedData& data);
@@ -169,14 +165,12 @@ public:
 
     /** Return the string contained in the layer message.
     *
-    * This function merely redirects the call to the StringwrapLayer object.
-    * @see StringwrapLayer::getString()
-    *
-    * @returns A constant reference to the string contained in this message
+    * @throws InvalidHeaderError when the stringwrap message is not aligned
+    * @return A stringwraplayer object
     */
-    const byte_traits::msg_string& getString() const
+    const StringwrapLayer getStringwrap() const
     {
-        return upper_layer->getString();
+        return StringwrapLayer(upper_layer->getSerializedData());
     }
 };
 

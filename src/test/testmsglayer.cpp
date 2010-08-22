@@ -79,7 +79,7 @@ int main()
             std::cout<<"msg_id: "<<rcvd.msg_id<<'\n';
             std::cout<<"from: "<<hexprint(rcvd.sender.id,rcvd.sender.id+8)<<'\n';
             std::cout<<"to: "<<hexprint(rcvd.recipient.id,rcvd.recipient.id+8)<<'\n';
-            std::cout<<"string: "<<rcvd.getString()<<'\n';
+            std::cout<<"string: "<<rcvd.getStringwrap().getString()<<'\n';
     }
     catch(const MsgLayerError& e)
     {std::cout<<"Error constructing NearUserMessage package: "<<e.what()<<'\n';}

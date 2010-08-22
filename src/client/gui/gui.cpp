@@ -164,7 +164,8 @@ invalid_command:
 
 void MainFrame::slotReceiveMessage(NearUserMessage::const_ptr_t msg)
 {
-    printMessage(wxT(">> ") + wxString::FromUTF8(msg->getString().c_str()));
+    byte_traits::msg_string s(msg->getStringwrap());
+    printMessage(wxT(">> ") + wxString::FromUTF8(s.c_str()));
 }
 
 void MainFrame::slotConnectionStatusReport(

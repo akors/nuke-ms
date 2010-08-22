@@ -26,6 +26,7 @@ const UniqueUserID UniqueUserID::user_id_none;
 
 
 NearUserMessage::NearUserMessage(const SerializedData& data)
+    : ContainingLayer(BasicMessageLayer::ptr_t())
 {
     BasicMessageLayer::const_data_it in_it = data.getDataIterator();
 

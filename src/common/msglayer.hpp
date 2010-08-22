@@ -567,6 +567,18 @@ public:
     const byte_traits::msg_string& getString() const
     { return message_string; }
 
+    /** Return the string contained in the layer message.
+    *
+    * This function returns a constant reference to the internal string message.
+    * When using this string object bear in mind that this is only a reference,
+    * not a copy. This reference is valid as long as *this is alive.
+    * If you need to pass this string on, copy construvt a new instance from
+    * this reference.
+    *
+    * @returns A constant reference to the string contained in this message
+    */
+    operator const byte_traits::msg_string& () const
+    { return message_string; }
 };
 
 
