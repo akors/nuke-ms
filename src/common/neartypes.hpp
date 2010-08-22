@@ -76,31 +76,79 @@ struct UniqueUserID
 };
 
 
-struct NearUserMessage : public ContainingLayer
+class NearUserMessage : public BasicMessageLayer
 {
+    StringwrapLayer::ptr_t upper_layer;
+public:
     typedef boost::shared_ptr<NearUserMessage> ptr_t;
     typedef boost::shared_ptr<NearUserMessage> const_ptr_t;
 
+    enum { LAYER_ID = 0x41 };
+    enum { header_length =
+        1 + sizeof(msg_id_t) + UniqueUserID::id_length + UniqueUserID::id_length
+    };
+
+
+    msg_id_t msg_id;
     UniqueUserID recipient;
     UniqueUserID sender;
 
-    /** Construct from a stringwraplayer message */
+    /** Construct from a stringwraplayer message
+     * @param stringwrap The message to be sent
+     * @param to Recipient of the message
+     * @param from sender of the message
+    */
 	NearUserMessage(
         StringwrapLayer::ptr_t stringwrap,
         const UniqueUserID& to = UniqueUserID(),
-        const UniqueUserID& from = UniqueUserID()
+        const UniqueUserID& from = UniqueUserID(),
+        msg_id_t _msg_id = msg_id_t()
     )
-        : ContainingLayer(stringwrap), recipient(to), sender(from)
-    { }
+        : upper_layer(stringwrap), recipient(to), sender(from),
+            msg_id(_msg_id)
+    {}
 
-    virtual std::size_t size() const
+    /** Construct from a string
+     * @param msg The message to be sent
+     * @param to Recipient of the message
+     * @param from sender of the message
+    */
+    NearUserMessage(
+        const byte_traits::msg_string& msg,
+        const UniqueUserID& to = UniqueUserID(),
+        const UniqueUserID& from = UniqueUserID(),
+        msg_id_t _msg_id = msg_id_t()
+    )
+        : upper_layer(StringwrapLayer::ptr_t(new StringwrapLayer(msg))),
+            recipient(to), sender(from), msg_id(_msg_id)
+    {}
+
+    /** Construct from serialized Data
+     *
+     * @param data Serialized Data layer
+     * @throws InvalidHeaderError when the stringwrap message is not aligned
+     * @throws UndersizedPacketError when the datasize is less than the minimum
+     * packet header
+    */
+    NearUserMessage(const SerializedData& data);
+
+    // implementing base class version
+    virtual std::size_t size() const;
+
+    // implementing base class version
+    virtual data_it fillSerialized(data_it buffer) const;
+
+    /** Return the string contained in the layer message.
+    *
+    * This function merely redirects the call to the StringwrapLayer object.
+    * @see StringwrapLayer::getString()
+    *
+    * @returns A constant reference to the string contained in this message
+    */
+    const byte_traits::msg_string& getString() const
     {
-        return upper_layer->size() +
-            sizeof(msg_id_t) + UniqueUserID::id_length*2;
+        return upper_layer->getString();
     }
-
-    virtual data_it fillSerialized(data_it buffer) const
-    { return buffer; }
 };
 
 }

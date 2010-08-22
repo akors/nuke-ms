@@ -2,6 +2,7 @@
 
 
 #include "msglayer.hpp"
+#include "neartypes.hpp"
 #include "byteprinter.hpp"
 
 using namespace nuke_ms;
@@ -18,21 +19,26 @@ int main()
     // create stringwrap from string
     StringwrapLayer::ptr_t stringwrap_down(new StringwrapLayer(s));
 
+
     // check string length
-    std::cout<<"stringwrap_down->getSerializedSize() == "<<
-        stringwrap_down->getSerializedSize()<<"\n";
+    std::cout<<"stringwrap_down->size() == "<<
+        stringwrap_down->size()<<"\n";
+
+    // get NearUserMessage from stringwrap
+    NearUserMessage::ptr_t num(new NearUserMessage(stringwrap_down));
+
 
     // create SegmentationLayer object from stringwrap
     // ugly static cast is needed, because otherwise call would be ambiguous
     SegmentationLayer
-    segmlayer(static_cast<BasicMessageLayer::ptr_t>(stringwrap_down));
+    segmlayer(static_cast<BasicMessageLayer::ptr_t>(num));
 
 
     SerializedData serialized = segmlayer.getSerializedData();
 
     BasicMessageLayer::dataptr_t bytewise(
         new nuke_ms::byte_traits::byte_sequence(
-            serialized.getSerializedSize()
+            serialized.size()
         )
     );
 
@@ -66,15 +72,17 @@ int main()
 
     // stringwrap from unknown layer
     try {
-        StringwrapLayer s2(segmlayer_up.getUpperLayer()->getSerializedData());
+        NearUserMessage rcvd(segmlayer_up.getUpperLayer()->getSerializedData());
 
-        std::cout<<"The sent string has size "<<std::dec<<
-            s2.getString().size()<<" and was: \"";
-
-        std::cout<<s2.getString()<<'\"'<<std::endl;
+        std::cout<<"Received message:\n";
+            std::cout<<"\tsize(): "<<rcvd.size()<<'\n';
+            std::cout<<"msg_id: "<<rcvd.msg_id<<'\n';
+            std::cout<<"from: "<<hexprint(rcvd.sender.id,rcvd.sender.id+8)<<'\n';
+            std::cout<<"to: "<<hexprint(rcvd.recipient.id,rcvd.recipient.id+8)<<'\n';
+            std::cout<<"string: "<<rcvd.getString()<<'\n';
     }
-    catch(const MsgLayerError&)
-    { std::cout<<"Error constructing stringwrap package\n"; }
+    catch(const MsgLayerError& e)
+    {std::cout<<"Error constructing NearUserMessage package: "<<e.what()<<'\n';}
 
     return 0;
 }
