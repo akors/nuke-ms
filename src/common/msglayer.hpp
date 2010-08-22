@@ -421,7 +421,7 @@ public:
     /** Type of pointer to this class. */
     typedef boost::shared_ptr<SegmentationLayer> ptr_t;
 
-    enum { LAYER_ID = 0x80 }; /**< Layer Identifier */
+    enum { LAYER_ID = 0x80  /**< Layer Identifier */ };
     enum { header_length = 4 };
 
     /** Type representing the header of a packet. */

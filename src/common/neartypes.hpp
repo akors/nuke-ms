@@ -76,21 +76,40 @@ struct UniqueUserID
 };
 
 
+/** Class representing a user message
+ *
+ * This class shall be used, whenever a client sends a message to another client
+ * that is connected to the same server.
+*/
 class NearUserMessage : public BasicMessageLayer
 {
+    /** The string contained in this message */
     StringwrapLayer::ptr_t upper_layer;
 public:
     typedef boost::shared_ptr<NearUserMessage> ptr_t;
     typedef boost::shared_ptr<NearUserMessage> const_ptr_t;
 
-    enum { LAYER_ID = 0x41 };
+    enum { LAYER_ID = 0x41  /**< Layer Identifier */ };
     enum { header_length =
         1 + sizeof(msg_id_t) + UniqueUserID::id_length + UniqueUserID::id_length
     };
 
-
+    /** ID of the message.
+     * This object can be used to identify the message uniquely. This is
+     * necessary for example when processing send reports
+    */
     msg_id_t msg_id;
+
+    /** Who this message is intended to.
+     * Set this field to specify a recipient of the message
+    */
     UniqueUserID recipient;
+
+    /** Who sent this message
+     * This field will be set to the client that sent the message.
+     * It is not neccessary to specify this field when sending a message,
+     * because it will be set by the protocol implicitly.
+    */
     UniqueUserID sender;
 
     /** Construct from a stringwraplayer message
