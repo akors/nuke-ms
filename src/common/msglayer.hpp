@@ -155,7 +155,7 @@ public:
     { }
 };
 
-
+/** Type to denote invalid header encoding */
 struct InvalidHeaderError : public MsgLayerError
 {
     InvalidHeaderError()
@@ -163,6 +163,13 @@ struct InvalidHeaderError : public MsgLayerError
     {}
 };
 
+/** Type to denote undersized packet */
+struct UndersizedPacketError : public MsgLayerError
+{
+    UndersizedPacketError()
+        : MsgLayerError("Packet too small")
+    {}
+};
 
 
 /** Object holding an ownership to memory.
@@ -471,8 +478,7 @@ public:
     SegmentationLayer(BasicMessageLayer::dataptr_t data);
 
     // overriding base class version
-    virtual std::size_t size() const
-    { return serializedsize; }
+    virtual std::size_t size() const;
 
     // overriding base class version
     virtual data_it fillSerialized(data_it buffer) const;

@@ -87,6 +87,12 @@ SegmentationLayer::SegmentationLayer(BasicMessageLayer::dataptr_t data)
 {
 }
 
+
+// overriding base class version
+std::size_t SegmentationLayer::size() const
+{ return serializedsize; }
+
+
 BasicMessageLayer::data_it
 SegmentationLayer::fillSerialized(BasicMessageLayer::data_it buffer) const
 {
