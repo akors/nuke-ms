@@ -45,7 +45,7 @@ static bool parseDestinationString(
 
 
 NukeMSProtocol::NukeMSProtocol()
-    : machine_scheduler(true)
+    : machine_scheduler(true), last_msg_id(0)
 {
 
     // create an event processor for our state machine
@@ -118,11 +118,15 @@ void NukeMSProtocol::connectTo(control::ServerLocation::const_ptr_t where)
 
 
 
-void NukeMSProtocol::send(NearUserMessage::ptr_t msg)
+NearUserMessage::msg_id_t NukeMSProtocol::send(NearUserMessage::ptr_t msg)
 {
+    msg->msg_id = getNextMessageId();
+
     // Create new Connection request event and dispatch it to the statemachine
     boost::intrusive_ptr<EvtSendMsg> send_evt(new EvtSendMsg(msg));
     machine_scheduler.queue_event(event_processor, send_evt);
+
+    return msg->msg_id;
 }
 
 

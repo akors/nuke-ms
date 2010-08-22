@@ -107,15 +107,39 @@ public:
 
 
     /** Send message to connected remote site.
+     *
+     * This will send the user message to the recipient specified.
+     * If the recipient field is set to UniqueUserID::user_id_none, the
+     * message will be sent to all clients connected to the server.
+     *
+     * The content sender field of this message will be ignored and overwritten
+     * with the value specified in the constructor.
+     *
      * @param msg The message you want to send
+     * @return the message identifier of the sent message
+     *
+     * @post When this call has finished, the sender field of msg will be
+     * overwritten with the value specified in the constructor.
      */
-    void send(NearUserMessage::ptr_t msg);
+    NearUserMessage::msg_id_t send(NearUserMessage::ptr_t msg);
 
     /** Disconnect from the remote site.
     */
     void disconnect();
 
 private:
+
+    /** Retrieve new unique message identifier.
+     * This identifier will be unique on this client
+     * @return unique message identifier
+    */
+    NearUserMessage::msg_id_t getNextMessageId()
+    {
+        // for now this is a simple increment.
+        // Maybe in the future there will be a need for more sophisticated
+        // identifier algorithms.
+        return ++last_msg_id;
+    }
 
     /** An own thread for the State Machine*/
     boost::thread machine_thread;
@@ -131,6 +155,9 @@ private:
 
     /** The I/O Service object used by all network operations */
     boost::asio::io_service io_service;
+
+    /** Unique message identifier of the last message */
+    NearUserMessage::msg_id_t last_msg_id;
 
     /** How long to wait for the thread to join */
     enum { threadwait_ms = 3000 };

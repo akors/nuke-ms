@@ -23,6 +23,8 @@
 
 
 #include <algorithm>
+#include <cstring>
+
 #include "bytes.hpp"
 #include "msglayer.hpp"
 
@@ -44,8 +46,14 @@ struct UniqueUserID
     /** The User ID, as a series of bytes */
     byte_traits::byte_t id[id_length];
 
-    /** Default constructor, does not initialize the User ID */
-    UniqueUserID() {}
+    /** UniqueUserID that means "no user id" */
+    static const UniqueUserID user_id_none;
+
+    /** Default constructor, initialize the User ID to user_id_none */
+    UniqueUserID()
+    {
+        std::memset(id, '\0', id_length);
+    }
 
     /** Copy constructor */
     UniqueUserID(const UniqueUserID& other)

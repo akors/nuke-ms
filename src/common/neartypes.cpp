@@ -22,6 +22,9 @@
 using namespace nuke_ms;
 
 
+const UniqueUserID UniqueUserID::user_id_none;
+
+
 NearUserMessage::NearUserMessage(const SerializedData& data)
 {
     BasicMessageLayer::const_data_it in_it = data.getDataIterator();
