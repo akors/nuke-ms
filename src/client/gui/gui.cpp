@@ -124,11 +124,7 @@ void MainFrame::parseCommand(const wxString& str)
 
 
     else if  ( !tok_iter->compare(wxT("/exit")) )
-    {
-        protocol.disconnect(); // try to disconnect before exiting WORKAROUND!!!
-        Close();
-        return;
-    }
+    { Close(); return; }
 
     else if  ( !tok_iter->compare(wxT("/disconnect")) )
     { protocol.disconnect(); return; }
@@ -269,7 +265,6 @@ MainFrame::MainFrame()
 
 void MainFrame::OnQuit(wxCommandEvent& event)
 {
-    protocol.disconnect(); // WORKAROUND!!!
     Close(true);
 }
 
