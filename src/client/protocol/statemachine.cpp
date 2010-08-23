@@ -250,13 +250,22 @@ void StateNegotiating::resolveHandler(
 {
     std::cout<<"resolveHandler invoked.\n";
 
+
+	
     // if there was an error, report it
     if (endpoint_iterator == tcp::resolver::iterator() )
     {
         byte_traits::native_string errmsg;
 
         if (error)
+		{
+			// if the operation was aborted, the state machine might not be alive,
+			// so we STFU and return
+			if (error == boost::asio::error::operation_aborted)
+				return;
+			
             errmsg = error.message();
+		}
         else
             errmsg = "No hosts found.";
 
@@ -299,8 +308,12 @@ void StateNegotiating::connectHandler(
     // if there was an error, create a negative reply
     if (error)
     {
+		// if the operation was aborted, the state machine might not be alive,
+		// so we STFU and return
+		if (error == boost::asio::error::operation_aborted)
+			return;
+	
         byte_traits::native_string errmsg(error.message());
-
         evt_rprt = new EvtConnectReport(false, errmsg);
     }
     else // if there was no error, create a positive reply
@@ -454,6 +467,7 @@ void StateConnected::writeHandler(
 
     if (!error)
     {
+
         control::SendReport::ptr_t rprt(new control::SendReport);
         rprt->send_state = true;
         rprt->reason = control::SendReport::SR_SEND_OK;
@@ -462,6 +476,12 @@ void StateConnected::writeHandler(
     }
     else
     {
+		// if the operation was aborted, the state machine might not be alive,
+		// so we STFU and return
+		if (error == boost::asio::error::operation_aborted)
+			return;
+	
+	
         byte_traits::native_string errmsg(error.message());
 
         control::SendReport::ptr_t rprt(new control::SendReport);
@@ -492,6 +512,11 @@ void StateConnected::receiveSegmentationHeaderHandler(
     // tear down the connection by posting a disconnection event
     if (error || bytes_transferred != SegmentationLayer::header_length)
     {
+		// if the operation was aborted, the state machine might not be alive,
+		// so we STFU and return
+		if (error == boost::asio::error::operation_aborted)
+			return;
+	
         byte_traits::native_string errmsg(error.message());
 
         _outermost_context.my_scheduler().queue_event(
@@ -567,6 +592,11 @@ void StateConnected::receiveSegmentationBodyHandler(
     // tear down the connection by posting a disconnection event
     if (error)
     {
+		// if the operation was aborted, the state machine might not be alive,
+		// so we STFU and return
+		if (error == boost::asio::error::operation_aborted)
+			return;
+	
         _outermost_context.my_scheduler().queue_event(
             _outermost_context.my_handle(),
             boost::intrusive_ptr<EvtDisconnected>(
