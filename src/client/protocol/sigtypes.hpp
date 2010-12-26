@@ -27,7 +27,7 @@
 
 namespace nuke_ms
 {
-namespace control
+namespace protocol
 {
 
 
@@ -99,10 +99,10 @@ struct SendReport
 typedef boost::signals2::signal<void (NearUserMessage::const_ptr_t)>
     SignalRcvMessage;
 typedef boost::signals2::signal<
-    void (control::ConnectionStatusReport::const_ptr_t)>
+    void (ConnectionStatusReport::const_ptr_t)>
     SignalConnectionStatusReport;
 typedef boost::signals2::signal<
-    void (control::SendReport::const_ptr_t)>
+    void (SendReport::const_ptr_t)>
     SignalSendReport;
 
 } // namespace control

@@ -104,9 +104,7 @@ void MainFrame::createTextBoxes()
 
 void MainFrame::parseCommand(const wxString& str)
 {
-    // we are basically dealing only with Control commands, so it would be nice
-    // if all the types were in scope
-    using namespace control;
+    using namespace protocol;
 
     // get ourself a tokenizer
     typedef boost::tokenizer<boost::char_separator<wxChar>, const wxChar*, wxString >
@@ -165,9 +163,9 @@ void MainFrame::slotReceiveMessage(NearUserMessage::const_ptr_t msg)
 }
 
 void MainFrame::slotConnectionStatusReport(
-    control::ConnectionStatusReport::const_ptr_t rprt)
+    protocol::ConnectionStatusReport::const_ptr_t rprt)
 {
-    using namespace control;
+    using namespace protocol;
 
     switch(rprt->newstate)
     {
@@ -203,7 +201,7 @@ void MainFrame::slotConnectionStatusReport(
 }
 
 
-void MainFrame::slotSendReport(control::SendReport::const_ptr_t rprt)
+void MainFrame::slotSendReport(protocol::SendReport::const_ptr_t rprt)
 {
     if (!rprt->send_state)
     {
@@ -295,9 +293,7 @@ void MainFrame::OnEnter(wxCommandEvent& event)
         byte_traits::msg_string msg;
         wxString2str(msg,input_string);
 
-        NearUserMessage::ptr_t usermsg(new NearUserMessage(msg));
-
-        protocol.send(usermsg);
+        protocol.sendUserMessage(msg);
     }
 
 }

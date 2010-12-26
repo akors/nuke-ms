@@ -43,8 +43,7 @@
 #include <wx/sizer.h>
 
 #include "protocol/protocol.hpp"
-#include "control/sigtypes.hpp"
-#include "neartypes.hpp"
+#include "protocol/sigtypes.hpp"
 
 namespace nuke_ms
 {
@@ -163,8 +162,8 @@ public:
 
     void slotReceiveMessage(NearUserMessage::const_ptr_t msg);
     void slotConnectionStatusReport(
-        control::ConnectionStatusReport::const_ptr_t rprt);
-    void slotSendReport(control::SendReport::const_ptr_t rprt);
+        protocol::ConnectionStatusReport::const_ptr_t rprt);
+    void slotSendReport(protocol::SendReport::const_ptr_t rprt);
 
 
     /** Called if the user wants to quit. */

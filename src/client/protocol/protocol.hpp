@@ -47,7 +47,7 @@
 #include "bytes.hpp"
 #include "neartypes.hpp"
 #include "protocol/errors.hpp"
-#include "control/sigtypes.hpp"
+#include "protocol/sigtypes.hpp"
 
 
 
@@ -71,9 +71,9 @@ class NukeMSProtocol
 public:
     struct Signals
     {
-        control::SignalRcvMessage rcvMessage;
-        control::SignalConnectionStatusReport connectStatReport;
-        control::SignalSendReport sendReport;
+        SignalRcvMessage rcvMessage;
+        SignalConnectionStatusReport connectStatReport;
+        SignalSendReport sendReport;
     };
 
     /** Constructor.
@@ -87,41 +87,39 @@ public:
     ~NukeMSProtocol();
 
     boost::signals2::connection
-    connectRcvMessage(const control::SignalRcvMessage::slot_type& slot)
+    connectRcvMessage(const SignalRcvMessage::slot_type& slot)
     { return signals.rcvMessage.connect(slot); }
 
     boost::signals2::connection connectConnectionStatusReport(
-        const control::SignalConnectionStatusReport::slot_type& slot)
+        const SignalConnectionStatusReport::slot_type& slot)
     { return signals.connectStatReport.connect(slot); }
 
     boost::signals2::connection
-    connectSendReport(const control::SignalSendReport::slot_type& slot)
+    connectSendReport(const SignalSendReport::slot_type& slot)
     { return signals.sendReport.connect(slot); }
 
 
     /** Connect to a remote site.
      * @param id The string representation of the address of the remote site
      */
-    void connectTo(control::ServerLocation::const_ptr_t where);
-
+    void connectTo(ServerLocation::const_ptr_t where);
 
 
     /** Send message to connected remote site.
      *
      * This will send the user message to the recipient specified.
-     * If the recipient field is set to UniqueUserID::user_id_none, the
+     * If recipient is set to UniqueUserID::user_id_none, the
      * message will be sent to all clients connected to the server.
      *
-     * The content sender field of this message will be ignored and overwritten
-     * with the value specified in the constructor.
-     *
      * @param msg The message you want to send
+     * @param recipient Recipient of the message
      * @return the message identifier of the sent message
-     *
-     * @post When this call has finished, the sender field of msg will be
-     * overwritten with the value specified in the constructor.
      */
-    NearUserMessage::msg_id_t send(NearUserMessage::ptr_t msg);
+    NearUserMessage::msg_id_t sendUserMessage(
+        const byte_traits::msg_string& msg,
+        const UniqueUserID& recipient = UniqueUserID()
+    );
+
 
     /** Disconnect from the remote site.
     */

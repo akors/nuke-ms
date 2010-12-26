@@ -127,9 +127,9 @@ boost::statechart::result StateWaiting::react(const EvtConnectRequest& evt)
 
 boost::statechart::result StateWaiting::react(const EvtSendMsg& evt)
 {
-    control::SendReport::ptr_t rprt(new control::SendReport);
+    protocol::SendReport::ptr_t rprt(new protocol::SendReport);
     rprt->send_state = false;
-    rprt->reason = control::SendReport::SR_SERVER_NOT_CONNECTED;
+    rprt->reason = protocol::SendReport::SR_SERVER_NOT_CONNECTED;
     rprt->reason_str = "Not Connected.";
 
     context<ProtocolMachine>().signals.sendReport(rprt);
@@ -163,9 +163,9 @@ StateNegotiating::StateNegotiating(my_context ctx)
 
 boost::statechart::result StateNegotiating::react(const EvtSendMsg& evt)
 {
-    control::SendReport::ptr_t rprt(new control::SendReport);
+    protocol::SendReport::ptr_t rprt(new protocol::SendReport);
     rprt->send_state = false;
-    rprt->reason = control::SendReport::SR_SERVER_NOT_CONNECTED;
+    rprt->reason = protocol::SendReport::SR_SERVER_NOT_CONNECTED;
     rprt->reason_str = "Not yet Connected.";
 
     context<ProtocolMachine>().signals.sendReport(rprt);
@@ -175,15 +175,15 @@ boost::statechart::result StateNegotiating::react(const EvtSendMsg& evt)
 
 boost::statechart::result StateNegotiating::react(const EvtConnectReport& evt)
 {
-    control::ConnectionStatusReport::ptr_t
-        rprt(new control::ConnectionStatusReport);
+    protocol::ConnectionStatusReport::ptr_t
+        rprt(new protocol::ConnectionStatusReport);
 
     // change state according to the outcome of a connection attempt
     if ( evt.success )
     {
-        rprt->newstate = control::ConnectionStatusReport::CNST_CONNECTED;
+        rprt->newstate = protocol::ConnectionStatusReport::CNST_CONNECTED;
         rprt->statechange_reason =
-            control::ConnectionStatusReport::STCHR_USER_REQUESTED;
+            protocol::ConnectionStatusReport::STCHR_USER_REQUESTED;
         rprt->msg = evt.message;
         context<ProtocolMachine>().signals.connectStatReport(rprt);
 
@@ -191,9 +191,9 @@ boost::statechart::result StateNegotiating::react(const EvtConnectReport& evt)
     }
     else
     {
-        rprt->newstate = control::ConnectionStatusReport::CNST_DISCONNECTED;
+        rprt->newstate = protocol::ConnectionStatusReport::CNST_DISCONNECTED;
         rprt->statechange_reason =
-            control::ConnectionStatusReport::STCHR_CONNECT_FAILED;
+            protocol::ConnectionStatusReport::STCHR_CONNECT_FAILED;
         rprt->msg = evt.message;
         context<ProtocolMachine>().signals.connectStatReport(rprt);
 
@@ -203,12 +203,12 @@ boost::statechart::result StateNegotiating::react(const EvtConnectReport& evt)
 
 boost::statechart::result StateNegotiating::react(const EvtDisconnectRequest&)
 {
-    control::ConnectionStatusReport::ptr_t
-    rprt(new control::ConnectionStatusReport);
+    protocol::ConnectionStatusReport::ptr_t
+    rprt(new protocol::ConnectionStatusReport);
 
-    rprt->newstate = control::ConnectionStatusReport::CNST_DISCONNECTED;
+    rprt->newstate = protocol::ConnectionStatusReport::CNST_DISCONNECTED;
     rprt->statechange_reason =
-        control::ConnectionStatusReport::STCHR_USER_REQUESTED;
+        protocol::ConnectionStatusReport::STCHR_USER_REQUESTED;
     context<ProtocolMachine>().signals.connectStatReport(rprt);
 
     return transit<StateWaiting>();
@@ -216,12 +216,12 @@ boost::statechart::result StateNegotiating::react(const EvtDisconnectRequest&)
 
 boost::statechart::result StateNegotiating::react(const EvtConnectRequest&)
 {
-    control::ConnectionStatusReport::ptr_t
-        rprt(new control::ConnectionStatusReport);
+    protocol::ConnectionStatusReport::ptr_t
+        rprt(new protocol::ConnectionStatusReport);
 
-    rprt->newstate = control::ConnectionStatusReport::CNST_CONNECTING;
+    rprt->newstate = protocol::ConnectionStatusReport::CNST_CONNECTING;
     rprt->statechange_reason =
-        control::ConnectionStatusReport::STCHR_BUSY;
+        protocol::ConnectionStatusReport::STCHR_BUSY;
     rprt->msg = "Currently trying to connect";
     context<ProtocolMachine>().signals.connectStatReport(rprt);
 
@@ -355,12 +355,12 @@ StateConnected::StateConnected(my_context ctx)
 
 boost::statechart::result StateConnected::react(const EvtDisconnectRequest&)
 {
-    control::ConnectionStatusReport::ptr_t
-    rprt(new control::ConnectionStatusReport);
+    protocol::ConnectionStatusReport::ptr_t
+    rprt(new protocol::ConnectionStatusReport);
 
-    rprt->newstate = control::ConnectionStatusReport::CNST_DISCONNECTED;
+    rprt->newstate = protocol::ConnectionStatusReport::CNST_DISCONNECTED;
     rprt->statechange_reason =
-        control::ConnectionStatusReport::STCHR_USER_REQUESTED;
+        protocol::ConnectionStatusReport::STCHR_USER_REQUESTED;
     context<ProtocolMachine>().signals.connectStatReport(rprt);
 
     return transit<StateWaiting>();
@@ -397,12 +397,12 @@ boost::statechart::result StateConnected::react(const EvtSendMsg& evt)
 
 boost::statechart::result StateConnected::react(const EvtDisconnected& evt)
 {
-    control::ConnectionStatusReport::ptr_t
-        rprt(new control::ConnectionStatusReport);
+    protocol::ConnectionStatusReport::ptr_t
+        rprt(new protocol::ConnectionStatusReport);
 
-    rprt->newstate = control::ConnectionStatusReport::CNST_DISCONNECTED;
+    rprt->newstate = protocol::ConnectionStatusReport::CNST_DISCONNECTED;
     rprt->statechange_reason =
-        control::ConnectionStatusReport::STCHR_SOCKET_CLOSED;
+        protocol::ConnectionStatusReport::STCHR_SOCKET_CLOSED;
     rprt->msg = evt.msg;
     context<ProtocolMachine>().signals.connectStatReport(rprt);
 
@@ -441,12 +441,12 @@ boost::statechart::result StateConnected::react(const EvtRcvdMessage& evt)
 
 boost::statechart::result StateConnected::react(const EvtConnectRequest&)
 {
-    control::ConnectionStatusReport::ptr_t
-        rprt(new control::ConnectionStatusReport);
+    protocol::ConnectionStatusReport::ptr_t
+        rprt(new protocol::ConnectionStatusReport);
 
-    rprt->newstate = control::ConnectionStatusReport::CNST_CONNECTED;
+    rprt->newstate = protocol::ConnectionStatusReport::CNST_CONNECTED;
     rprt->statechange_reason =
-        control::ConnectionStatusReport::STCHR_BUSY;
+        protocol::ConnectionStatusReport::STCHR_BUSY;
     rprt->msg = "Allready connected";
     context<ProtocolMachine>().signals.connectStatReport(rprt);
 
@@ -468,9 +468,9 @@ void StateConnected::writeHandler(
     if (!error)
     {
 
-        control::SendReport::ptr_t rprt(new control::SendReport);
+        protocol::SendReport::ptr_t rprt(new protocol::SendReport);
         rprt->send_state = true;
-        rprt->reason = control::SendReport::SR_SEND_OK;
+        rprt->reason = protocol::SendReport::SR_SEND_OK;
 
         _outermost_context.signals.sendReport(rprt);
     }
@@ -484,9 +484,9 @@ void StateConnected::writeHandler(
 	
         byte_traits::native_string errmsg(error.message());
 
-        control::SendReport::ptr_t rprt(new control::SendReport);
+        protocol::SendReport::ptr_t rprt(new protocol::SendReport);
         rprt->send_state = false;
-        rprt->reason = control::SendReport::SR_CONNECTION_ERROR;
+        rprt->reason = protocol::SendReport::SR_CONNECTION_ERROR;
         rprt->reason_str = errmsg;
 
         _outermost_context.signals.sendReport(rprt);

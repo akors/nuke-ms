@@ -89,7 +89,7 @@ NukeMSProtocol::~NukeMSProtocol()
 }
 
 
-void NukeMSProtocol::connectTo(control::ServerLocation::const_ptr_t where)
+void NukeMSProtocol::connectTo(protocol::ServerLocation::const_ptr_t where)
 {
     // Get Host/Service pair from the destination string
     byte_traits::native_string host, service;
@@ -104,7 +104,7 @@ void NukeMSProtocol::connectTo(control::ServerLocation::const_ptr_t where)
     }
     else // on failure, report back to application
     {
-        using namespace control;
+        using namespace protocol;
         ConnectionStatusReport::ptr_t rprt(new ConnectionStatusReport);
         rprt->newstate = ConnectionStatusReport::CNST_DISCONNECTED;
         rprt->statechange_reason = ConnectionStatusReport::STCHR_CONNECT_FAILED;
@@ -117,17 +117,21 @@ void NukeMSProtocol::connectTo(control::ServerLocation::const_ptr_t where)
 
 
 
-
-NearUserMessage::msg_id_t NukeMSProtocol::send(NearUserMessage::ptr_t msg)
+NearUserMessage::msg_id_t NukeMSProtocol::sendUserMessage(
+    const byte_traits::msg_string& msg,
+    const UniqueUserID& recipient
+)
 {
-    msg->msg_id = getNextMessageId();
+    NearUserMessage::ptr_t usermsg(new NearUserMessage(msg, recipient));
+    usermsg->msg_id = getNextMessageId();
 
     // Create new Connection request event and dispatch it to the statemachine
-    boost::intrusive_ptr<EvtSendMsg> send_evt(new EvtSendMsg(msg));
+    boost::intrusive_ptr<EvtSendMsg> send_evt(new EvtSendMsg(usermsg));
     machine_scheduler.queue_event(event_processor, send_evt);
 
-    return msg->msg_id;
+    return usermsg->msg_id;
 }
+
 
 
 void NukeMSProtocol::disconnect()
