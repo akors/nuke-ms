@@ -14,7 +14,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 # these are the sources for the client
 set(CLIENT_SRCS
     main.cpp
-    gui/gui.cpp
+    gui.cpp
 )
 
 add_executable(nuke-ms-client WIN32 ${CLIENT_SRCS})

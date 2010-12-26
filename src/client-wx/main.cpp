@@ -29,7 +29,7 @@
 #include <iostream>
 #include <wx/app.h>
 
-#include "gui/gui.hpp"
+#include "client-wx/gui.hpp"
 
 
 using namespace nuke_ms;

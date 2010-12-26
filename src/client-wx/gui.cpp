@@ -21,7 +21,7 @@
 #include <boost/bind.hpp>
 #include <boost/tokenizer.hpp>
 
-#include "gui/gui.hpp"
+#include "client-wx/gui.hpp"
 
 
 namespace nuke_ms
