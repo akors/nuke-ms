@@ -30,11 +30,11 @@
 #include <boost/ref.hpp>
 
 #include "msglayer.hpp"
-#include "clientnode/protocol.hpp"
+#include "clientnode/clientnode.hpp"
 
 namespace nuke_ms
 {
-namespace protocol
+namespace clientnode
 {
 
 // Event declarations
@@ -137,7 +137,7 @@ struct StateWaiting;
 
 /** The Protoc State Machine.
 * @ingroup proto_machine
-* This class represents the Overall State of the Protocol.
+* This class represents the Overall State of the clientnode.
 * Events can be dispatched to this machine, and the according actions will be
 * performed.
 *
@@ -145,16 +145,16 @@ struct StateWaiting;
 * thread. Refer to the documention of Boost.Statechart for details on how to
 * create and use this class, and how to dispatch events.
 */
-struct ProtocolMachine :
+struct ClientnodeMachine :
     public boost::statechart::asynchronous_state_machine<
-        ProtocolMachine,
+        ClientnodeMachine,
         StateWaiting
     >
 {
     enum {thread_timeout = 3000u};
 
     /** Callback signals that will be used to inform the application */
-    protocol::NukeMSProtocol::Signals& signals;
+    clientnode::ClientNode::Signals& signals;
 
     /** I/O Service Object */
     boost::asio::io_service io_service;
@@ -173,14 +173,14 @@ struct ProtocolMachine :
     * create_processor does not work.
     */
 #ifdef I_HATE_THIS_DAMN_BUGGY_STATECHART_LIBRARY
-    ProtocolMachine(my_context ctx, NukeMSProtocol::Signals&  _signals);
+    ClientnodeMachine(my_context ctx, ClientNode::Signals&  _signals);
 #else
-    ProtocolMachine(my_context ctx, NukeMSProtocol::Signals*  _signals);
+    ClientnodeMachine(my_context ctx, ClientNode::Signals*  _signals);
 #endif
 
     /** Destructor. Stops all I/O operations and threads as cleanly as possible.
     */
-    ~ProtocolMachine();
+    ~ClientnodeMachine();
 
     /** Starts the I/O service object and thread to process I/O operations.
     * @pre io_service object must have some work to do before calling this
@@ -207,7 +207,7 @@ struct ProtocolMachine :
 * EvtSendMsg
 */
 struct StateWaiting :
-    public boost::statechart::state<StateWaiting, ProtocolMachine>
+    public boost::statechart::state<StateWaiting, ClientnodeMachine>
 {
 
     /** State reactions. */
@@ -232,7 +232,7 @@ struct StateWaiting :
 * EvtConnectReport
 */
 struct StateNegotiating :
-    public boost::statechart::state<StateNegotiating, ProtocolMachine>
+    public boost::statechart::state<StateNegotiating, ClientnodeMachine>
 {
      /** State reactions. */
     typedef boost::mpl::list<
@@ -276,7 +276,7 @@ struct StateNegotiating :
 
 
 struct StateConnected :
-    public boost::statechart::state<StateConnected, ProtocolMachine>
+    public boost::statechart::state<StateConnected, ClientnodeMachine>
 {
     /** State reactions. */
     typedef boost::mpl::list<
@@ -319,11 +319,11 @@ struct StateConnected :
 
 };
 
-// this function is declared in protocol.hpp and defined in protocol.hpp
+// this function is declared in clientnode.hpp and defined in clientnode.hpp
 extern void catchThread(boost::thread& thread, unsigned threadwait_ms);
 
 
-} // namespace protocol
+} // namespace clientnode
 } // namespace nuke_ms
 
 

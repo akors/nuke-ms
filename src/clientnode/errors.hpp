@@ -24,27 +24,27 @@
 
 namespace nuke_ms
 {
-namespace protocol
+namespace clientnode
 {
 
 
 /** Class for errors that can be issued by the Communication Protocol.
 * @ingroup proto
 */
-class ProtocolError : public std::runtime_error
+class ClientnodeError : public std::runtime_error
 {
     /** The error message */
     const char* msg;
 public:
     /** Default Constructor */
-    ProtocolError() throw()
+    ClientnodeError() throw()
         : std::runtime_error("Unknown Communication Protocol Error")
     { }
 
     /** Constructor.
     * @param str The error message
     */
-    ProtocolError(const char* str) throw()
+    ClientnodeError(const char* str) throw()
         : std::runtime_error(str)
     {}
 
@@ -54,12 +54,12 @@ public:
     virtual const char* what() const throw()
     { return std::runtime_error::what(); }
 
-    virtual ~ProtocolError() throw()
+    virtual ~ClientnodeError() throw()
     { }
 };
 
 
-} // namespace protocol
+} // namespace clientnode
 } // namespace nuke_ms
 
 #endif // ifndef ERRORS_HPP

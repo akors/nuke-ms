@@ -3,7 +3,7 @@
 # directory instead.
 
 # set library sources
-set(CLIENTNODE_SRCS protocol.cpp statemachine.cpp)
+set(CLIENTNODE_SRCS clientnode.cpp statemachine.cpp)
 
 # add library to project
 add_library(nuke-ms-clientnode ${CLIENTNODE_SRCS})

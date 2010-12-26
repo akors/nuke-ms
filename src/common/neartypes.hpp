@@ -115,7 +115,7 @@ struct NearUserMessage : public ContainingLayer
     /** Who sent this message
      * This field will be set to the client that sent the message.
      * It is not neccessary to specify this field when sending a message,
-     * because it will be set by the protocol implicitly.
+     * because it will be set by the clientnode implicitly.
     */
     UniqueUserID sender;
 

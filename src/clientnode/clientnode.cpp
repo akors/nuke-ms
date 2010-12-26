@@ -1,4 +1,4 @@
-// protocol.cpp
+// clientnode.cpp
 
 /*
  *   nuke-ms - Nuclear Messaging System
@@ -23,18 +23,18 @@
 
 
 #include "clientnode/statemachine.hpp"
-#include "clientnode/protocol.hpp"
+#include "clientnode/clientnode.hpp"
 
 #include "bytes.hpp"
 #include "msglayer.hpp"
 
 
-/** @defgroup proto_machine Comunication Protocol State Machine
+/** @defgroup proto_machine Comunication clientnode State Machine
 * @ingroup proto */
 
 
 using namespace nuke_ms;
-using namespace protocol;
+using namespace clientnode;
 
 
 static bool parseDestinationString(
@@ -44,7 +44,7 @@ static bool parseDestinationString(
 );
 
 
-NukeMSProtocol::NukeMSProtocol()
+ClientNode::ClientNode()
     : machine_scheduler(true), last_msg_id(0)
 {
 
@@ -54,11 +54,11 @@ NukeMSProtocol::NukeMSProtocol()
     // create_processor does not work.
 #ifdef I_HATE_THIS_DAMN_BUGGY_STATECHART_LIBRARY
     event_processor =
-        machine_scheduler.create_processor<ProtocolMachine, Signals&>(
+        machine_scheduler.create_processor<ClientnodeMachine, Signals&>(
         boost::ref(signals));
 #else
     event_processor =
-        machine_scheduler.create_processor<ProtocolMachine, Signals*>(
+        machine_scheduler.create_processor<ClientnodeMachine, Signals*>(
         &signals);
 #endif
 
@@ -79,7 +79,7 @@ NukeMSProtocol::NukeMSProtocol()
 
 }
 
-NukeMSProtocol::~NukeMSProtocol()
+ClientNode::~ClientNode()
 {
     // stop the network machine
     machine_scheduler.terminate();
@@ -89,7 +89,7 @@ NukeMSProtocol::~NukeMSProtocol()
 }
 
 
-void NukeMSProtocol::connectTo(protocol::ServerLocation::const_ptr_t where)
+void ClientNode::connectTo(clientnode::ServerLocation::const_ptr_t where)
 {
     // Get Host/Service pair from the destination string
     byte_traits::native_string host, service;
@@ -104,7 +104,7 @@ void NukeMSProtocol::connectTo(protocol::ServerLocation::const_ptr_t where)
     }
     else // on failure, report back to application
     {
-        using namespace protocol;
+        using namespace clientnode;
         ConnectionStatusReport::ptr_t rprt(new ConnectionStatusReport);
         rprt->newstate = ConnectionStatusReport::CNST_DISCONNECTED;
         rprt->statechange_reason = ConnectionStatusReport::STCHR_CONNECT_FAILED;
@@ -117,7 +117,7 @@ void NukeMSProtocol::connectTo(protocol::ServerLocation::const_ptr_t where)
 
 
 
-NearUserMessage::msg_id_t NukeMSProtocol::sendUserMessage(
+NearUserMessage::msg_id_t ClientNode::sendUserMessage(
     const byte_traits::msg_string& msg,
     const UniqueUserID& recipient
 )
@@ -134,7 +134,7 @@ NearUserMessage::msg_id_t NukeMSProtocol::sendUserMessage(
 
 
 
-void NukeMSProtocol::disconnect()
+void ClientNode::disconnect()
 {
     // Create new Disconnect request event and dispatch it to the statemachine
     boost::intrusive_ptr<EvtDisconnectRequest>
@@ -201,7 +201,7 @@ static bool parseDestinationString(
 
 
 
-void nuke_ms::protocol::catchThread(boost::thread& thread, unsigned threadwait_ms)
+void nuke_ms::clientnode::catchThread(boost::thread& thread, unsigned threadwait_ms)
 {
     // a thread id that compares equal to "not-a-thread"
     boost::thread::id not_a_thread;

@@ -1,4 +1,4 @@
-// protocol.hpp
+// clientnode.hpp
 
 /*
  *   nuke-ms - Nuclear Messaging System
@@ -17,11 +17,11 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** @file protocol.hpp
+/** @file clientnode.hpp
 * @brief Network communication protocol.
 *
 * This file contains all of the networking logic.
-* The main class is nuke_ms::protocol::NukeMSProtocol. Use this file within an
+* The main class is nuke_ms::clientnode::ClientNode. Use this file within an
 * Application Control entitiy.
 * This file depends only on the file "notifications.hpp" that contains the
 * types for the interface to the Application Control entitiy.
@@ -33,8 +33,8 @@
 
 
 
-#ifndef PROTOCOL_HPP_
-#define PROTOCOL_HPP_
+#ifndef CLIENTNODE_HPP_
+#define CLIENTNODE_HPP_
 
 #include <stdexcept>
 
@@ -53,7 +53,7 @@
 
 namespace nuke_ms
 {
-namespace protocol
+namespace clientnode
 {
 
 
@@ -66,7 +66,7 @@ namespace protocol
 * Request are handled by the public functions connect_to, send and disconnect.
 * Replies will be dispatched to the callback function you supply in the constructor.
 */
-class NukeMSProtocol
+class ClientNode
 {
 public:
     struct Signals
@@ -79,12 +79,12 @@ public:
     /** Constructor.
     * Creates a thread and initializes the Network machine.
     */
-    NukeMSProtocol();
+    ClientNode();
 
     /** Destructor.
     * Stops the Network machine and destroys the thread.
     */
-    ~NukeMSProtocol();
+    ~ClientNode();
 
     boost::signals2::connection
     connectRcvMessage(const SignalRcvMessage::slot_type& slot)
@@ -179,7 +179,7 @@ void catchThread(boost::thread& thread, unsigned threadwait_ms);
 
 
 
-} // namespace protocol
+} // namespace clientnode
 } // namespace nuke_ms
 
-#endif /*PROTOCOL_HPP_*/
+#endif /*CLIENTNODE_HPP_*/

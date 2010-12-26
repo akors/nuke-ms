@@ -42,7 +42,7 @@
 #include <wx/textctrl.h>
 #include <wx/sizer.h>
 
-#include "clientnode/protocol.hpp"
+#include "clientnode/clientnode.hpp"
 #include "clientnode/sigtypes.hpp"
 
 namespace nuke_ms
@@ -108,7 +108,7 @@ class MainFrame : public wxFrame
     boost::mutex print_mutex;
 
     /** Network Protocol object */
-    protocol::NukeMSProtocol protocol;
+    clientnode::ClientNode clientnode;
 
 
 
@@ -154,7 +154,7 @@ public:
     /** Constructor.
     *
     * Initialize base class, set scales,
-    * create menu bar and text boxes, connect protocol signals and slots.
+    * create menu bar and text boxes, connect clientnode signals and slots.
     */
     MainFrame();
 
@@ -162,8 +162,8 @@ public:
 
     void slotReceiveMessage(NearUserMessage::const_ptr_t msg);
     void slotConnectionStatusReport(
-        protocol::ConnectionStatusReport::const_ptr_t rprt);
-    void slotSendReport(protocol::SendReport::const_ptr_t rprt);
+        clientnode::ConnectionStatusReport::const_ptr_t rprt);
+    void slotSendReport(clientnode::SendReport::const_ptr_t rprt);
 
 
     /** Called if the user wants to quit. */

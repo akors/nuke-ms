@@ -104,7 +104,7 @@ void MainFrame::createTextBoxes()
 
 void MainFrame::parseCommand(const wxString& str)
 {
-    using namespace protocol;
+    using namespace clientnode;
 
     // get ourself a tokenizer
     typedef boost::tokenizer<boost::char_separator<wxChar>, const wxChar*, wxString >
@@ -125,7 +125,7 @@ void MainFrame::parseCommand(const wxString& str)
     { Close(); return; }
 
     else if  ( !tok_iter->compare(wxT("/disconnect")) )
-    { protocol.disconnect(); return; }
+    { clientnode.disconnect(); return; }
 
     else if ( !tok_iter->compare(wxT("/print")) )
     {
@@ -145,7 +145,7 @@ void MainFrame::parseCommand(const wxString& str)
 
         ServerLocation::ptr_t where(new ServerLocation);
         where->where = wherestr;
-        protocol.connectTo(where);
+        clientnode.connectTo(where);
         return;
     }
 
@@ -163,9 +163,9 @@ void MainFrame::slotReceiveMessage(NearUserMessage::const_ptr_t msg)
 }
 
 void MainFrame::slotConnectionStatusReport(
-    protocol::ConnectionStatusReport::const_ptr_t rprt)
+    clientnode::ConnectionStatusReport::const_ptr_t rprt)
 {
-    using namespace protocol;
+    using namespace clientnode;
 
     switch(rprt->newstate)
     {
@@ -201,7 +201,7 @@ void MainFrame::slotConnectionStatusReport(
 }
 
 
-void MainFrame::slotSendReport(protocol::SendReport::const_ptr_t rprt)
+void MainFrame::slotSendReport(clientnode::SendReport::const_ptr_t rprt)
 {
     if (!rprt->send_state)
     {
@@ -238,12 +238,12 @@ void MainFrame::printMessage(const wxString& str)
 MainFrame::MainFrame()
     : wxFrame(NULL, -1, wxT("killer app"), wxDefaultPosition, wxSize(600, 500))
 {
-	// thread protocol signals to gui slots
-	protocol.connectRcvMessage(
+	// thread clientnode signals to gui slots
+	clientnode.connectRcvMessage(
 		boost::bind(&MainFrame::slotReceiveMessage, this, _1));
-	protocol.connectConnectionStatusReport(
+	clientnode.connectConnectionStatusReport(
 		boost::bind(&MainFrame::slotConnectionStatusReport, this, _1));
-	protocol.connectSendReport(
+	clientnode.connectSendReport(
 		boost::bind(&MainFrame::slotSendReport, this, _1));
 
     // softcoding the window sizes
@@ -293,7 +293,7 @@ void MainFrame::OnEnter(wxCommandEvent& event)
         byte_traits::msg_string msg;
         wxString2str(msg,input_string);
 
-        protocol.sendUserMessage(msg);
+        clientnode.sendUserMessage(msg);
     }
 
 }

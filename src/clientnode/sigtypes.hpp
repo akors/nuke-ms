@@ -27,7 +27,7 @@
 
 namespace nuke_ms
 {
-namespace protocol
+namespace clientnode
 {
 
 
