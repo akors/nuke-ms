@@ -42,8 +42,8 @@
 #include <wx/textctrl.h>
 #include <wx/sizer.h>
 
-#include "protocol/protocol.hpp"
-#include "protocol/sigtypes.hpp"
+#include "clientnode/protocol.hpp"
+#include "clientnode/sigtypes.hpp"
 
 namespace nuke_ms
 {

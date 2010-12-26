@@ -22,8 +22,8 @@
 #include<boost/tokenizer.hpp>
 
 
-#include "protocol/statemachine.hpp"
-#include "protocol/protocol.hpp"
+#include "clientnode/statemachine.hpp"
+#include "clientnode/protocol.hpp"
 
 #include "bytes.hpp"
 #include "msglayer.hpp"

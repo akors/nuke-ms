@@ -30,7 +30,7 @@
 #include <boost/ref.hpp>
 
 #include "msglayer.hpp"
-#include "protocol/protocol.hpp"
+#include "clientnode/protocol.hpp"
 
 namespace nuke_ms
 {

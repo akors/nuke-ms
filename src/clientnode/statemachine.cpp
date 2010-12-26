@@ -18,7 +18,7 @@
 */
 
 #include <iostream>
-#include "protocol/statemachine.hpp"
+#include "clientnode/statemachine.hpp"
 
 using namespace nuke_ms;
 using namespace nuke_ms::protocol;

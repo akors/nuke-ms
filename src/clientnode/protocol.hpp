@@ -46,8 +46,8 @@
 
 #include "bytes.hpp"
 #include "neartypes.hpp"
-#include "protocol/errors.hpp"
-#include "protocol/sigtypes.hpp"
+#include "clientnode/errors.hpp"
+#include "clientnode/sigtypes.hpp"
 
 
 

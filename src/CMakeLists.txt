@@ -21,6 +21,9 @@ link_directories(${Boost_LIBRARY_DIRS})
 link_directories(${nuke-ms_BINARY_DIR}/common)
 include_directories(${nuke-ms_SOURCE_DIR}/common)
 
+# Include directories will be referenced from the top level
+include_directories(${nuke-ms_SOURCE_DIR})
+
 # If this is a big endian system, we must add a define
 TEST_BIG_ENDIAN(NUKE_MS_BIG_ENDIAN)
 if(NUKE_MS_BIG_ENDIAN)
@@ -59,6 +62,7 @@ endif()
 
 # compile nuke-ms-common first
 add_subdirectory(common)
+add_subdirectory(clientnode)
 add_subdirectory(client)
 add_subdirectory(server)
 add_subdirectory(test EXCLUDE_FROM_ALL)

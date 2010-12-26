@@ -15,14 +15,13 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 set(CLIENT_SRCS
     main.cpp
     gui/gui.cpp
-    protocol/protocol.cpp
-    protocol/statemachine.cpp
 )
 
 add_executable(nuke-ms-client WIN32 ${CLIENT_SRCS})
 
 target_link_libraries(nuke-ms-client
     nuke-ms-common
+	nuke-ms-clientnode
     ${Boost_LIBRARIES}
     ${wxWidgets_LIBRARIES}
     ${WIN32_NETWORK_LIBS}
