@@ -169,7 +169,7 @@ private:
     {
         LOCK_IF_MULTITHREADED()
 
-        reference_count++;
+        ++reference_count;
     }
 
     /** Decrease reference count
@@ -185,7 +185,7 @@ private:
     {
         LOCK_IF_MULTITHREADED()
 
-        reference_count--;
+        --reference_count;
 
         if (reference_count <= 0u && action)
             action();
