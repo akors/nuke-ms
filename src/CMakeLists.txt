@@ -18,7 +18,6 @@ include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
 # All executables need the nuke-ms-common library
-link_directories(${nuke-ms_BINARY_DIR}/common)
 include_directories(${nuke-ms_SOURCE_DIR}/common)
 
 # Include directories will be referenced from the top level
