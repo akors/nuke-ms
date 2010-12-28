@@ -18,8 +18,6 @@
 */
 
 #include <iostream>
-#include <algorithm>
-#include <functional>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 
