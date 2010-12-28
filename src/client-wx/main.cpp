@@ -27,6 +27,7 @@
 */
 
 #include <iostream>
+#include <exception>
 #include <wx/app.h>
 
 #include "client-wx/gui.hpp"

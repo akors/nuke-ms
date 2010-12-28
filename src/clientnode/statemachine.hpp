@@ -172,7 +172,7 @@ struct ClientnodeMachine :
     * Passing _io_service by pointer, because passing references to
     * create_processor does not work.
     */
-#ifdef I_HATE_THIS_DAMN_BUGGY_STATECHART_LIBRARY
+#ifdef STATECHART_CREATE_PROCESSOR_USE_REF
     ClientnodeMachine(my_context ctx, ClientNode::Signals&  _signals);
 #else
     ClientnodeMachine(my_context ctx, ClientNode::Signals*  _signals);

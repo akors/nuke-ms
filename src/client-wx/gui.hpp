@@ -32,9 +32,8 @@
 #ifndef MAIN_HPP_INCLUDED
 #define MAIN_HPP_INCLUDED
 
-#include <boost/thread/mutex.hpp>
-#include <boost/signals2/signal.hpp>
 
+#include <boost/signals2/signal.hpp>
 
 
 #include <wx/frame.h>
@@ -103,9 +102,6 @@ class MainFrame : public wxFrame
 
     /** Input text box */
     wxTextCtrl* text_input_box;
-
-    /** The mutex to ensure synchronized access to the display resource*/
-    boost::mutex print_mutex;
 
     /** Network Protocol object */
     clientnode::ClientNode clientnode;

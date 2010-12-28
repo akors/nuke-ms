@@ -24,7 +24,7 @@ using namespace nuke_ms;
 using namespace nuke_ms::clientnode;
 using namespace boost::asio::ip;
 
-#ifdef I_HATE_THIS_DAMN_BUGGY_STATECHART_LIBRARY
+#ifdef STATECHART_CREATE_PROCESSOR_USE_REF
 ClientnodeMachine::ClientnodeMachine(my_context ctx,
     ClientNode::Signals&  _signals)
     : my_base(ctx), signals(_signals), socket(io_service)

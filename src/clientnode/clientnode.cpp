@@ -19,14 +19,13 @@
 
 #include <boost/bind.hpp>
 #include <boost/ref.hpp>
-#include<boost/tokenizer.hpp>
+#include <boost/tokenizer.hpp>
 
 
 #include "clientnode/statemachine.hpp"
 #include "clientnode/clientnode.hpp"
 
 #include "bytes.hpp"
-#include "msglayer.hpp"
 
 
 /** @defgroup proto_machine Comunication clientnode State Machine
@@ -52,7 +51,7 @@ ClientNode::ClientNode()
 
     // Passing _io_service by pointer, because passing references to
     // create_processor does not work.
-#ifdef I_HATE_THIS_DAMN_BUGGY_STATECHART_LIBRARY
+#ifdef STATECHART_CREATE_PROCESSOR_USE_REF
     event_processor =
         machine_scheduler.create_processor<ClientnodeMachine, Signals&>(
         boost::ref(signals));

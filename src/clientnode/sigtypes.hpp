@@ -21,7 +21,9 @@
 #ifndef SIGTYPES_HPP
 #define SIGTYPES_HPP
 
+#include <boost/signals2/signal.hpp>
 #include <boost/shared_ptr.hpp>
+
 #include "bytes.hpp"
 #include "neartypes.hpp"
 
