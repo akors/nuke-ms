@@ -24,10 +24,8 @@
 #include "client-wx/gui.hpp"
 
 
-namespace nuke_ms
-{
-namespace gui
-{
+using namespace nuke_ms;
+using namespace gui;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -303,9 +301,8 @@ void MainFrame::OnPrintMessage(wxCommandEvent& event)
     text_display_box->AppendText( event.GetString() + wxT('\n') );
 }
 
+namespace nuke_ms { namespace gui {
+	// define the new event type for printing messages
+	DEFINE_LOCAL_EVENT_TYPE( nuke_msEVT_PRINT_MESSAGE )
+}}
 
-// define the new event type for printing messages
-DEFINE_LOCAL_EVENT_TYPE( nuke_msEVT_PRINT_MESSAGE )
-
-} // namespace gui
-} // namespace nuke_ms

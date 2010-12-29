@@ -154,7 +154,7 @@ struct ClientnodeMachine :
     enum {thread_timeout = 3000u};
 
     /** Callback signals that will be used to inform the application */
-    clientnode::ClientNode::Signals& signals;
+    ClientNode::Signals& signals;
 
     /** I/O Service Object */
     boost::asio::io_service io_service;

@@ -88,7 +88,7 @@ ClientNode::~ClientNode()
 }
 
 
-void ClientNode::connectTo(clientnode::ServerLocation::const_ptr_t where)
+void ClientNode::connectTo(ServerLocation::const_ptr_t where)
 {
     // Get Host/Service pair from the destination string
     byte_traits::native_string host, service;
