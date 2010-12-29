@@ -26,7 +26,10 @@
 #include "refcounter.hpp"
 #include "servevent.hpp"
 
-namespace nuke_ms {
+namespace nuke_ms 
+{
+namespace server
+{
 
 class RemotePeer : public ReferenceCounter<RemotePeer>
 {
@@ -119,6 +122,7 @@ private:
 };
 
 
+} // namespace server
 } // namespace nuke_ms
 
 #endif // ifndef REMOTEPEER_HPP

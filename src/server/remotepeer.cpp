@@ -22,6 +22,7 @@
 #include <boost/bind.hpp>
 
 using namespace nuke_ms;
+using namespace server;
 
 
 RemotePeer::RemotePeer(

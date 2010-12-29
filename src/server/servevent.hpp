@@ -25,6 +25,8 @@
 
 namespace nuke_ms
 {
+namespace server
+{
 
 /** Basic event sent to the server.
 * This event will be passed to an event handler function when something
@@ -102,6 +104,7 @@ typedef ServerEvent1Parm<
 typedef boost::function1 <void, const BasicServerEvent&>
     event_callback_t;
 
+} // namespace server
 } // nuke_ms
 
 #endif // ifndef SERVEVENT_HPP

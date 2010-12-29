@@ -24,6 +24,7 @@
 #include "dispatcher.hpp"
 
 using namespace nuke_ms;
+using namespace server;
 using boost::asio::ip::tcp;
 
 

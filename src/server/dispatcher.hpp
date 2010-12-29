@@ -29,6 +29,8 @@
 
 namespace nuke_ms
 {
+namespace server
+{
 
 /** Main server class.
 *
@@ -89,7 +91,7 @@ private:
 
 };
 
-
+} // namespace server
 } //namespace nuke_ms
 
 

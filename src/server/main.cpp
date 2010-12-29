@@ -26,7 +26,7 @@ using boost::asio::ip::tcp;
 
 int main()
 {
-    nuke_ms::DispatchingServer server;
+    nuke_ms::server::DispatchingServer server;
 
     server.run();
 
