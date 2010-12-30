@@ -36,6 +36,7 @@
 #ifndef CLIENTNODE_HPP_
 #define CLIENTNODE_HPP_
 
+#include <iostream>
 #include <stdexcept>
 
 #include <boost/asio.hpp>
@@ -56,8 +57,6 @@ namespace clientnode
 {
 
 
-
-
 /** Client Communication Protocol.
 * @ingroup proto
 * Use this class to create a black box that handles all the network stuff for
@@ -75,10 +74,28 @@ public:
         SignalSendReport sendReport;
     };
 
+	/** Wrapper class for logging streams. */
+	struct LoggingStreams
+	{
+		/** Stream info messages will be written to */
+		std::ostream& infostream;
+		
+		/** Stream warning messages will be written to */
+		std::ostream& warnstream;
+		
+		/** Stream error messages will be written to */
+		std::ostream& errorstream; 
+		
+		/** Default constructor, initialize to std::clog and std::cerr */
+		LoggingStreams() : 
+			infostream(std::clog), warnstream(std::cerr), errorstream(std::cerr) 
+		{}
+	} logstreams /**< The Streams used for message output */;
+
     /** Constructor.
     * Creates a thread and initializes the Network machine.
     */
-    ClientNode();
+    ClientNode(LoggingStreams logstreams_ = LoggingStreams());
 
     /** Destructor.
     * Stops the Network machine and destroys the thread.

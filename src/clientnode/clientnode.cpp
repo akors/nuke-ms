@@ -43,8 +43,8 @@ static bool parseDestinationString(
 );
 
 
-ClientNode::ClientNode()
-    : machine_scheduler(true), last_msg_id(0)
+ClientNode::ClientNode(LoggingStreams logstreams_)
+    : machine_scheduler(true), last_msg_id(0),  logstreams(logstreams_)
 {
 
     // create an event processor for our state machine
@@ -54,11 +54,11 @@ ClientNode::ClientNode()
 #ifdef STATECHART_CREATE_PROCESSOR_USE_REF
     event_processor =
         machine_scheduler.create_processor<ClientnodeMachine, Signals&>(
-        boost::ref(signals));
+        boost::ref(signals), logstreams);
 #else
     event_processor =
         machine_scheduler.create_processor<ClientnodeMachine, Signals*>(
-        &signals);
+        &signals, logstreams);
 #endif
 
 

@@ -18,6 +18,7 @@
 */
 
 #include <iostream>
+
 #include "clientnode/statemachine.hpp"
 
 using namespace nuke_ms;
@@ -26,12 +27,14 @@ using namespace boost::asio::ip;
 
 #ifdef STATECHART_CREATE_PROCESSOR_USE_REF
 ClientnodeMachine::ClientnodeMachine(my_context ctx,
-    ClientNode::Signals&  _signals)
-    : my_base(ctx), signals(_signals), socket(io_service)
+    ClientNode::Signals&  _signals, 
+	ClientNode::LoggingStreams logstreams_)
+    : my_base(ctx),signals(_signals),socket(io_service),logstreams(logstreams_)
 #else
 ClientnodeMachine::ClientnodeMachine(my_context ctx,
-    ClientNode::Signals *_signals)
-    : my_base(ctx), signals(*_signals), socket(io_service)
+    ClientNode::Signals *_signals, 
+	ClientNode::LoggingStreams logstreams_)
+    : my_base(ctx),signals(*_signals),socket(io_service),logstreams(logstreams_)
 #endif
 {}
 
@@ -72,7 +75,8 @@ void ClientnodeMachine::stopIOOperations()
 StateWaiting::StateWaiting(my_context ctx)
     : my_base(ctx)
 {
-    std::cout<<"Entering StateWaiting\n";
+    outermost_context().logstreams.infostream<<"Entering StateWaiting"<<
+		std::endl;
 
     // when we are waiting, we don't need the io_service object and the thread
     outermost_context().stopIOOperations();
@@ -142,7 +146,8 @@ boost::statechart::result StateWaiting::react(const EvtSendMsg& evt)
 StateNegotiating::StateNegotiating(my_context ctx)
     : my_base(ctx)
 {
-    std::cout<<"Entering StateNegotiating\n";
+    outermost_context().logstreams.infostream<<"Entering StateNegotiating"<<
+		std::endl;
 
     try {
         outermost_context().startIOOperations();
@@ -230,7 +235,8 @@ void StateNegotiating::tiktakHandler(
     outermost_context_type& _outermost_context
 )
 {
-    std::cout<<"Timer went off: "<<error.message()<<'\n';
+    _outermost_context.logstreams.infostream<<
+		"Timer went off: "<<error.message()<<'\n';
 }
 #endif
 
@@ -242,7 +248,7 @@ void StateNegotiating::resolveHandler(
     boost::shared_ptr<tcp::resolver::query> /* query */
 )
 {
-    std::cout<<"resolveHandler invoked.\n";
+    _outermost_context.logstreams.infostream<<"resolveHandler invoked."<<std::endl;
 
 
 	
@@ -273,7 +279,7 @@ void StateNegotiating::resolveHandler(
         return;
     }
 
-    std::cout<<"Resolving finished. Host: "<<
+    _outermost_context.logstreams.infostream<<"Resolving finished. Host: "<<
         endpoint_iterator->endpoint().address().to_string()<<" Port: "<<
         endpoint_iterator->endpoint().port()<<'\n';
 
@@ -295,7 +301,7 @@ void StateNegotiating::connectHandler(
     outermost_context_type& _outermost_context
 )
 {
-    std::cout<<"connectHandler invoked.\n";
+    _outermost_context.logstreams.infostream<<"connectHandler invoked."<<std::endl;
 
     boost::intrusive_ptr<EvtConnectReport> evt_rprt;
 
@@ -343,7 +349,8 @@ void StateNegotiating::connectHandler(
 StateConnected::StateConnected(my_context ctx)
     : my_base(ctx)
 {
-    std::cout<<"Entering StateConnected\n";
+    outermost_context().logstreams.infostream<<"Entering StateConnected"<<
+		std::endl;
 }
 
 
@@ -416,13 +423,17 @@ boost::statechart::result StateConnected::react(const EvtRcvdMessage& evt)
             context<ClientnodeMachine>().signals.rcvMessage(usermsg);
         }
         else
-            std::cout<<"Received packet with unknown layer identifier! "
-                "Discarding.\n";
+		{
+            outermost_context().logstreams.warnstream<<
+				"Received packet with unknown layer identifier! Discarding."<<
+				std::endl;
+		}
     }
     catch(const MsgLayerError& e)
     {
-        std::cout<<"Reiceived packet but failed to create Message object: "<<
-            e.what()<<'\n';
+        outermost_context().logstreams.errorstream<<
+			"Reiceived packet but failed to create Message object: "<<e.what()<<
+			std::endl;
     }
 
     return discard_event();
@@ -450,7 +461,7 @@ void StateConnected::writeHandler(
     SegmentationLayer::dataptr_t data
 )
 {
-    std::cout<<"Sending message finished\n";
+    _outermost_context.logstreams.infostream<<"Sending message finished"<<std::endl;
 
 
     if (!error)
@@ -494,7 +505,7 @@ void StateConnected::receiveSegmentationHeaderHandler(
     byte_traits::byte_t rcvbuf[SegmentationLayer::header_length]
 )
 {
-    std::cout<<"Reveived message\n";
+    _outermost_context.logstreams.infostream<<"Reveived message"<<std::endl;
 
     // if there was an error,
     // tear down the connection by posting a disconnection event

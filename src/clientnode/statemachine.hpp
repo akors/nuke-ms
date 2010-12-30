@@ -155,6 +155,9 @@ struct ClientnodeMachine :
 
     /** Callback signals that will be used to inform the application */
     ClientNode::Signals& signals;
+	
+	/** The Streams used for message output */
+	ClientNode::LoggingStreams logstreams;
 
     /** I/O Service Object */
     boost::asio::io_service io_service;
@@ -173,9 +176,11 @@ struct ClientnodeMachine :
     * create_processor does not work.
     */
 #ifdef STATECHART_CREATE_PROCESSOR_USE_REF
-    ClientnodeMachine(my_context ctx, ClientNode::Signals&  _signals);
+    ClientnodeMachine(my_context ctx, ClientNode::Signals&  _signals, 
+		ClientNode::LoggingStreams logstreams_);
 #else
-    ClientnodeMachine(my_context ctx, ClientNode::Signals*  _signals);
+    ClientnodeMachine(my_context ctx, ClientNode::Signals*  _signals, 
+		ClientNode::LoggingStreams logstreams_);
 #endif
 
     /** Destructor. Stops all I/O operations and threads as cleanly as possible.
