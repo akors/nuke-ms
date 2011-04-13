@@ -28,10 +28,6 @@
 #include "bytes.hpp"
 
 
-/** @defgroup proto_machine Comunication clientnode State Machine
-* @ingroup proto */
-
-
 using namespace nuke_ms;
 using namespace clientnode;
 

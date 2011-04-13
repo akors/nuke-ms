@@ -17,6 +17,16 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/** @file clientnode/sigtypes.hpp
+* @brief Signals issued by the ClientNode module
+* @ingroup clientnode
+*
+* Contains the types and function declarations needed by the signals issued by
+* ClientNode.
+*
+* @author Alexander Korsunsky
+*/
+
 
 #ifndef SIGTYPES_HPP
 #define SIGTYPES_HPP
@@ -29,6 +39,13 @@
 
 namespace nuke_ms
 {
+
+
+/** @addtogroup clientnode Communication Protocol 
+ * @{
+*/
+	
+
 namespace clientnode
 {
 
@@ -84,30 +101,41 @@ struct SendReport
 
 
     NearUserMessage::msg_id_t message_id; /**< ID of the message in question */
-    bool send_state; /** Was it sent or not */
+    bool send_state; /**< Was it sent or not */
 
+	/** Enum for the reasons for failure while sending a message */
     enum send_rprt_reason_t
     {
         SR_SEND_OK, /**< All cool. */
         SR_SERVER_NOT_CONNECTED, /**< Not connected to server */
         SR_CONNECTION_ERROR /**< Network failure */
-    } reason;
-    byte_traits::native_string reason_str;
+    } reason; /**< Reason for failure while sending a message */
+	
+	/** Reason for whatever this report is about */
+    byte_traits::native_string reason_str; 
 };
 
 
-
 // Signals issued by the Protocol
+
+/** Signal for incoming messages*/
 typedef boost::signals2::signal<void (NearUserMessage::const_ptr_t)>
     SignalRcvMessage;
+	
+/** signal for connection status reports */
 typedef boost::signals2::signal<
     void (ConnectionStatusReport::const_ptr_t)>
     SignalConnectionStatusReport;
+
+/** signal for send reports */
 typedef boost::signals2::signal<
     void (SendReport::const_ptr_t)>
     SignalSendReport;
 
 } // namespace control
+
+/**@}*/ // addtogroup clientnode
+
 } // namespace nuke_ms
 
 

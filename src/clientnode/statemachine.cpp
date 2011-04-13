@@ -528,7 +528,7 @@ void StateConnected::receiveSegmentationHeaderHandler(
             SegmentationLayer::HeaderType header_data
                 = SegmentationLayer::decodeHeader(rcvbuf);
 
-/// @fixme Magic number, set to something proper or make configurable
+/// @todo Magic number, set to something proper or make configurable
 const byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
 
             if (header_data.packetsize > MAX_PACKETSIZE)

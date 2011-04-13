@@ -17,6 +17,13 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/** @file clientnode/errors.hpp
+* @brief Exceptions and Errors that can be produced by ClientNode
+* @ingroup clientnode
+*
+* @author Alexander Korsunsky
+*/
+
 #ifndef ERRORS_HPP
 #define ERRORS_HPP
 
@@ -24,6 +31,11 @@
 
 namespace nuke_ms
 {
+
+/** @addtogroup clientnode Communication Protocol 
+ * @{
+*/
+
 namespace clientnode
 {
 
@@ -60,6 +72,9 @@ public:
 
 
 } // namespace clientnode
+
+/**@}*/ // addtogroup clientnode
+
 } // namespace nuke_ms
 
 #endif // ifndef ERRORS_HPP

@@ -17,6 +17,12 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/** @file clientnode/statemachine.hpp
+* @brief Internal statemachine that represents the current ClientNode state
+* @ingroup clientnode
+*
+* @author Alexander Korsunsky
+*/
 
 #ifndef STATEMACHINE_HPP
 #define STATEMACHINE_HPP
@@ -34,6 +40,13 @@
 
 namespace nuke_ms
 {
+
+
+/** @defgroup proto_machine Communication Protocol State Machine
+* @ingroup clientnode
+* @{
+*/
+
 namespace clientnode
 {
 
@@ -44,12 +57,14 @@ namespace clientnode
 */
 struct EvtConnectRequest : public boost::statechart::event<EvtConnectRequest>
 {
-    /** Where to connect to. */
-    byte_traits::native_string host;
-    byte_traits::native_string service;
+    
+    byte_traits::native_string host; /**< Where to connect to. */
+    byte_traits::native_string service; /**< Which port to connect to. */
 
     /** Constructor.
-    * @param _where Where to connect to. */
+    * @param _host Where to connect to.
+	* @param _service Which port to connect to.
+	*/
     EvtConnectRequest(const byte_traits::native_string& _host,
         const byte_traits::native_string& _service)
         : host (_host), service(_service)
@@ -123,7 +138,7 @@ struct EvtRcvdMessage :
     SegmentationLayer data;
 
     /** Constructor.
-    * @param _msg The text of the message.
+    * @param _data The data of the message.
     */
     EvtRcvdMessage(const SegmentationLayer& _data)
         : data (_data)
@@ -329,6 +344,9 @@ extern void catchThread(boost::thread& thread, unsigned threadwait_ms);
 
 
 } // namespace clientnode
+
+/**@}*/ // defgroup proto_machine
+
 } // namespace nuke_ms
 
 

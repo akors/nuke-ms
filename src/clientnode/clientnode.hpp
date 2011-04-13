@@ -17,8 +17,9 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** @file clientnode.hpp
+/** @file clientnode/clientnode.hpp
 * @brief Network communication protocol.
+* @ingroup clientnode
 *
 * This file contains all of the networking logic.
 * The main class is nuke_ms::clientnode::ClientNode. Use this file within an
@@ -29,7 +30,6 @@
 * @author Alexander Korsunsky
 */
 
-/** @defgroup proto Communication Protocol */
 
 
 #ifndef CLIENTNODE_HPP_
@@ -52,12 +52,15 @@
 
 namespace nuke_ms
 {
+
+/** @defgroup clientnode Communication Protocol 
+ * @{
+*/
+
 namespace clientnode
 {
 
-
 /** Client Communication Protocol.
-* @ingroup proto
 * Use this class to create a black box that handles all the network stuff for
 * you.
 * Request are handled by the public functions connect_to, send and disconnect.
@@ -68,9 +71,9 @@ class ClientNode
 public:
     struct Signals
     {
-        SignalRcvMessage rcvMessage;
-        SignalConnectionStatusReport connectStatReport;
-        SignalSendReport sendReport;
+        SignalRcvMessage rcvMessage; /**< Signal for incoming messages*/
+        SignalConnectionStatusReport connectStatReport; /**< signal for connection status reports */
+        SignalSendReport sendReport; /**< signal for send reports */
     };
 
 	/** Wrapper class for logging streams. */
@@ -101,21 +104,36 @@ public:
     */
     ~ClientNode();
 
+	/** Connect the signal for incoming messages
+	 * 
+	 * @param slot The slot you want to connect the signal to
+	 * @return Object to the connection of the signal/slot 
+	*/
     boost::signals2::connection
     connectRcvMessage(const SignalRcvMessage::slot_type& slot)
     { return signals.rcvMessage.connect(slot); }
 
+	/** Connect the signal for connection status reports
+	 * 
+	 * @param slot The slot you want to connect the signal to
+	 * @return Object to the connection of the signal/slot 
+	*/
     boost::signals2::connection connectConnectionStatusReport(
         const SignalConnectionStatusReport::slot_type& slot)
     { return signals.connectStatReport.connect(slot); }
 
+	/** Connect the signal for send reports
+	 * 
+	 * @param slot The slot you want to connect the signal to
+	 * @return Object to the connection of the signal/slot 
+	*/
     boost::signals2::connection
     connectSendReport(const SignalSendReport::slot_type& slot)
     { return signals.sendReport.connect(slot); }
 
 
     /** Connect to a remote site.
-     * @param id The string representation of the address of the remote site
+     * @param where The string representation of the address of the remote site
      */
     void connectTo(ServerLocation::const_ptr_t where);
 
@@ -195,6 +213,8 @@ void catchThread(boost::thread& thread, unsigned threadwait_ms);
 
 
 } // namespace clientnode
+/**@}*/ // defgroup clientnode
+
 } // namespace nuke_ms
 
 #endif /*CLIENTNODE_HPP_*/
