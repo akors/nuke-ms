@@ -32,7 +32,6 @@
 /** @defgroup proto Communication Protocol */
 
 
-
 #ifndef CLIENTNODE_HPP_
 #define CLIENTNODE_HPP_
 
