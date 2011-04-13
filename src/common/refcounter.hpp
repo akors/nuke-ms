@@ -17,6 +17,12 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/** @file refcounter.hpp
+* @ingroup common
+* @brief Simple reference counting
+*
+*/
+
 #ifndef REFCOUNTER_HPP
 #define REFCOUNTER_HPP
 
@@ -63,7 +69,7 @@ class ReferenceCounter
     /**< Action that will be executed when the reference count reaches zero */
     boost::function<void ()> action;
 
-    unsigned reference_count; /** Number of counted references */
+    unsigned reference_count; /**< Number of counted references */
 
 public:
 
@@ -138,7 +144,7 @@ protected:
     * If you want an action to be executed when the reference count reaches
     * zero, specify it in the constructor.
     *
-    * @param Action that will be executed when the reference count reaches zero
+    * @param _action that will be executed when the reference count reaches zero
     */
     ReferenceCounter(
         boost::function<void ()> _action = boost::function<void ()>()

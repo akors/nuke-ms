@@ -17,7 +17,7 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** @file main.cpp
+/** @file client-wx/main.cpp
 * @brief Application entry point
 *
 * This file contains the main() function and launches the application.

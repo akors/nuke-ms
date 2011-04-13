@@ -18,6 +18,7 @@
 */
 
 /** @file msglayer.hpp
+* @ingroup common
 * @brief Message Layer Interface
 *
 * This file contains declarations and definitions of the Message Layer
@@ -101,8 +102,6 @@
 * can decide to discard the old buffer and allocate a new smaller buffer.
 *
 *
-* @todo Describe implementation of the message pipeline
-*
 * @author Alexander Korsunsky
 *
 */
@@ -123,10 +122,11 @@
 namespace nuke_ms
 {
 
-
+/** @addtogroup common
+ * @{
+*/
 
 /** Class for errors with the message layers
-* @ingroup proto
 */
 class MsgLayerError : public std::runtime_error
 {
@@ -190,7 +190,7 @@ struct UndersizedPacketError : public MsgLayerError
 template <typename PointerType>
 class MemoryOwnership
 {
-    PointerType memory_pointer;
+    PointerType memory_pointer; /**< A smart pointer to the memory block */
 
 public:
     /** Default constructor.
@@ -228,7 +228,7 @@ class SerializedData;
 class BasicMessageLayer
 {
 public:
-    typedef boost::shared_ptr<BasicMessageLayer> ptr_t;
+    typedef boost::shared_ptr<BasicMessageLayer> ptr_t; 
     typedef boost::shared_ptr<BasicMessageLayer> const_ptr_t;
     typedef boost::shared_ptr<byte_traits::byte_sequence> dataptr_t;
 
@@ -241,7 +241,7 @@ public:
 
     /** Retrieve the serialized size.
      * Returns the length of the returned sequence of a successive call to
-     * serialize(). <br>
+     * serialize().
      *
      * @return The number of bytes the serialized byte sequence would have.
     */
@@ -274,7 +274,7 @@ public:
     virtual SerializedData getSerializedData() const;
 };
 
-
+/** Alias for a Memory ownership of a boost::shared_ptr pointer */
 typedef MemoryOwnership<BasicMessageLayer::dataptr_t> DataOwnership;
 
 
@@ -303,7 +303,7 @@ public:
     *
     * @param _memblock Ownership of a memory block that ensures that _data_it is
     * valid
-    * @param _data_it Iterator to the data of the message in the memory block
+    * @param _begin_it Iterator to the data of the message in the memory block
     * block
     * @param _datasize size of the message in bytes
     */
@@ -426,7 +426,7 @@ public:
 
     /** Type representing the header of a packet. */
     struct HeaderType {
-        byte_traits::uint2b_t packetsize;
+        byte_traits::uint2b_t packetsize /**< Size of the packet */;
     };
 
     /** Header decoding function.
@@ -581,7 +581,7 @@ public:
     { return message_string; }
 };
 
-
+/**@}*/ // addtogroup common
 
 } // namespace nuke_ms
 

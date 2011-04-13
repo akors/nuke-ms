@@ -17,6 +17,11 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/** @file neartypes.hpp
+* @ingroup common
+* @brief Types used for client-server communication
+*
+*/
 
 #ifndef NEARTYPES_HPP_INCLUDED
 #define NEARTYPES_HPP_INCLUDED
@@ -33,6 +38,9 @@
 namespace nuke_ms
 {
 
+/** @addtogroup common
+ * @{
+*/
 
 /** Class that identifies a user uniquely.
  * @note Although this class provides a similar interface to the MessageLayer
@@ -123,6 +131,7 @@ struct NearUserMessage : public ContainingLayer
      * @param stringwrap The message to be sent
      * @param to Recipient of the message
      * @param from sender of the message
+	 * @param _msg_id use this as message identifier
     */
 	NearUserMessage(
         StringwrapLayer::ptr_t stringwrap,
@@ -138,6 +147,7 @@ struct NearUserMessage : public ContainingLayer
      * @param msg The message to be sent
      * @param to Recipient of the message
      * @param from sender of the message
+	 * @param _msg_id use this as message identifier
     */
     NearUserMessage(
         const byte_traits::msg_string& msg,
@@ -174,6 +184,8 @@ struct NearUserMessage : public ContainingLayer
     }
 };
 
-}
+/**@}*/ // addtogroup common
+
+} // namespace nuke_ms
 
 #endif // ifndef NEARTYPES_HPP_INCLUDED

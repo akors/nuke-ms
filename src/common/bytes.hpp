@@ -17,6 +17,29 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/** @file bytes.hpp
+ * @ingroup common
+ * @brief Datatypes and functions for handling bytewise data.
+ * 
+ * This file defines sizes and implementations of binary (bytewise) datatypes 
+ * used in nuke-ms uniformly across platforms and modules.
+ * 
+ * When encoding data that is to be transmitted over the network, it is 
+ * neccessary that the encoding is the same on any platform. To ensure this 
+ * compatibility, any data that will be transmitted shall use the datatype 
+ * definitions in this file instead of native datatypes.
+ * The definitions for bytewise datatypes can be found in the 
+ * @ref nuke_ms::byte_traits class.
+ * 
+ * To ensure the correct encoding of integer values across platforms with 
+ * different MSB/LSB encodings, all integers shall be converted using the 
+ * to_netbo() and to_hostbo() functions before sending or using the integer 
+ * value.
+ * 
+ * Additional routines for reading and writing raw sequences of bytes to/from 
+ * POD variables are provided by the functions readbytes() and writebytes().
+*/
+
 
 #ifndef BYTES_HPP_INCLUDED
 #define BYTES_HPP_INCLUDED
@@ -26,10 +49,17 @@
 #include <vector>
 #include <boost/cstdint.hpp>
 
+/** General namespace for the Nuclear Messaging System project */
 namespace nuke_ms
 {
 
 
+/** @addtogroup common nuke-ms common routines and types
+ * @{
+ */
+
+
+/** Traits class for byte types used by nuke-ms */
 struct byte_traits
 {
     /** The type of the smallest adressable data unit in memory */
@@ -74,6 +104,7 @@ inline T reversebytes(T x)
 }
 
 // Specializations for certain integer types
+/// @cond TEMPLATE_SPECIALIZATIONS
 
 // specialization for a two byte value,
 // hoping this will be faster than a std::reverse<>()
@@ -100,6 +131,9 @@ inline byte_traits::int2b_t reversebytes(byte_traits::int2b_t x)
 template<>
 inline byte_traits::int4b_t reversebytes(byte_traits::int4b_t x)
 { return reversebytes<byte_traits::uint4b_t>(x); }
+
+/// @endcond
+
 
 
 /** Write a value into a byte sequence container of any kind.
@@ -145,17 +179,21 @@ ByteSequenceIterator readbytes(T* val_ptr, ByteSequenceIterator it)
     return it + sizeof(T);
 }
 
+/// @cond TEMPLATE_SPECIALIZATIONS
 
 template <typename ByteSequenceIterator> inline
 ByteSequenceIterator readbytes(
     byte_traits::byte_t* val_ptr, ByteSequenceIterator it)
 { *val_ptr = *it; return ++it; }
 
+/// @endcond
+
+
+
 
 #ifdef NUKE_MS_BIG_ENDIAN
 
 /** Convert integer to network byte order
-* This function converts the host byte order to the network byte order.
 *
 * Beware! As opposed to common understanding of the term "network byte order",
 * the network byte order of nuke-ms is Little Endian, that means least
@@ -172,7 +210,6 @@ template <typename T>
 inline T to_netbo(T x) { return reversebytes(x); }
 
 /** Convert integer to host byte order
-* This function converts the network byte order to the host byte order.
 *
 * Beware! As opposed to common understanding of the term "network byte order",
 * the network byte order of nuke-ms is Little Endian, that means least
@@ -192,7 +229,6 @@ inline T to_hostbo(T x) { return reversebytes(x); }
 #else
 
 /** Convert integer to network byte order
-* This function converts the host byte order to the network byte order.
 *
 * Beware! As opposed to common understanding of the term "network byte order",
 * the network byte order of nuke-ms is Little Endian, that means least
@@ -209,7 +245,6 @@ template <typename T>
 inline T to_netbo(T x) { return x; }
 
 /** Convert integer to host byte order
-* This function converts the network byte order to the host byte order.
 *
 * Beware! As opposed to common understanding of the term "network byte order",
 * the network byte order of nuke-ms is Little Endian, that means least
@@ -227,7 +262,11 @@ inline T to_hostbo(T x) { return x; }
 
 #endif
 
-} // nuke_ms
+
+/**@}*/ // addtogroup common
+
+
+} // namespace nuke_ms
 
 
 
