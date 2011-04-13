@@ -13,6 +13,9 @@ if(DOXYGEN_FOUND)
     # output to html dir
     set(DOXYGEN_OUTPUT_DIR ${PROJECT_BINARY_DIR})
 
+	# generate docs for private members if desired
+	set (APIDOC_GEN_PRIVATE "$ENV{APIDOC_GEN_PRIVATE}")
+
     # transform Doxyfile.in to real Doxyfile with correct paths
     configure_file(Doxyfile.in
         ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
