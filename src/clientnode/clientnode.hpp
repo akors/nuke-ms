@@ -54,6 +54,18 @@ namespace nuke_ms
 {
 
 /** @defgroup clientnode Communication Protocol 
+ * 
+ * This Module is used as the client side of a server-client connection.
+ * It handles lookup, connect/disconnect operations as well as sending and 
+ * receiving data from/to a server.
+ * 
+ * The main class of this module is the @ref clientnode::ClientNode class, please refer to its 
+ * documentation for information on how to use this module.
+ * 
+ * The ClientNode is supposed to be reentrant, so in theory you should be able
+ * to create multiple instances of it without the possibility of interference 
+ * between them. 
+ * 
  * @{
 */
 
@@ -61,10 +73,21 @@ namespace clientnode
 {
 
 /** Client Communication Protocol.
-* Use this class to create a black box that handles all the network stuff for
-* you.
-* Request are handled by the public functions connect_to, send and disconnect.
-* Replies will be dispatched to the callback function you supply in the constructor.
+ * 
+ * Use this class to create a black box that handles all the network stuff for
+ * you.
+ * 
+ * To use it, simply create an instance of this class using the constructor 
+ * ClientNode(). 
+ * Upon creation, the ClientModule will be initialized and ready to connect to
+ * a server. 
+ * Then you will have to set up callbacks that inform you of the 
+ * result of connection attempts, send attempts and incoming messages. To 
+ * register callbacks use the functions connectRcvMessage(),
+ * connectConnectionStatusReport() and connectSendReport().
+ * You can then post connection/disconnection requests 
+ * (connectTo(), disconnect()) and send messages (sendUserMessage()).
+ * 
 */
 class ClientNode
 {
@@ -92,9 +115,10 @@ public:
 		LoggingStreams() : 
 			infostream(std::clog), warnstream(std::cerr), errorstream(std::cerr) 
 		{}
-	} logstreams /**< The Streams used for message output */;
+	} logstreams /** The Streams used for message output */;
 
     /** Constructor.
+	 * 
     * Creates a thread and initializes the Network machine.
     */
     ClientNode(LoggingStreams logstreams_ = LoggingStreams());

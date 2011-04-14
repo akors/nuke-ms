@@ -18,7 +18,7 @@
 */
 
 /** @file clientnode/sigtypes.hpp
-* @brief Signals issued by the ClientNode module
+* @brief Signals issued by the ClientNode module.
 * @ingroup clientnode
 *
 * Contains the types and function declarations needed by the signals issued by
