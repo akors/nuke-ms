@@ -18,6 +18,7 @@
 */
 
 /** @file gui.hpp
+* @ingroup gui
 * @brief Graphical user interface
 *
 * This file contains the Graphical User Interface Layout and Logic. Commands
@@ -27,10 +28,10 @@
 *
 */
 
-/** @defgroup gui Graphical User Interface */
 
-#ifndef MAIN_HPP_INCLUDED
-#define MAIN_HPP_INCLUDED
+
+#ifndef GUI_HPP_INCLUDED
+#define GUI_HPP_INCLUDED
 
 
 #include <boost/signals2/signal.hpp>
@@ -44,13 +45,19 @@
 #include "clientnode/clientnode.hpp"
 #include "clientnode/sigtypes.hpp"
 
+
 namespace nuke_ms
 {
+
 namespace gui
 {
 
+	
+/** @defgroup gui Graphical User Interface
+ * @{
+*/
+	
 /** Proportions for the window.
-* @ingroup gui
 * This struct contains members that are used by MainFrame to determine the size
 * and proportions of the window.
 *
@@ -78,7 +85,6 @@ class MainFrameWrapper;
 
 
 /** Main Window.
-* @ingroup gui
 * This class represents the main window. Construct it and a window will appear.
 *
 */
@@ -155,10 +161,14 @@ public:
     MainFrame();
 
 
-
+	/** Slot for incoming messages*/
     void slotReceiveMessage(NearUserMessage::const_ptr_t msg);
+	
+	/** Slot for connection status reports */
     void slotConnectionStatusReport(
         clientnode::ConnectionStatusReport::const_ptr_t rprt);
+		
+	/** Slot for send reports */
     void slotSendReport(clientnode::SendReport::const_ptr_t rprt);
 
 
@@ -209,9 +219,13 @@ inline void str2wxString(wxString& wxstr, const byte_traits::msg_string& str)
 }
 
 
+/**@}*/
+
 } // namespace gui
+
+
 } // namespace nuke_ms
 
-#endif // ifndef MAIN_HPP_INCLUDED
+#endif // ifndef GUI_HPP_INCLUDED
 
 

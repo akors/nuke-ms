@@ -18,6 +18,7 @@
 */
 
 /** @file client-wx/main.cpp
+* @ingroup gui
 * @brief Application entry point
 *
 * This file contains the main() function and launches the application.
@@ -41,7 +42,7 @@ using namespace gui;
 * @ingroup gui
 * This class represents the main thread of execution.
 *
-* @todo Do semthing sensible when an exception is thrown.
+* @todo Do something sensible when an exception is thrown.
 */
 class MainApp : public wxApp
 {
