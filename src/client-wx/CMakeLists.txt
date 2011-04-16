@@ -24,13 +24,6 @@ target_link_libraries(nuke-ms-client
 	nuke-ms-clientnode
     ${Boost_LIBRARIES}
     ${wxWidgets_LIBRARIES}
-    ${WIN32_NETWORK_LIBS}
-)
-
-# We want our executables to be in the bin/ directory
-set_target_properties(nuke-ms-client PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY
-    ${CMAKE_BINARY_DIR}/bin
 )
 
 install(TARGETS nuke-ms-client

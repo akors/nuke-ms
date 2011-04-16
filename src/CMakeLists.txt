@@ -27,8 +27,10 @@ include_directories(${nuke-ms_SOURCE_DIR})
 TEST_BIG_ENDIAN(NUKE_MS_BIG_ENDIAN)
 if(NUKE_MS_BIG_ENDIAN)
     add_definitions(-DNUKE_MS_BIG_ENDIAN)
-endif()
+endif(NUKE_MS_BIG_ENDIAN)
 
+# Copy all executables (and dll's on Win32) to bin/ 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 if(WIN32)
     # Compile the Unicode version (non-win32 cmake is not smart enough)
@@ -56,8 +58,15 @@ if(WIN32)
 		
 		# Disable MSVC's paranoia about std::copy
 		add_definitions(/wd4996)
-    endif()
-endif()
+		
+		# building shared libs on MSVC is not allowed, because the code is not 
+		# clad in dllexport definitions
+		if (BUILD_SHARED_LIBS)
+			set(BUILD_SHARED_LIBS OFF)
+			message(WARNING "Building shared libraries with Visual Studio is not allowed! Building static libs instead.")
+		endif(BUILD_SHARED_LIBS)
+    endif(MSVC)	
+endif(WIN32)
 
 # compile nuke-ms-common first
 add_subdirectory(common)
