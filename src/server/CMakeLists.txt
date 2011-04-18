@@ -1,5 +1,5 @@
-# CMakeLists.txt file for the server application.
-# Should not be called directly, use parent level cmake file in src/
+# CMakeLists.txt file for the server directory.
+# Should not be called directly, use parent level cmake file in project
 # directory instead.
 
 # these are the sources for the server

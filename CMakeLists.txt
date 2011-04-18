@@ -7,7 +7,10 @@ cmake_minimum_required(VERSION 2.6)
 project(nuke-ms)
 
 # Add source directory, place resulting files in build directory
-add_subdirectory(src build)
+add_subdirectory(src)
+
+# Add include directory
+add_subdirectory(include)
 
 # Add doc directory, but exclude from all target
 add_subdirectory(doc EXCLUDE_FROM_ALL)

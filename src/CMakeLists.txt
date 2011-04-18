@@ -3,9 +3,6 @@
 # we need at lest cmake 2.6
 cmake_minimum_required(VERSION 2.6)
 
-# we are compiling nuke-ms, and it's C++-Code
-project(nuke-ms)
-
 # include endiannes testing macro
 include(TestBigEndian)
 
@@ -17,11 +14,11 @@ find_package( Boost 1.39.0 REQUIRED thread system)
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
-# All executables need the nuke-ms-common library
-include_directories(${nuke-ms_SOURCE_DIR}/common)
+# Add top level include directory
+include_directories(${nuke-ms_SOURCE_DIR}/include)
 
-# Include directories will be referenced from the top level
-include_directories(${nuke-ms_SOURCE_DIR})
+# Also, private headers can be found in the src/ directory
+include_directories(${nuke-ms_SOURCE_DIR}/src)
 
 # If this is a big endian system, we must add a define
 TEST_BIG_ENDIAN(NUKE_MS_BIG_ENDIAN)

@@ -24,6 +24,8 @@ if(DOXYGEN_FOUND)
     add_custom_target(apidoc
         ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
     )
+    
+    install(DIRECTORY ${DOXYGEN_OUTPUT_DIR}/html DESTINATION doc)
 endif(DOXYGEN_FOUND)
 
 # thx to

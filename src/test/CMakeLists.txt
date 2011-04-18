@@ -1,5 +1,5 @@
 # CMakeLists.txt file for the testing directory.
-# Should not be called directly, use parent level cmake file in src/
+# Should not be called directly, use parent level cmake file in project
 # directory instead.
 
 add_executable(testownership testownership.cpp)

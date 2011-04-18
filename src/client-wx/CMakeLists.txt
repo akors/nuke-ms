@@ -1,5 +1,5 @@
-# CMakeLists.txt file for the client application.
-# Should not be called directly, use parent level cmake file in src/
+# CMakeLists.txt file for the client-wx directory.
+# Should not be called directly, use parent level cmake file in project
 # directory instead.
 
 # first of all find wxWidgets
@@ -29,4 +29,3 @@ target_link_libraries(nuke-ms-client
 install(TARGETS nuke-ms-client
     RUNTIME DESTINATION bin
 )
-

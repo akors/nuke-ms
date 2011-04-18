@@ -1,5 +1,5 @@
-# CMakeLists.txt file for the common subroutines library.
-# Should not be called directly, use parent level cmake file in src/
+# CMakeLists.txt file for the common directory.
+# Should not be called directly, use parent level cmake file in project
 # directory instead.
 
 # set library sources
@@ -15,10 +15,3 @@ install(TARGETS nuke-ms-common
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
 )
-
-# install headers to include directory
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    DESTINATION "include/${PROJECT_NAME}"
-    FILES_MATCHING PATTERN "*.hpp"
-)
-
