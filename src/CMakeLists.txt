@@ -6,6 +6,9 @@ cmake_minimum_required(VERSION 2.6)
 # include endiannes testing macro
 include(TestBigEndian)
 
+option(BUILD_SHARED_LIBS "Build shared libraries instead of linking statically" OFF)
+
+
 # We need boost for all executeables
 set(Boost_USE_MULTITHREADED ON)
 find_package( Boost 1.39.0 REQUIRED thread system)
