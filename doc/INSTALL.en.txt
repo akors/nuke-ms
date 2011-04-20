@@ -75,7 +75,7 @@ Ubuntu:
         Install the following packages and their dependencies: build-essentials cmake libboost-system-dev libboost-thread-dev libwxgtk2.8-dev
 
 Fedora:
-    12 ("Constantine"), 13 ("Goddard"), 14 ("Laughlin")
+    12 ("Constantine"), 13 ("Goddard"), 14 ("Laughlin"):
         Install the following packages and their dependencies: cmake boost-devel wxGTK-devel
 
 Arch Linux:
@@ -211,7 +211,7 @@ The instructions for compiling with this version of Visual Studio are basically 
 A few things to bear in mind:
 	- The CMake Generator is called "Visual Studio 2010"
 	- All runtime Libraries are now called msvc*100 instead of msvc*90. The link to the redistributable package changes to: http://www.microsoft.com/downloads/en/details.aspx?FamilyID=a7b7a05e-6de6-4d3a-a423-37bf0912db84
-	- If you don't want to open the Visual Studio GUI, you can use the tool "msbuild.exe" for command line building, which was broken for non-english systems in Visual Studio 2008.
+	- If you don't want to open the Visual Studio GUI, you can use the tool "msbuild.exe" (call with the generated "nuke-ms.sln" file) for command line building, which was broken for non-english systems in Visual Studio 2008.
 
 2.2.4) Using Visual Studio 2005
 
@@ -236,6 +236,7 @@ This "my_vcvarsall.bat" in turn first calls the default file and then adds the B
 	set "LIB=%LIB%C:\Program Files (x86)\Microsoft Visual Studio 8\VC\PlatformSDK\Lib;"
 
 4) Continue with the Steps in 2.2.2) (Using Visual Studio 2008), using either the "Visual Studio 8 2005" generator or the "NMake Makefiles" generator.
+
 
 
 This concludes the installation instructions for nuke-ms, and gives you a little impression of what I've been through, especially with Visual Studio. Now use nuke-ms and have fun!
