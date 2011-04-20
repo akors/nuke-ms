@@ -43,10 +43,10 @@ This will create a folder called "nuke-ms" containing the most recent version al
 
 You can download the source code and a compiled win32 version of nuke-ms on the BerliOS project page from these addresses:
 
-    ftp://ftp.berlios.de/pub/nuke-ms/alpha/nuke-ms-0.1-src.tar.gz
+    ftp://ftp.berlios.de/pub/nuke-ms/alpha/nuke-ms-0.2-src.tar.gz
         This is the source code version of nuke-ms, with unix line endings (LF).
 
-    ftp://ftp.berlios.de/pub/nuke-ms/alpha/nuke-ms-0.1-win32.zip
+    ftp://ftp.berlios.de/pub/nuke-ms/alpha/nuke-ms-0.2-win32.zip
         This is the compiled win32 version, with all text files having windows line endings (CR LF).
 
 
@@ -57,8 +57,9 @@ You can download the source code and a compiled win32 version of nuke-ms on the 
 For the compiled win32 version, download the archive from the link above and uncompress it. The binaries can be found in the "bin" directory of the project tree and are called "nuke-ms-client.exe", "nuke-ms-serv.exe". A DLL is required to run nuke-ms, it is called "mingwm10.dll". Make sure this dll-file resides in the same directory as the exe-files.
 
 For the source code version, the short instructions for compiling the application under unixlike system are as follows:
-    - Install CMake >= 2.6, wxWidgets >= 2.8 and Boost >= 1.35
+    - Install CMake >= 2.6, wxWidgets >= 2.8 and Boost >= 1.39
     - Change into a directory where you want to build nuke-ms, run cmake on the "src" directory of the project tree and finally run make:
+        
         $ cd nuke-ms/build
         $ cmake ../src
         $ make
@@ -75,7 +76,7 @@ nuke-ms consists of two programs: a client that sends and receives messages to t
 
 
 Start the server by simply executing the nuke-ms-serv file. It does not take any parameters, shows no graphical or command line interface but simply listens on the port 34443 for incoming connections. If you have a nagging firewall, allow the server to bind to a port, that means click the "Allow", "Do not block", "Unblock" Button or anything similar of your firewall nag window.
-To stop the server application you have to interrupt it, for example by hitting Ctrl-C in your console, with the kill program or with the Task Manager.
+To stop the server application you have to interrupt it, for example by hitting Ctrl-C in your console, with the "kill" program or with the Task Manager.
 
 Then start the nuke-ms-client application, it should show a window with two text fields. Connect to a running server by entering the following command into the text input field of the window:
     /connect <host>:<port>
@@ -94,8 +95,6 @@ These problems are based on the fact that no measures have been taken yet to sec
 ---------------------------------------------------------------------------------
 
 4. Compatibility notes
-
-Communication between clients on different systems, especially communication between Linux and Windows hosts is not possible. The reason lies in the difference of the default UTF encoding size on both platforms - Linux uses UTF-32 whereas Windows uses UTF-16. This issue will be addressed in near future.
 
 nuke-ms is not yet a mature piece of software. As such, the communication protocol between the clients is also not mature and it is subject to ongoing change. Compatibilities between different versions is not granted at all in this early phase of development, in fact an incompatible change to the protocol is planned for the near future. To use the program for communication you should allways use the same version for every participant.
 
