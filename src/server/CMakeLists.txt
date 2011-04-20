@@ -7,7 +7,16 @@ set(SERVER_SRCS dispatcher.cpp main.cpp remotepeer.cpp)
 
 add_executable(nuke-ms-serv ${SERVER_SRCS})
 
-target_link_libraries(nuke-ms-serv nuke-ms-common ${Boost_LIBRARIES} ${WIN32_NETWORK_LIBS})
+
+# link Boost, Win32 network libs and Boost.Asio implementation library if desired
+if(BOOSTASIO_OWNLIB)
+	set(SERVER_DEPS nuke-ms-common  ${Boost_LIBRARIES} nuke-ms-boostasio)
+else(BOOSTASIO_OWNLIB)
+	set(SERVER_DEPS nuke-ms-common  ${Boost_LIBRARIES} ${WIN32_NETWORK_LIBS})
+endif(BOOSTASIO_OWNLIB)
+
+
+target_link_libraries(nuke-ms-serv ${SERVER_DEPS})
 
 install(TARGETS nuke-ms-serv
     RUNTIME DESTINATION bin

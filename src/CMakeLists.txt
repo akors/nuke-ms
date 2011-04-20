@@ -68,6 +68,19 @@ if(WIN32)
     endif(MSVC)	
 endif(WIN32)
 
+# if we want to have an own Boost.Asio lib
+if(BOOSTASIO_OWNLIB)
+	# add flags to not compile the code in the including modules
+	if(BUILD_SHARED_LIBS)
+		add_definitions(-DBOOST_ASIO_DYN_LINK)
+	else(BUILD_SHARED_LIBS)
+		add_definitions(-DBOOST_ASIO_SEPARATE_COMPILATION)
+	endif(BUILD_SHARED_LIBS)
+	
+	# add "source" directory
+	add_subdirectory(boostasio-impl)
+endif(BOOSTASIO_OWNLIB)
+
 # compile nuke-ms-common first
 add_subdirectory(common)
 add_subdirectory(clientnode)
