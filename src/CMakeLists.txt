@@ -6,7 +6,12 @@ cmake_minimum_required(VERSION 2.6)
 # include endiannes testing macro
 include(TestBigEndian)
 
-option(BUILD_SHARED_LIBS "Build shared libraries instead of linking statically" OFF)
+
+option(BUILD_SHARED_LIBS 
+    "Build shared libraries instead of linking statically" OFF)
+
+option(BOOSTASIO_OWNLIB
+    "Build Boost.Asio as a standalone library" OFF)
 
 
 # We need boost for all executeables
@@ -63,7 +68,9 @@ if(WIN32)
 		# clad in dllexport definitions
 		if (BUILD_SHARED_LIBS)
 			set(BUILD_SHARED_LIBS OFF)
-			message(WARNING "Building shared libraries with Visual Studio is not allowed! Building static libs instead.")
+			message(WARNING 
+                "Building shared libraries with Visual Studio is not allowed! "
+                "Building static libs instead.")
 		endif(BUILD_SHARED_LIBS)
     endif(MSVC)	
 endif(WIN32)

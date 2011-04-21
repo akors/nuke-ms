@@ -7,7 +7,7 @@
 # add library to project
 add_library(nuke-ms-boostasio boostasio_impl.cpp)
 
-# This lib needs Boost
+# This lib needs Boost and Network libraries
 target_link_libraries(nuke-ms-boostasio ${Boost_LIBRARIES} ${WIN32_NETWORK_LIBS})
 
 # install into the bin/ directory if built as DLL on Win32, 
