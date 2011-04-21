@@ -54,14 +54,14 @@ You can download the source code and a compiled win32 version of nuke-ms on the 
 
 2) Installation
 
-For the compiled win32 version, download the archive from the link above and uncompress it. The binaries can be found in the "bin" directory of the project tree and are called "nuke-ms-client.exe", "nuke-ms-serv.exe". A DLL is required to run nuke-ms, it is called "mingwm10.dll". Make sure this dll-file resides in the same directory as the exe-files.
+For the compiled win32 version, download the archive from the link above and uncompress it. The binaries can be found in the "bin" directory of the project tree and are called "nuke-ms-client.exe", "nuke-ms-serv.exe". Some dll's are required to run nuke-ms, you can find them in the bin/ directory. Make sure these dll-files resides in the same directory as the exe-files.
 
 For the source code version, the short instructions for compiling the application under unixlike system are as follows:
     - Install CMake >= 2.6, wxWidgets >= 2.8 and Boost >= 1.39
-    - Change into a directory where you want to build nuke-ms, run cmake on the "src" directory of the project tree and finally run make:
+    - Change into a directory where you want to build nuke-ms, run cmake on the project tree and finally run make:
         
         $ cd nuke-ms/build
-        $ cmake ../src
+        $ cmake ..
         $ make
       The binaries can then be found in the "bin" directory of the directory you built nuke-ms in.
 

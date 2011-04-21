@@ -1,4 +1,4 @@
-Die ist die Readme datei für das Nuclear Messaging System Projekt. In dieser datei finden Sie Information zum Projekt und darüber wie Sie nuke-ms bekommen und benutzen können.
+Dies ist die Readme-Datei für das Nuclear Messaging System Projekt. In dieser Datei finden Sie Information zum Projekt und darüber wie Sie nuke-ms bekommen und benutzen können.
 
 Das Nuclear Messaging System (nuke-ms) ist gedacht als ein verlässliches und sicheres verteiltes Sofortnachrichtensystem, das auf vielen Plattformen verfügbar ist.
 Zurzeit bietet es nur sehr rudimentäre Funktionen und ist wahrscheinlich nur zum Testen und Evaluieren zu gebrauchen.
@@ -30,7 +30,7 @@ Inhalt dieser Datei:
 1.1) Git Repository
 
 Sie können nuke-ms aus dem Git Versinskontrollsystem auf BerliOS herunterladen.
-Dazu, installieren Sie Git (anweisungen können Sie hier: http://git.or.cz/gitwiki/Installation oder hier: http://progit.org/book/de/ch1-7.html) und wechseln Sie in das Verzeichnis in das Sie den Projektordner ablegen wollen. Sie können das Repository auschecken indem Sie folgenden Befehl in die Kommandozeile eingeben:
+Dazu installieren Sie Git (anweisungen können Sie hier: http://git.or.cz/gitwiki/Installation oder hier: http://progit.org/book/de/ch1-7.html finden) und wechseln Sie in das Verzeichnis in das Sie den Projektordner ablegen wollen. Sie können das Repository auschecken indem Sie folgenden Befehl in die Kommandozeile eingeben:
 
     git clone git://git.berlios.de/nuke-ms
 
@@ -43,10 +43,10 @@ Dieser Befehl erstellt einen Ordner mit dem Namen "nuke-ms" mit der neuesten Ver
 
 Sie können den Quellcode und eine für Windows kompilierte Version von nuke-ms von der BerliOS Projektseite unter folgenden Addressen herunterladen:
 
-    ftp://ftp.berlios.de/pub/nuke-ms/alpha/nuke-ms-0.1-src.tar.gz
+    ftp://ftp.berlios.de/pub/nuke-ms/alpha/nuke-ms-0.2-src.tar.gz
         Die ist die Quellcodeversion von nuke-ms mit Unix Zeilenenden (LF).
 
-    ftp://ftp.berlios.de/pub/nuke-ms/alpha/nuke-ms-0.1-win32.zip
+    ftp://ftp.berlios.de/pub/nuke-ms/alpha/nuke-ms-0.2-win32.zip
         Dies ist die kompilierte win32 Version, alle Dateien haben Windows Zeilenenden (CR LF).
 
 
@@ -54,11 +54,11 @@ Sie können den Quellcode und eine für Windows kompilierte Version von nuke-ms 
 
 2) Installation
 
-Für die kompilierte win32 Version, laden Sie das Archiv aus dem Link von oben herunter und entpacken Sie es. Die ausführbaren Dateien können Sie im "bin"-Verzeichnis des Projektordners finden, sie heißen "nuke-ms-client.exe" und "nuke-ms-serv.exe". Eine DLL wird von nuke-ms benötigt, sie heißt "mingwm10.dll". Stellen Sie sicher dass die DLL-Datei im gleichen Verzeichnis wie die EXE-Dateien liegt.
+Für die kompilierte win32 Version, laden Sie das Archiv aus dem Link von oben herunter und entpacken Sie es. Die ausführbaren Dateien können Sie im "bin"-Verzeichnis des Projektordners finden, sie heißen "nuke-ms-client.exe" und "nuke-ms-serv.exe". Einige DLL werden von nuke-ms benötigt, diese liegen im bin/ Verzeichnis bei. Stellen Sie sicher dass die DLL-Datei im gleichen Verzeichnis wie die EXE-Dateien liegt.
 
 Für die Quellcodeversion sehen die Kurzanweisungen zum Kompilieren unter unixähnlichen Systemen wie folgt aus:
-    - Installieren Sie CMake >= 2.6, wxWidgets >= 2.8 and Boost >= 1.35
-    - Wechseln Sie in ein Verzeichnis wo Sie nuke-ms bauen wollen, starten Sie "cmake" mit dem "src"-Verzeichnis des Projektordners und starten Sie schließlich "make":
+    - Installieren Sie CMake >= 2.6, wxWidgets >= 2.8 and Boost >= 1.39
+    - Wechseln Sie in ein Verzeichnis wo Sie nuke-ms bauen wollen, starten Sie "cmake" mit dem Verzeichnis des Projektordners und starten Sie schließlich "make":
         $ cd nuke-ms/build
         $ cmake ../src
         $ make
@@ -95,8 +95,6 @@ Diese Probleme beruhen auf der Tatsache, dass in dieser frühen Entwicklungsphas
 ---------------------------------------------------------------------------------
 
 4. Anmerkungen zur Kompatibilität
-
-Die Kommunikation zwischen Clients auf verschieden System, besonders zwischen Linux- und Windowssystemen ist leider nicht möglich. Der Grund dafür liegt in den Unterschieden der Standard UTF-Kodierung - Linux benutzt UTF-32 wohingegen Windows UTF-16 benutzt. Dieses Problem wird in naher zukunft behandelt werden.
 
 nuke-ms ist noch keine reife Software. Als solche ist auch das Kommunikationsprotokoll ziwschen den Clients nicht reif und unterliegt andauernden Veränderungen. Kompatibilität zwischen verschiedenen Versionen ist in dieser frühen Phase der Entwicklung nicht gewährleistet. Tatsächlich ist ein inkompatible Änderung des Protokolls in naher zukunft geplant. Um also das Programm zur kommunikation zu verwenden sollten Sie immer die gleiche Version für jeden Teilnehmer verwenden.
 
