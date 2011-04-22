@@ -1,0 +1,78 @@
+This is the release-notes file of nuke-ms. In here you can find information 
+important changes to the project concerning both users and developers.
+
+
+============  nuke-ms 0.2   ------------------------  23 Apr 2011  =============
+
+---- Application users
+
+  * It is now possible to chat with clients from different operating systems.
+    This is because text is now encoded using UTF-8 instead of UTF-16/UTF-32.
+    
+
+---- Library users
+
+  * Minimal Boost version is raised to 1.39. This is due to the inclusion of 
+    Boost.Signals2, see below.
+    
+  * In this release, for the first time, parts of nuke-ms can be used as 
+    libraries that can be used in other applications. 
+    
+    The first library to be released is the "clientnode" library, which provides
+    functionality to any client connecting to a nuke-ms network.
+    You can build it a static as well as a shared library, depending on the 
+    CMake variable BUILD_SHARED_LIBS that can be specified on the command line.
+    Documentation for the nuke-ms API is provided in the doc/html/ subdirectory.
+    
+
+---- Developers
+
+  * You can now compile Boost.Asio as a seperate library to reduce code size,
+    compile time and code redundancies. To do so, set the CMake variable 
+    BOOSTASIO_OWNLIB to ON.
+
+  * Building shared libraries is now supported. Set the CMake variable 
+    BUILD_SHARED_LIBS to on.
+    
+  * Building with the src/ subdirectory as CMake top-level-dir is now 
+    unsupported. Build with the top level directory instead.
+    
+  * You can now build the API documentation, provided you have doxygen
+    installed. An "apidoc" target is provided which can be used to create the
+    documentation.
+
+  * Seperated the network component from the client application, this is now a 
+    library and called "clientnode"
+
+  * Boost.Signals2 is now used for signals and callbacks to/from the clientnode.
+    this version of the Signals library is included in Boost since 1.39, so we
+    have to raise the minimum Boost version.
+    
+  * The client/control has died. No glue between network and gui is needed 
+    anymore, since the gui now instantiates the clientnode itself.
+
+
+---- Lookout to the next version
+
+This section sets goals to achieve until the next version of nuke-ms. However,
+these goals might change over time. Some might be added and some dropped.
+
+  * New server infrastructure:
+    - The current server implementation is to be scrapped and the server 
+      application shall be rewritten from scratch.
+    - The new architecture should provide a robust (and hopefully small) 
+      framework for server applications that will be based on pluggable 
+      libraries that provide the actual functionality.
+    - As a demonstration of the new pluggability, an "alias" module shall be
+      created that receives, stores and distributes alias'es to different 
+      clients.
+
+  * GUI improvements
+    - It should not be neccessary to know any textual commands, the GUI should
+      feature the necessary interface to the user to connect, disconnect and
+      send messages.
+  
+  
+============  nuke-ms 0.1   ------------------------  31 Aug 2009  =============
+
+Initial Release.
