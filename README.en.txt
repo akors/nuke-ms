@@ -1,4 +1,4 @@
-This is the readme file for the Nuclear Messaging System project. In this file you can find informations about the project and informations on how to obtain and use the program.
+This is the readme file for the Nuclear Messaging System project. In this file you can find information about the project and information on how to obtain and use the program.
 
 The Nuclear Messaging System (nuke-ms) is intended as a reliable and secure distributed instant messaging system available on many platforms.
 Right now it provides only a very rudimentary functionality and is probably only useful for testing and evaluation purposes.
@@ -54,11 +54,11 @@ You can download the source code and a compiled win32 version of nuke-ms on the 
 
 2) Installation
 
-For the compiled win32 version, download the archive from the link above and uncompress it. The binaries can be found in the "bin" directory of the project tree and are called "nuke-ms-client.exe", "nuke-ms-serv.exe". Some dll's are required to run nuke-ms, you can find them in the bin/ directory. Make sure these dll-files resides in the same directory as the exe-files.
+For the compiled win32 version, download the archive from the link above and uncompress it. The binaries can be found in the "bin" directory of the project tree and are called "nuke-ms-client.exe", "nuke-ms-serv.exe". Some DLL's are required to run nuke-ms, you can find them in the bin/ directory. Make sure these DLL-files resides in the same directory as the exe-files.
 
 For the source code version, the short instructions for compiling the application under unixlike system are as follows:
     - Install CMake >= 2.6, wxWidgets >= 2.8 and Boost >= 1.39
-    - Change into a directory where you want to build nuke-ms, run cmake on the project tree and finally run make:
+    - Change into a directory where you want to build nuke-ms, run CMake on the project tree and finally run make:
         
         $ cd nuke-ms/build
         $ cmake ..
@@ -78,7 +78,7 @@ nuke-ms consists of two programs: a client that sends and receives messages to t
 Start the server by simply executing the nuke-ms-serv file. It does not take any parameters, shows no graphical or command line interface but simply listens on the port 34443 for incoming connections. If you have a nagging firewall, allow the server to bind to a port, that means click the "Allow", "Do not block", "Unblock" Button or anything similar of your firewall nag window.
 To stop the server application you have to interrupt it, for example by hitting Ctrl-C in your console, with the "kill" program or with the Task Manager.
 
-Then start the nuke-ms-client application, it should show a window with two text fields. Connect to a running server by entering the following command into the text input field of the window:
+Then start the nuke-ms-client application, it should show a window with two text fields. Connect to a running server by entering the following command into the text input (lower) field of the window:
     /connect <host>:<port>
 Replace <host> with the hostname (IP address or DNS name) of the host the server is running on. If this is your local computer, enter "localhost".
 The <port> is allways 34443. The first letter of the command must be a '/' (a slash), otherwise the command will not be recognized.

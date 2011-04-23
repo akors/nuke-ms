@@ -40,7 +40,7 @@ To compile nuke-ms from source you need to install some libraries and tools. The
 These are the tools and libraries needed to build nuke-ms, their minimum required versions and their homepages:
 
     C++ Compiler
-    A fairly recent C++ compiler is required to build nuke-ms. GCC is allways a safe bet, however other compilers might work as well. It's best to simply try out if you are able to compile nuke-ms. The following compilers were tested: gcc-3.4.5 (MinGW), gcc-4.5.1 (MinGW), gcc-4.3, gcc-4.4, gcc 4.5, MSVC9/10 (Visual Studio 2008/2010). MSVC8 (Visual Studio 2005) probably works as well but it requires a little bit more effort due to missing Windows SDK libraries.
+    A fairly recent C++ compiler is required to build nuke-ms. GCC is allways a safe bet, however other compilers might work as well. It's best to simply try out if you are able to compile nuke-ms. The following compilers were tested: gcc-3.4.5 (MinGW), gcc-4.5.1 (MinGW), gcc-4.3, gcc-4.4, gcc 4.5, MSVC9/10 (Visual Studio 2008/2010). MSVC8 (Visual Studio 2005) works as well but it requires a little bit more effort due to missing Windows SDK libraries.
 
     Boost C++ Libraries,    1.39,       http://www.boost.org/
     The Boost Libraries are a set of portable high quality libraries of which most are header-only. The libraries that need to be included at link-time are Boost.System and Boost.Thread.

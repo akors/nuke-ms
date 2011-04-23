@@ -37,12 +37,12 @@ important changes to the project concerning both users and developers.
   * Building with the src/ subdirectory as CMake top-level-dir is now 
     unsupported. Build with the top level directory instead.
     
-  * You can now build the API documentation, provided you have doxygen
+  * You can now build the API documentation, provided you have Doxygen
     installed. An "apidoc" target is provided which can be used to create the
     documentation.
 
   * Seperated the network component from the client application, this is now a 
-    library and called "clientnode"
+    library and called "clientnode".
 
   * Boost.Signals2 is now used for signals and callbacks to/from the clientnode.
     this version of the Signals library is included in Boost since 1.39, so we
@@ -76,3 +76,4 @@ these goals might change over time. Some might be added and some dropped.
 ============  nuke-ms 0.1   ------------------------  31 Aug 2009  =============
 
 Initial Release.
+

@@ -47,14 +47,14 @@ Sie können den Quellcode und eine für Windows kompilierte Version von nuke-ms 
         Die ist die Quellcodeversion von nuke-ms mit Unix Zeilenenden (LF).
 
     ftp://ftp.berlios.de/pub/nuke-ms/alpha/nuke-ms-0.2-win32.zip
-        Dies ist die kompilierte win32 Version, alle Dateien haben Windows Zeilenenden (CR LF).
+        Dies ist die kompilierte Win32 Version, alle Dateien haben Windows Zeilenenden (CR LF).
 
 
 ---------------------------------------------------------------------------------
 
 2) Installation
 
-Für die kompilierte win32 Version, laden Sie das Archiv aus dem Link von oben herunter und entpacken Sie es. Die ausführbaren Dateien können Sie im "bin"-Verzeichnis des Projektordners finden, sie heißen "nuke-ms-client.exe" und "nuke-ms-serv.exe". Einige DLL werden von nuke-ms benötigt, diese liegen im bin/ Verzeichnis bei. Stellen Sie sicher dass die DLL-Datei im gleichen Verzeichnis wie die EXE-Dateien liegt.
+Für die kompilierte Win32 Version, laden Sie das Archiv aus dem Link von oben herunter und entpacken Sie es. Die ausführbaren Dateien können Sie im "bin"-Verzeichnis des Projektordners finden, sie heißen "nuke-ms-client.exe" und "nuke-ms-serv.exe". Einige DLL werden von nuke-ms benötigt, diese liegen im bin/ Verzeichnis bei. Stellen Sie sicher dass die DLL-Datei im gleichen Verzeichnis wie die EXE-Dateien liegt.
 
 Für die Quellcodeversion sehen die Kurzanweisungen zum Kompilieren unter unixähnlichen Systemen wie folgt aus:
     - Installieren Sie CMake >= 2.6, wxWidgets >= 2.8 and Boost >= 1.39
@@ -96,7 +96,7 @@ Diese Probleme beruhen auf der Tatsache, dass in dieser frühen Entwicklungsphas
 
 4. Anmerkungen zur Kompatibilität
 
-nuke-ms ist noch keine reife Software. Als solche ist auch das Kommunikationsprotokoll ziwschen den Clients nicht reif und unterliegt andauernden Veränderungen. Kompatibilität zwischen verschiedenen Versionen ist in dieser frühen Phase der Entwicklung nicht gewährleistet. Tatsächlich ist ein inkompatible Änderung des Protokolls in naher zukunft geplant. Um also das Programm zur kommunikation zu verwenden sollten Sie immer die gleiche Version für jeden Teilnehmer verwenden.
+nuke-ms ist noch keine reife Software. Als solche ist auch das Kommunikationsprotokoll zwischen den Clients nicht reif und unterliegt andauernden Veränderungen. Kompatibilität zwischen verschiedenen Versionen ist in dieser frühen Phase der Entwicklung nicht gewährleistet. Tatsächlich ist eine inkompatible Änderung des Protokolls in naher zukunft geplant. Um also das Programm zur kommunikation zu verwenden sollten Sie immer die gleiche Version für jeden Teilnehmer verwenden.
 
 ---------------------------------------------------------------------------------
 
