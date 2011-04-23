@@ -234,7 +234,7 @@ void MainFrame::printMessage(const wxString& str)
 
 
 MainFrame::MainFrame()
-    : wxFrame(NULL, -1, wxT("killer app"), wxDefaultPosition, wxSize(600, 500))
+    : wxFrame(NULL, -1, wxT("nuke-ms"), wxDefaultPosition, wxSize(600, 500))
 {
 	// thread clientnode signals to gui slots
 	clientnode.connectRcvMessage(
