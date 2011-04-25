@@ -226,17 +226,6 @@ boost::statechart::result StateNegotiating::react(const EvtConnectRequest&)
 }
 
 
-#if 0
-void StateNegotiating::tiktakHandler(
-    const boost::system::error_code& error,
-    boost::shared_ptr<boost::asio::deadline_timer> timer,
-    outermost_context_type& _outermost_context
-)
-{
-    _outermost_context.logstreams.infostream<<
-		"Timer went off: "<<error.message()<<'\n';
-}
-#endif
 
 void StateNegotiating::resolveHandler(
     const boost::system::error_code& error,

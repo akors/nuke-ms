@@ -264,15 +264,7 @@ struct StateNegotiating :
 
     /** Constructor. To be used only by Boost.Statechart classes. */
     StateNegotiating(my_context ctx);
-
-#if 0
-    static void tiktakHandler(
-        const boost::system::error_code& error,
-        boost::shared_ptr<boost::asio::deadline_timer> timer,
-        outermost_context_type& _outermost_context
-    );
-#endif
-
+    
     static void resolveHandler(
         const boost::system::error_code& error,
         boost::asio::ip::tcp::resolver::iterator endpoint_iterator,
