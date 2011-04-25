@@ -50,11 +50,11 @@ ClientNode::ClientNode(LoggingStreams logstreams_)
 #ifdef STATECHART_CREATE_PROCESSOR_USE_REF
     event_processor =
         machine_scheduler.create_processor<ClientnodeMachine, Signals&>(
-        boost::ref(signals), logstreams);
+        boost::ref(signals), logstreams, boost::ref(machine_mutex));
 #else
     event_processor =
         machine_scheduler.create_processor<ClientnodeMachine, Signals*>(
-        &signals, logstreams);
+        &signals, logstreams, &machine_mutex);
 #endif
 
 
@@ -94,7 +94,11 @@ void ClientNode::connectTo(ServerLocation::const_ptr_t where)
         // and dispatch it to the statemachine
         boost::intrusive_ptr<EvtConnectRequest>
         connect_request(new EvtConnectRequest(host, service));
+        
+        // lock the mutex to the machine
+        boost::mutex::scoped_lock(machine_mutex); 
 
+        // process event
         machine_scheduler.queue_event(event_processor, connect_request);
     }
     else // on failure, report back to application
@@ -122,6 +126,10 @@ NearUserMessage::msg_id_t ClientNode::sendUserMessage(
 
     // Create new Connection request event and dispatch it to the statemachine
     boost::intrusive_ptr<EvtSendMsg> send_evt(new EvtSendMsg(usermsg));
+
+    // lock the mutex to the machine
+    boost::mutex::scoped_lock(machine_mutex); 
+    
     machine_scheduler.queue_event(event_processor, send_evt);
 
     return usermsg->msg_id;
@@ -135,6 +143,9 @@ void ClientNode::disconnect()
     boost::intrusive_ptr<EvtDisconnectRequest>
     disconnect_evt(new EvtDisconnectRequest);
 
+
+    // lock the mutex to the machine
+    boost::mutex::scoped_lock(machine_mutex);
     machine_scheduler.queue_event(event_processor, disconnect_evt);
 }
 

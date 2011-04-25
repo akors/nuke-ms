@@ -180,7 +180,9 @@ struct ClientnodeMachine :
     /** Socket used for the connection */
     boost::asio::ip::tcp::socket socket;
 
-
+    /** A reference to the mutex that is needed to access this machine */
+    boost::mutex& machine_mutex;
+    
     /** A thread object for all asynchronouy I/O operations. It will start in
     not-a-thread state. */
     boost::thread io_thread;
@@ -192,10 +194,10 @@ struct ClientnodeMachine :
     */
 #ifdef STATECHART_CREATE_PROCESSOR_USE_REF
     ClientnodeMachine(my_context ctx, ClientNode::Signals&  _signals, 
-		ClientNode::LoggingStreams logstreams_);
+		ClientNode::LoggingStreams logstreams_, boost::mutex& _machine_mutex);
 #else
     ClientnodeMachine(my_context ctx, ClientNode::Signals*  _signals, 
-		ClientNode::LoggingStreams logstreams_);
+		ClientNode::LoggingStreams logstreams_, boost::mutex* _machine_mutex);
 #endif
 
     /** Destructor. Stops all I/O operations and threads as cleanly as possible.

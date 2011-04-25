@@ -94,9 +94,23 @@ class ClientNode
 public:
     struct Signals
     {
-        SignalRcvMessage rcvMessage; /**< Signal for incoming messages*/
-        SignalConnectionStatusReport connectStatReport; /**< signal for connection status reports */
-        SignalSendReport sendReport; /**< signal for send reports */
+        /** Signal for incoming messages
+         * The slot connecting to be signal can be called by multiple threads
+         * and must thus esnure thread safety.
+        */
+        SignalRcvMessage rcvMessage;
+        
+        /** Signal for connection status reports
+         * The slot connecting to be signal can be called by multiple threads
+         * and must thus esnure thread safety.
+        */
+        SignalConnectionStatusReport connectStatReport;
+        
+        /** Signal for send reports
+         * The slot connecting to be signal can be called by multiple threads
+         * and must thus esnure thread safety.
+        */
+        SignalSendReport sendReport;
     };
 
 	/** Wrapper class for logging streams. */
@@ -198,6 +212,9 @@ private:
 
     /** An own thread for the State Machine*/
     boost::thread machine_thread;
+    
+    /** A mutex to gain access to the state machine */
+    boost::mutex machine_mutex;
 
     /** The scheduler for the asynchronous state machine */
     boost::statechart::fifo_scheduler<> machine_scheduler;
