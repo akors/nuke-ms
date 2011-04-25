@@ -275,7 +275,8 @@ void StateNegotiating::resolveHandler(
         boost::bind(
             &StateNegotiating::connectHandler,
             boost::asio::placeholders::error,
-            boost::ref(_outermost_context)
+            boost::ref(_outermost_context),
+			endpoint_iterator
         )
     );
 }
@@ -285,28 +286,17 @@ void StateNegotiating::resolveHandler(
 
 void StateNegotiating::connectHandler(
     const boost::system::error_code& error,
-    outermost_context_type& _outermost_context
+    outermost_context_type& _outermost_context,
+	tcp::resolver::iterator endpoint_iterator
 )
 {
-    _outermost_context.logstreams.infostream<<"connectHandler invoked."<<std::endl;
-
-    // if there was an error, create a negative reply
-    if (error)
+    _outermost_context.logstreams.infostream<<
+		"connectHandler invoked. (host "<<
+		endpoint_iterator->endpoint().address().to_string()<<")"<<std::endl;
+	
+	if(!error) // if there was no error, create a positive reply
     {
-		// if the operation was aborted, the state machine might not be alive,
-		// so we STFU and return
-		if (error == boost::asio::error::operation_aborted)
-			return;
-
-        byte_traits::native_string errmsg(error.message());
-
-        boost::mutex::scoped_lock(_outermost_context.machine_mutex);
-        _outermost_context.process_event(
-            EvtConnectReport(false, errmsg)
-        );
-    }
-    else // if there was no error, create a positive reply
-    {
+	
         // create a receive buffer
         byte_traits::byte_t* rcvbuf =
             new byte_traits::byte_t[SegmentationLayer::header_length];
@@ -329,6 +319,38 @@ void StateNegotiating::connectHandler(
             EvtConnectReport(true,"Connection succeeded.")
         );
     }
+	// if there was an error, but we still have records, 
+	// just try the next record
+	else if(error && ++endpoint_iterator != tcp::resolver::iterator())
+	{
+		
+		_outermost_context.socket.close();
+		_outermost_context.socket.async_connect(
+			*endpoint_iterator,
+			boost::bind(
+				&StateNegotiating::connectHandler,
+				boost::asio::placeholders::error,
+				boost::ref(_outermost_context),
+				endpoint_iterator
+			)
+		);
+	}
+    // if there was an error and no record is left, create a negative reply
+    else
+    {
+		// if the operation was aborted, the state machine might not be alive,
+		// so we STFU and return
+		if (error == boost::asio::error::operation_aborted)
+			return;
+
+        byte_traits::native_string errmsg(error.message());
+
+        boost::mutex::scoped_lock(_outermost_context.machine_mutex);
+        _outermost_context.process_event(
+            EvtConnectReport(false, errmsg)
+        );
+    }
+
 }
 
 

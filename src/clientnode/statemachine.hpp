@@ -273,7 +273,8 @@ struct StateNegotiating :
 
     static void connectHandler(
         const boost::system::error_code& error,
-        outermost_context_type& _outermost_context
+        outermost_context_type& _outermost_context,
+        boost::asio::ip::tcp::resolver::iterator endpoint_iterator		
     );
 
 
