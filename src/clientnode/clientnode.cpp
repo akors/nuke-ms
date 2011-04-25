@@ -125,14 +125,14 @@ static bool parseDestinationString(
 {
     // get ourself a tokenizer
     typedef boost::tokenizer<
-        boost::char_separator<wchar_t>,
+        boost::char_separator<byte_traits::native_string::value_type>,
         byte_traits::native_string::const_iterator,
         byte_traits::native_string
     >
         tokenizer;
 
     // get the part before the colon and the part after the colon
-    boost::char_separator<wchar_t> colons(L":");
+    boost::char_separator<byte_traits::native_string::value_type> colons(" ");
     tokenizer tokens(where, colons);
 
     tokenizer::iterator tok_iter = tokens.begin();

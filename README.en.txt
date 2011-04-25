@@ -59,7 +59,7 @@ For the compiled win32 version, download the archive from the link above and unc
 For the source code version, the short instructions for compiling the application under unixlike system are as follows:
     - Install CMake >= 2.6, wxWidgets >= 2.8 and Boost >= 1.39
     - Change into a directory where you want to build nuke-ms, run CMake on the project tree and finally run make:
-        
+
         $ cd nuke-ms/build
         $ cmake ..
         $ make
@@ -79,7 +79,7 @@ Start the server by simply executing the nuke-ms-serv file. It does not take any
 To stop the server application you have to interrupt it, for example by hitting Ctrl-C in your console, with the "kill" program or with the Task Manager.
 
 Then start the nuke-ms-client application, it should show a window with two text fields. Connect to a running server by entering the following command into the text input (lower) field of the window:
-    /connect <host>:<port>
+    /connect <host> <port>
 Replace <host> with the hostname (IP address or DNS name) of the host the server is running on. If this is your local computer, enter "localhost".
 The <port> is allways 34443. The first letter of the command must be a '/' (a slash), otherwise the command will not be recognized.
 If you see a message that says something like "Connection succeeded.", you can now start typing messages in the text input field. As soon as you hit Enter the message will be sent. You can send multiline messages by inserting a line break by pressing Shift+Enter. The message you sent will be echoed back to you by the server.

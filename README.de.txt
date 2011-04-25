@@ -78,7 +78,7 @@ Starten Sie den Server indem Sie einfach die Datei nuke-ms-serv ausführen. Der 
 Um den Server zu stoppen müssen Sie ihn von außen unterbrechen, das heißt entweder dadurch dass Sie Strg-C im Konsolenfenster angeben oder die Anwendung mit dem "kill"-Programm oder mit dem Task Manager beenden.
 
 Starten Sie dann die nuke-ms-client Anwendung. Es sollte nun ein Fenster mit zwei Textfeldern zu sehen sein. Verbinden Sie sich mit einem Server, indem Sie ins untere Textfeld folgendes eingeben:
-    /connect <host>:<port>
+    /connect <host> <port>
 Ersetzen Sie <host> mit dem Hostnamen des Zielrechners (IP-Addresse oder DNS Name). Wenn das Ihr lokaler Rechner ist, geben Sie "localhost" ein.
 Der <port> ist immer 34443. Das erste Zeichen des kommandos muss '/' (ein Slash) sein, ansonsten wird das kommando nicht angenommen.
 Wenn Sie eine Antwort so ähnlich wie "Connection succeeded." sehen, können Sie nun anfangen Nachrichten einzutippen. Sobald Sie die Entertaste gedrückt haben wid die Nachricht abgeschickt. Sie können einen Zeileinschub mit der Tastenkombination Shift-Enter einfügen. Die Nachricht die Sie verschickt haben wird ihnen vom server sofort wieder zurückgeschickt.

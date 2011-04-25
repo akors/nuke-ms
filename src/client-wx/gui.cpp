@@ -141,6 +141,14 @@ void MainFrame::parseCommand(const wxString& str)
 
         byte_traits::native_string wherestr(tok_iter->begin(), tok_iter->end());
 
+        if (++tok_iter == tokens.end() )
+            goto invalid_command;
+
+        wherestr += " ";
+        wherestr +=
+            byte_traits::native_string(tok_iter->begin(), tok_iter->end());
+
+
         ServerLocation::ptr_t where(new ServerLocation);
         where->where = wherestr;
         clientnode.connectTo(where);
