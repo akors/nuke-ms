@@ -257,9 +257,18 @@ void StateNegotiating::resolveHandler(
         return;
     }
 
-    _outermost_context.logstreams.infostream<<"Resolving finished. Host: "<<
-        endpoint_iterator->endpoint().address().to_string()<<" Port: "<<
-        endpoint_iterator->endpoint().port()<<'\n';
+    _outermost_context.logstreams.infostream<<"Resolving finished. "
+		"The following records were found:\n";
+	
+	// display all records for debugging purposes
+    tcp::resolver::iterator disp_it = endpoint_iterator;
+    while (disp_it != tcp::resolver::iterator())
+    {
+        _outermost_context.logstreams.infostream<<"\tHost: "<<
+            disp_it->endpoint().address().to_string()<<", Port: "<<
+            disp_it->endpoint().port()<<'\n';
+        ++disp_it;
+    }
 
     _outermost_context.socket.async_connect(
         *endpoint_iterator,
