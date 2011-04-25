@@ -35,13 +35,10 @@
 #ifndef CLIENTNODE_HPP_
 #define CLIENTNODE_HPP_
 
-#include <stdexcept>
-
 #include <boost/asio.hpp>
 
 #include <boost/thread/thread.hpp>
 #include <boost/signals2/signal.hpp>
-#include <boost/statechart/asynchronous_state_machine.hpp>
 
 #include "bytes.hpp"
 #include "neartypes.hpp"
@@ -183,9 +180,6 @@ private:
 
     /** The function object that will be called, if an event occurs.*/
     ClientNodeSignals signals;
-
-    /** The I/O Service object used by all network operations */
-    boost::asio::io_service io_service;
 
     /** Unique message identifier of the last message */
     NearUserMessage::msg_id_t last_msg_id;

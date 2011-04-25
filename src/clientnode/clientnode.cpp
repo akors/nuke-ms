@@ -73,7 +73,6 @@ void ClientNode::connectTo(ServerLocation::const_ptr_t where)
 
         signals.connectStatReport(rprt);
     }
-
 }
 
 

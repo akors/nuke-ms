@@ -29,7 +29,7 @@
 
 #include <boost/thread/thread.hpp>
 #include <boost/asio.hpp>
-#include <boost/statechart/asynchronous_state_machine.hpp>
+#include <boost/statechart/state_machine.hpp>
 #include <boost/statechart/state.hpp>
 #include <boost/statechart/custom_reaction.hpp>
 #include <boost/mpl/list.hpp>
