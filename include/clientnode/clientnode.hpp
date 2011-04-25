@@ -35,7 +35,6 @@
 #ifndef CLIENTNODE_HPP_
 #define CLIENTNODE_HPP_
 
-#include <iostream>
 #include <stdexcept>
 
 #include <boost/asio.hpp>
@@ -47,92 +46,55 @@
 #include "bytes.hpp"
 #include "neartypes.hpp"
 #include "clientnode/sigtypes.hpp"
+#include "clientnode/statemachine.hpp"
 
 
 
 namespace nuke_ms
 {
 
-/** @defgroup clientnode Communication Protocol 
- * 
+/** @defgroup clientnode Communication Protocol
+ *
  * This Module is used as the client side of a server-client connection.
- * It handles lookup, connect/disconnect operations as well as sending and 
+ * It handles lookup, connect/disconnect operations as well as sending and
  * receiving data from/to a server.
- * 
- * The main class of this module is the @ref clientnode::ClientNode class, please refer to its 
+ *
+ * The main class of this module is the @ref clientnode::ClientNode class, please refer to its
  * documentation for information on how to use this module.
- * 
+ *
  * The ClientNode is supposed to be reentrant, so in theory you should be able
- * to create multiple instances of it without the possibility of interference 
- * between them. 
- * 
+ * to create multiple instances of it without the possibility of interference
+ * between them.
+ *
  * @{
 */
 
 namespace clientnode
 {
 
+
 /** Client Communication Protocol.
- * 
+ *
  * Use this class to create a black box that handles all the network stuff for
  * you.
- * 
- * To use it, simply create an instance of this class using the constructor 
- * ClientNode(). 
+ *
+ * To use it, simply create an instance of this class using the constructor
+ * ClientNode().
  * Upon creation, the ClientModule will be initialized and ready to connect to
- * a server. 
- * Then you will have to set up callbacks that inform you of the 
- * result of connection attempts, send attempts and incoming messages. To 
+ * a server.
+ * Then you will have to set up callbacks that inform you of the
+ * result of connection attempts, send attempts and incoming messages. To
  * register callbacks use the functions connectRcvMessage(),
  * connectConnectionStatusReport() and connectSendReport().
- * You can then post connection/disconnection requests 
+ * You can then post connection/disconnection requests
  * (connectTo(), disconnect()) and send messages (sendUserMessage()).
- * 
+ *
 */
 class ClientNode
 {
 public:
-    struct Signals
-    {
-        /** Signal for incoming messages
-         * The slot connecting to be signal can be called by multiple threads
-         * and must thus esnure thread safety.
-        */
-        SignalRcvMessage rcvMessage;
-        
-        /** Signal for connection status reports
-         * The slot connecting to be signal can be called by multiple threads
-         * and must thus esnure thread safety.
-        */
-        SignalConnectionStatusReport connectStatReport;
-        
-        /** Signal for send reports
-         * The slot connecting to be signal can be called by multiple threads
-         * and must thus esnure thread safety.
-        */
-        SignalSendReport sendReport;
-    };
-
-	/** Wrapper class for logging streams. */
-	struct LoggingStreams
-	{
-		/** Stream info messages will be written to */
-		std::ostream& infostream;
-		
-		/** Stream warning messages will be written to */
-		std::ostream& warnstream;
-		
-		/** Stream error messages will be written to */
-		std::ostream& errorstream; 
-		
-		/** Default constructor, initialize to std::clog and std::cerr */
-		LoggingStreams() : 
-			infostream(std::clog), warnstream(std::cerr), errorstream(std::cerr) 
-		{}
-	} logstreams /** The Streams used for message output */;
-
     /** Constructor.
-	 * 
+	 *
     * Creates a thread and initializes the Network machine.
     */
     ClientNode(LoggingStreams logstreams_ = LoggingStreams());
@@ -143,27 +105,27 @@ public:
     ~ClientNode();
 
 	/** Connect the signal for incoming messages
-	 * 
+	 *
 	 * @param slot The slot you want to connect the signal to
-	 * @return Object to the connection of the signal/slot 
+	 * @return Object to the connection of the signal/slot
 	*/
     boost::signals2::connection
     connectRcvMessage(const SignalRcvMessage::slot_type& slot)
     { return signals.rcvMessage.connect(slot); }
 
 	/** Connect the signal for connection status reports
-	 * 
+	 *
 	 * @param slot The slot you want to connect the signal to
-	 * @return Object to the connection of the signal/slot 
+	 * @return Object to the connection of the signal/slot
 	*/
     boost::signals2::connection connectConnectionStatusReport(
         const SignalConnectionStatusReport::slot_type& slot)
     { return signals.connectStatReport.connect(slot); }
 
 	/** Connect the signal for send reports
-	 * 
+	 *
 	 * @param slot The slot you want to connect the signal to
-	 * @return Object to the connection of the signal/slot 
+	 * @return Object to the connection of the signal/slot
 	*/
     boost::signals2::connection
     connectSendReport(const SignalSendReport::slot_type& slot)
@@ -210,20 +172,17 @@ private:
         return ++last_msg_id;
     }
 
-    /** An own thread for the State Machine*/
-    boost::thread machine_thread;
-    
+    /** The Streams used for message output */
+    LoggingStreams logstreams;
+
+    /** Our state machine */
+    ClientnodeMachine statemachine;
+
     /** A mutex to gain access to the state machine */
     boost::mutex machine_mutex;
 
-    /** The scheduler for the asynchronous state machine */
-    boost::statechart::fifo_scheduler<> machine_scheduler;
-
-    /** The event processor handle for the state machine */
-    boost::statechart::fifo_scheduler<>::processor_handle event_processor;
-
     /** The function object that will be called, if an event occurs.*/
-    Signals signals;
+    ClientNodeSignals signals;
 
     /** The I/O Service object used by all network operations */
     boost::asio::io_service io_service;

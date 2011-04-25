@@ -23,19 +23,12 @@ using namespace nuke_ms;
 using namespace nuke_ms::clientnode;
 using namespace boost::asio::ip;
 
-#ifdef STATECHART_CREATE_PROCESSOR_USE_REF
-ClientnodeMachine::ClientnodeMachine(my_context ctx,
-    ClientNode::Signals&  _signals, 
-	ClientNode::LoggingStreams logstreams_, boost::mutex& _machine_mutex)
-    : my_base(ctx),signals(_signals),socket(io_service),logstreams(logstreams_),
-        machine_mutex(_machine_mutex)
-#else
-ClientnodeMachine::ClientnodeMachine(my_context ctx,
-    ClientNode::Signals *_signals, 
-	ClientNode::LoggingStreams logstreams_, boost::mutex* _machine_mutex)
-    : my_base(ctx),signals(*_signals),socket(io_service),logstreams(logstreams_),
-        machine_mutex(*_machine_mutex)
-#endif
+
+ClientnodeMachine::ClientnodeMachine(ClientNodeSignals&  _signals,
+	LoggingStreams logstreams_, boost::mutex& _machine_mutex
+)
+    : signals(_signals), socket(io_service),
+        logstreams(logstreams_), machine_mutex(_machine_mutex)
 {}
 
 ClientnodeMachine::~ClientnodeMachine()
@@ -240,7 +233,7 @@ void StateNegotiating::resolveHandler(
     _outermost_context.logstreams.infostream<<
         "resolveHandler invoked."<<std::endl;
 
-	
+
     // if there was an error, report it
     if (endpoint_iterator == tcp::resolver::iterator() )
     {
@@ -252,19 +245,14 @@ void StateNegotiating::resolveHandler(
 			// so we STFU and return
 			if (error == boost::asio::error::operation_aborted)
 				return;
-			
+
             errmsg = error.message();
 		}
         else
             errmsg = "No hosts found.";
-    
+
         boost::mutex::scoped_lock(_outermost_context.machine_mutex);
-        _outermost_context.my_scheduler().queue_event(
-            _outermost_context.my_handle(),
-            boost::intrusive_ptr<EvtConnectReport> (
-                new EvtConnectReport(false, errmsg)
-            )
-        );
+        _outermost_context.process_event(EvtConnectReport(false, errmsg));
 
         return;
     }
@@ -293,8 +281,6 @@ void StateNegotiating::connectHandler(
 {
     _outermost_context.logstreams.infostream<<"connectHandler invoked."<<std::endl;
 
-    boost::intrusive_ptr<EvtConnectReport> evt_rprt;
-
     // if there was an error, create a negative reply
     if (error)
     {
@@ -302,14 +288,16 @@ void StateNegotiating::connectHandler(
 		// so we STFU and return
 		if (error == boost::asio::error::operation_aborted)
 			return;
-	
+
         byte_traits::native_string errmsg(error.message());
-        evt_rprt = new EvtConnectReport(false, errmsg);
+
+        boost::mutex::scoped_lock(_outermost_context.machine_mutex);
+        _outermost_context.process_event(
+            EvtConnectReport(false, errmsg)
+        );
     }
     else // if there was no error, create a positive reply
     {
-        evt_rprt = new EvtConnectReport(true,"Connection succeeded.");
-
         // create a receive buffer
         byte_traits::byte_t* rcvbuf =
             new byte_traits::byte_t[SegmentationLayer::header_length];
@@ -326,11 +314,12 @@ void StateNegotiating::connectHandler(
                 rcvbuf
             )
         );
-    }
 
-    boost::mutex::scoped_lock(_outermost_context.machine_mutex);
-    _outermost_context.my_scheduler().
-        queue_event(_outermost_context.my_handle(), evt_rprt);
+        boost::mutex::scoped_lock(_outermost_context.machine_mutex);
+        _outermost_context.process_event(
+            EvtConnectReport(true,"Connection succeeded.")
+        );
+    }
 }
 
 
@@ -470,8 +459,8 @@ void StateConnected::writeHandler(
 		// so we STFU and return
 		if (error == boost::asio::error::operation_aborted)
 			return;
-	
-	
+
+
         byte_traits::native_string errmsg(error.message());
 
         SendReport::ptr_t rprt(new SendReport);
@@ -482,10 +471,7 @@ void StateConnected::writeHandler(
         _outermost_context.signals.sendReport(rprt);
 
         boost::mutex::scoped_lock(_outermost_context.machine_mutex);
-        _outermost_context.my_scheduler().queue_event(
-            _outermost_context.my_handle(),
-            boost::intrusive_ptr<EvtDisconnected> (new EvtDisconnected(errmsg))
-        );
+        _outermost_context.process_event(EvtDisconnected(errmsg));
 
     }
 }
@@ -507,14 +493,11 @@ void StateConnected::receiveSegmentationHeaderHandler(
 		// so we STFU and return
 		if (error == boost::asio::error::operation_aborted)
 			return;
-	
+
         byte_traits::native_string errmsg(error.message());
 
         boost::mutex::scoped_lock(_outermost_context.machine_mutex);
-        _outermost_context.my_scheduler().queue_event(
-            _outermost_context.my_handle(),
-            boost::intrusive_ptr<EvtDisconnected>(new EvtDisconnected(errmsg))
-        );
+        _outermost_context.process_event(EvtDisconnected(errmsg));
     }
     else // if no error occured, try to decode the header
     {
@@ -553,22 +536,12 @@ const byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
         catch (const std::exception& e)
         {
             boost::mutex::scoped_lock(_outermost_context.machine_mutex);
-            _outermost_context.my_scheduler().queue_event(
-                _outermost_context.my_handle(),
-                boost::intrusive_ptr<EvtDisconnected>(
-                    new EvtDisconnected(e.what())
-                )
-            );
+            _outermost_context.process_event(EvtDisconnected(e.what()));
         }
         catch(...)
         {
             boost::mutex::scoped_lock(_outermost_context.machine_mutex);
-            _outermost_context.my_scheduler().queue_event(
-                _outermost_context.my_handle(),
-                boost::intrusive_ptr<EvtDisconnected>(
-                    new EvtDisconnected("Unknown Error")
-                )
-            );
+            _outermost_context.process_event(EvtDisconnected("Unknown Error"));
         }
     }
 
@@ -590,27 +563,17 @@ void StateConnected::receiveSegmentationBodyHandler(
 		// so we STFU and return
 		if (error == boost::asio::error::operation_aborted)
 			return;
-	
+
         boost::mutex::scoped_lock(_outermost_context.machine_mutex);
-        _outermost_context.my_scheduler().queue_event(
-            _outermost_context.my_handle(),
-            boost::intrusive_ptr<EvtDisconnected>(
-                new EvtDisconnected(error.message())
-            )
-        );
+        _outermost_context.process_event(EvtDisconnected(error.message()));
     }
     else // if no error occured, report the received message to the application
     {
         SegmentationLayer segmlayer(rcvbuf);
-        
+
         {
             boost::mutex::scoped_lock(_outermost_context.machine_mutex);
-            _outermost_context.my_scheduler().queue_event(
-                _outermost_context.my_handle(),
-                boost::intrusive_ptr<EvtRcvdMessage>(
-                    new EvtRcvdMessage(segmlayer)
-                )
-            );        
+            _outermost_context.process_event(EvtRcvdMessage(segmlayer));
         }
         // start a new receive for the next message
 

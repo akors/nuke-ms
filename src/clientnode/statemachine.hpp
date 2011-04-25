@@ -36,7 +36,8 @@
 #include <boost/ref.hpp>
 
 #include "msglayer.hpp"
-#include "clientnode/clientnode.hpp"
+#include "clientnode/logstreams.hpp"
+#include "clientnode/sigtypes.hpp"
 
 namespace nuke_ms
 {
@@ -57,7 +58,7 @@ namespace clientnode
 */
 struct EvtConnectRequest : public boost::statechart::event<EvtConnectRequest>
 {
-    
+
     byte_traits::native_string host; /**< Where to connect to. */
     byte_traits::native_string service; /**< Which port to connect to. */
 
@@ -161,7 +162,7 @@ struct StateWaiting;
 * create and use this class, and how to dispatch events.
 */
 struct ClientnodeMachine :
-    public boost::statechart::asynchronous_state_machine<
+    public boost::statechart::state_machine<
         ClientnodeMachine,
         StateWaiting
     >
@@ -169,10 +170,10 @@ struct ClientnodeMachine :
     enum {thread_timeout = 3000u};
 
     /** Callback signals that will be used to inform the application */
-    ClientNode::Signals& signals;
-	
+    ClientNodeSignals& signals;
+
 	/** The Streams used for message output */
-	ClientNode::LoggingStreams logstreams;
+	LoggingStreams logstreams;
 
     /** I/O Service Object */
     boost::asio::io_service io_service;
@@ -182,23 +183,17 @@ struct ClientnodeMachine :
 
     /** A reference to the mutex that is needed to access this machine */
     boost::mutex& machine_mutex;
-    
+
     /** A thread object for all asynchronouy I/O operations. It will start in
     not-a-thread state. */
     boost::thread io_thread;
 
 
-    /** Constructor. To be used only by Boost.Statechart classes.
-    * Passing _io_service by pointer, because passing references to
-    * create_processor does not work.
+    /** Constructor.
     */
-#ifdef STATECHART_CREATE_PROCESSOR_USE_REF
-    ClientnodeMachine(my_context ctx, ClientNode::Signals&  _signals, 
-		ClientNode::LoggingStreams logstreams_, boost::mutex& _machine_mutex);
-#else
-    ClientnodeMachine(my_context ctx, ClientNode::Signals*  _signals, 
-		ClientNode::LoggingStreams logstreams_, boost::mutex* _machine_mutex);
-#endif
+    ClientnodeMachine(ClientNodeSignals&  _signals,
+		LoggingStreams logstreams_, boost::mutex& _machine_mutex);
+
 
     /** Destructor. Stops all I/O operations and threads as cleanly as possible.
     */
@@ -266,7 +261,7 @@ struct StateNegotiating :
 
     /** Constructor. To be used only by Boost.Statechart classes. */
     StateNegotiating(my_context ctx);
-    
+
     static void resolveHandler(
         const boost::system::error_code& error,
         boost::asio::ip::tcp::resolver::iterator endpoint_iterator,

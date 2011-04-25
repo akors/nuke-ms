@@ -41,10 +41,10 @@ namespace nuke_ms
 {
 
 
-/** @addtogroup clientnode Communication Protocol 
+/** @addtogroup clientnode Communication Protocol
  * @{
 */
-	
+
 
 namespace clientnode
 {
@@ -110,9 +110,9 @@ struct SendReport
         SR_SERVER_NOT_CONNECTED, /**< Not connected to server */
         SR_CONNECTION_ERROR /**< Network failure */
     } reason; /**< Reason for failure while sending a message */
-	
+
 	/** Reason for whatever this report is about */
-    byte_traits::native_string reason_str; 
+    byte_traits::native_string reason_str;
 };
 
 
@@ -121,7 +121,7 @@ struct SendReport
 /** Signal for incoming messages*/
 typedef boost::signals2::signal<void (NearUserMessage::const_ptr_t)>
     SignalRcvMessage;
-	
+
 /** signal for connection status reports */
 typedef boost::signals2::signal<
     void (ConnectionStatusReport::const_ptr_t)>
@@ -132,7 +132,32 @@ typedef boost::signals2::signal<
     void (SendReport::const_ptr_t)>
     SignalSendReport;
 
-} // namespace control
+
+struct ClientNodeSignals
+{
+    /** Signal for incoming messages
+     * The slot connecting to be signal can be called by multiple threads
+     * and must thus esnure thread safety.
+    */
+    boost::signals2::signal<void (NearUserMessage::const_ptr_t)> rcvMessage;
+
+    /** Signal for connection status reports
+     * The slot connecting to be signal can be called by multiple threads
+     * and must thus esnure thread safety.
+    */
+    boost::signals2::signal<void (ConnectionStatusReport::const_ptr_t)>
+    connectStatReport;
+
+    /** Signal for send reports
+     * The slot connecting to be signal can be called by multiple threads
+     * and must thus esnure thread safety.
+    */
+    boost::signals2::signal<void (SendReport::const_ptr_t)> sendReport;
+};
+
+
+
+} // namespace clientnode
 
 /**@}*/ // addtogroup clientnode
 

@@ -21,8 +21,6 @@
 #include <boost/ref.hpp>
 #include <boost/tokenizer.hpp>
 
-
-#include "clientnode/statemachine.hpp"
 #include "clientnode/clientnode.hpp"
 
 #include "bytes.hpp"
@@ -40,47 +38,17 @@ static bool parseDestinationString(
 
 
 ClientNode::ClientNode(LoggingStreams logstreams_)
-    : machine_scheduler(true), last_msg_id(0),  logstreams(logstreams_)
+    : statemachine(signals, logstreams, machine_mutex),
+    last_msg_id(0),  logstreams(logstreams_)
 {
-
-    // create an event processor for our state machine
-
-    // Passing _io_service by pointer, because passing references to
-    // create_processor does not work.
-#ifdef STATECHART_CREATE_PROCESSOR_USE_REF
-    event_processor =
-        machine_scheduler.create_processor<ClientnodeMachine, Signals&>(
-        boost::ref(signals), logstreams, boost::ref(machine_mutex));
-#else
-    event_processor =
-        machine_scheduler.create_processor<ClientnodeMachine, Signals*>(
-        &signals, logstreams, &machine_mutex);
-#endif
-
-
     // initiate the event processor
-    machine_scheduler.initiate_processor(event_processor);
-
-    // machine_thread is in state "not-a-thread", so we will use the move
-    // semantics provided by boost::thread to create a new thread and assign it
-    // the variable
-    machine_thread = boost::thread(
-        boost::bind(
-            &boost::statechart::fifo_scheduler<>::operator(),
-            &machine_scheduler,
-            0
-            )
-        );
-
+    statemachine.initiate();
 }
 
 ClientNode::~ClientNode()
 {
     // stop the network machine
-    machine_scheduler.terminate();
-
-    // catch the running thread
-    catchThread(machine_thread, threadwait_ms);
+    statemachine.terminate();
 }
 
 
@@ -90,16 +58,10 @@ void ClientNode::connectTo(ServerLocation::const_ptr_t where)
     byte_traits::native_string host, service;
     if (parseDestinationString(host, service, where->where))
     {  // on success, pass on event
-        // Create new Connection request event
-        // and dispatch it to the statemachine
-        boost::intrusive_ptr<EvtConnectRequest>
-        connect_request(new EvtConnectRequest(host, service));
-        
-        // lock the mutex to the machine
-        boost::mutex::scoped_lock(machine_mutex); 
 
-        // process event
-        machine_scheduler.queue_event(event_processor, connect_request);
+        // lock the mutex to the machine, process event
+        boost::mutex::scoped_lock(machine_mutex);
+        statemachine.process_event(EvtConnectRequest(host, service));
     }
     else // on failure, report back to application
     {
@@ -124,13 +86,9 @@ NearUserMessage::msg_id_t ClientNode::sendUserMessage(
     NearUserMessage::ptr_t usermsg(new NearUserMessage(msg, recipient));
     usermsg->msg_id = getNextMessageId();
 
-    // Create new Connection request event and dispatch it to the statemachine
-    boost::intrusive_ptr<EvtSendMsg> send_evt(new EvtSendMsg(usermsg));
-
     // lock the mutex to the machine
-    boost::mutex::scoped_lock(machine_mutex); 
-    
-    machine_scheduler.queue_event(event_processor, send_evt);
+    boost::mutex::scoped_lock(machine_mutex);
+    statemachine.process_event(EvtSendMsg(usermsg));
 
     return usermsg->msg_id;
 }
@@ -139,14 +97,9 @@ NearUserMessage::msg_id_t ClientNode::sendUserMessage(
 
 void ClientNode::disconnect()
 {
-    // Create new Disconnect request event and dispatch it to the statemachine
-    boost::intrusive_ptr<EvtDisconnectRequest>
-    disconnect_evt(new EvtDisconnectRequest);
-
-
-    // lock the mutex to the machine
+    // lock the mutex to the machine, dispatch disconnect request
     boost::mutex::scoped_lock(machine_mutex);
-    machine_scheduler.queue_event(event_processor, disconnect_evt);
+    statemachine.process_event(EvtDisconnectRequest());
 }
 
 
