@@ -2,7 +2,7 @@
 
 /*
  *   nuke-ms - Nuclear Messaging System
- *   Copyright (C) 2009  Alexander Korsunsky
+ *   Copyright (C) 2009, 2011  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -28,19 +28,9 @@
 
 #include <boost/function.hpp>
 
-#ifdef REFCOUNTER_MULTITHREADED
-#   include <boost/thread/locks.hpp>
+
+#ifndef NUKE_MS_REFCOUNTER_NOT_MULTITHREADED
 #   include <boost/thread/mutex.hpp>
-
-#   define MUTEX_IF_MULTITHREADED() boost::mutex reference_mutex;
-#   define LOCK_IF_MULTITHREADED() boost::lock_guard<boost::mutex> \
-        lock(reference_mutex);
-
-#else
-
-#   define MUTEX_IF_MULTITHREADED()
-#   define LOCK_IF_MULTITHREADED()
-
 #endif
 
 /** Count references to the current object.
@@ -63,8 +53,10 @@
 template <typename ReferencedType>
 class ReferenceCounter
 {
-    // mutex that ensures thread safe acces to the reference count
-    MUTEX_IF_MULTITHREADED()
+#ifndef NUKE_MS_REFCOUNTER_NOT_MULTITHREADED
+    /// mutex that ensures thread safe acces to the reference count
+    boost::mutex reference_mutex;
+#endif
 
     /**< Action that will be executed when the reference count reaches zero */
     boost::function<void ()> action;
@@ -173,8 +165,10 @@ private:
     */
     inline void increaseRefCount ()
     {
-        LOCK_IF_MULTITHREADED()
-
+#ifndef NUKE_MS_REFCOUNTER_NOT_MULTITHREADED
+        /// mutex that ensures thread safe acces to the reference count
+        boost::mutex::scoped_lock lock(reference_mutex);
+#endif
         ++reference_count;
     }
 
@@ -189,7 +183,10 @@ private:
     */
     inline void decreaseRefCount ()
     {
-        LOCK_IF_MULTITHREADED()
+#ifndef NUKE_MS_REFCOUNTER_NOT_MULTITHREADED
+        /// mutex that ensures thread safe acces to the reference count
+        boost::mutex::scoped_lock lock(reference_mutex);
+#endif
 
         --reference_count;
 
