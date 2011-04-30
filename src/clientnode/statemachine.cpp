@@ -251,7 +251,7 @@ void StateNegotiating::resolveHandler(
         else
             errmsg = "No hosts found.";
 
-        boost::mutex::scoped_lock(_outermost_context.machine_mutex);
+        boost::mutex::scoped_lock lk(_outermost_context.machine_mutex);
         _outermost_context.process_event(EvtConnectReport(false, errmsg));
 
         return;
@@ -314,7 +314,7 @@ void StateNegotiating::connectHandler(
             )
         );
 
-        boost::mutex::scoped_lock(_outermost_context.machine_mutex);
+        boost::mutex::scoped_lock lk(_outermost_context.machine_mutex);
         _outermost_context.process_event(
             EvtConnectReport(true,"Connection succeeded.")
         );
@@ -345,7 +345,7 @@ void StateNegotiating::connectHandler(
 
         byte_traits::native_string errmsg(error.message());
 
-        boost::mutex::scoped_lock(_outermost_context.machine_mutex);
+        boost::mutex::scoped_lock lk(_outermost_context.machine_mutex);
         _outermost_context.process_event(
             EvtConnectReport(false, errmsg)
         );
@@ -501,7 +501,7 @@ void StateConnected::writeHandler(
 
         _outermost_context.signals.sendReport(rprt);
 
-        boost::mutex::scoped_lock(_outermost_context.machine_mutex);
+        boost::mutex::scoped_lock lk(_outermost_context.machine_mutex);
         _outermost_context.process_event(EvtDisconnected(errmsg));
 
     }
@@ -527,7 +527,7 @@ void StateConnected::receiveSegmentationHeaderHandler(
 
         byte_traits::native_string errmsg(error.message());
 
-        boost::mutex::scoped_lock(_outermost_context.machine_mutex);
+        boost::mutex::scoped_lock lk(_outermost_context.machine_mutex);
         _outermost_context.process_event(EvtDisconnected(errmsg));
     }
     else // if no error occured, try to decode the header
@@ -566,12 +566,12 @@ const byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
         // on failure, report back to application
         catch (const std::exception& e)
         {
-            boost::mutex::scoped_lock(_outermost_context.machine_mutex);
+            boost::mutex::scoped_lock lk(_outermost_context.machine_mutex);
             _outermost_context.process_event(EvtDisconnected(e.what()));
         }
         catch(...)
         {
-            boost::mutex::scoped_lock(_outermost_context.machine_mutex);
+            boost::mutex::scoped_lock lk(_outermost_context.machine_mutex);
             _outermost_context.process_event(EvtDisconnected("Unknown Error"));
         }
     }
@@ -595,7 +595,7 @@ void StateConnected::receiveSegmentationBodyHandler(
 		if (error == boost::asio::error::operation_aborted)
 			return;
 
-        boost::mutex::scoped_lock(_outermost_context.machine_mutex);
+        boost::mutex::scoped_lock lk(_outermost_context.machine_mutex);
         _outermost_context.process_event(EvtDisconnected(error.message()));
     }
     else // if no error occured, report the received message to the application
@@ -603,7 +603,7 @@ void StateConnected::receiveSegmentationBodyHandler(
         SegmentationLayer segmlayer(rcvbuf);
 
         {
-            boost::mutex::scoped_lock(_outermost_context.machine_mutex);
+            boost::mutex::scoped_lock lk(_outermost_context.machine_mutex);
             _outermost_context.process_event(EvtRcvdMessage(segmlayer));
         }
         // start a new receive for the next message
