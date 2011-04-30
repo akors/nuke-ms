@@ -53,11 +53,6 @@
 template <typename ReferencedType>
 class ReferenceCounter
 {
-#ifndef NUKE_MS_REFCOUNTER_NOT_MULTITHREADED
-    /// mutex that ensures thread safe acces to the reference count
-    boost::mutex reference_mutex;
-#endif
-
     /**< Action that will be executed when the reference count reaches zero */
     boost::function<void ()> action;
 
@@ -149,6 +144,12 @@ protected:
     */
     inline unsigned getRefCount() const
     { return reference_count; }
+
+#ifndef NUKE_MS_REFCOUNTER_NOT_MULTITHREADED
+    /// mutex that ensures thread safe acces to the reference count
+    boost::mutex reference_mutex;
+#endif
+
 
 private:
     // CountedReference is our friend
