@@ -5,6 +5,9 @@
 # these are the sources for the server
 set(SERVER_SRCS dispatcher.cpp main.cpp remotepeer.cpp)
 
+# temporary fix to prevent failing assertion
+add_definitions("-DNUKE_MS_REFCOUNTER_NOT_MULTITHREADED")
+
 add_executable(nuke-ms-serv ${SERVER_SRCS})
 
 
