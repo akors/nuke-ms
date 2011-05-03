@@ -490,7 +490,7 @@ void StateConnected::receiveSegmentationHeaderHandler(
     byte_traits::byte_t rcvbuf[SegmentationLayer::header_length]
 )
 {
-    cm.ref().logstreams.infostream<<"Reveived message"<<std::endl;
+    cm.ref().logstreams.infostream<<"Reveive (header) handler invoked"<<std::endl;
 
     // if there was an error,
     // tear down the connection by posting a disconnection event
