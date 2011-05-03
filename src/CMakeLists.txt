@@ -93,4 +93,4 @@ add_subdirectory(common)
 add_subdirectory(clientnode)
 add_subdirectory(client-wx)
 add_subdirectory(server)
-add_subdirectory(test EXCLUDE_FROM_ALL)
+

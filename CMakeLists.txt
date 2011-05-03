@@ -12,5 +12,8 @@ add_subdirectory(src)
 # Add include directory
 add_subdirectory(include)
 
+# Add tests, but exclude from all target
+add_subdirectory(test EXCLUDE_FROM_ALL)
+
 # Add doc directory, but exclude from all target
 add_subdirectory(doc EXCLUDE_FROM_ALL)
