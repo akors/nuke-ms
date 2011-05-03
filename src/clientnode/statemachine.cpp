@@ -27,8 +27,8 @@ using namespace boost::asio::ip;
 ClientnodeMachine::ClientnodeMachine(ClientNodeSignals&  _signals,
 	LoggingStreams logstreams_, boost::mutex& _machine_mutex
 )
-    : signals(_signals), _io_service(new boost::asio::io_service),
-        io_service(*_io_service), socket(io_service),
+    : signals(_signals), io_service(new boost::asio::io_service),
+        socket(*io_service), resolver(*io_service),
         logstreams(logstreams_), machine_mutex(_machine_mutex),
         ReferenceCounter(boost::bind(&ClientnodeMachine::on_returned, this))
 {}
@@ -49,9 +49,12 @@ ClientnodeMachine::~ClientnodeMachine()
 
 void ClientnodeMachine::startIOOperations()
 {
+    // Before starting a new thread, the old thread must be joined.
+    catchThread(io_thread, thread_timeout);
+
     // start a new thread that processes all asynchronous operations
     io_thread = boost::thread(
-        boost::bind(&boost::asio::io_service::run, &io_service)
+        boost::bind(&boost::asio::io_service::run, io_service)
     );
 }
 
@@ -63,13 +66,10 @@ void ClientnodeMachine::stopIOOperations()
     socket.close(dontcare);
 
     // stop the service object if it's running
-    io_service.stop();
-
-    // stop the thread
-    catchThread(io_thread, thread_timeout);
+    io_service->stop();
 
     // reset the io_service object so it can continue its work afterwards
-    io_service.reset();
+    io_service->reset();
 }
 
 
@@ -79,19 +79,12 @@ StateWaiting::StateWaiting(my_context ctx)
     outermost_context().logstreams.infostream<<"Entering StateWaiting"<<
 		std::endl;
 
-    // when we are waiting, we don't need the io_service object and the thread
+    // when we are waiting, we don't need the io_service object
     outermost_context().stopIOOperations();
 }
 
-
-
 boost::statechart::result StateWaiting::react(const EvtConnectRequest& evt)
 {
-     //get a resolver
-    boost::shared_ptr<tcp::resolver> resolver(
-        new tcp::resolver(outermost_context().io_service)
-    );
-
     // create a query
     boost::shared_ptr<tcp::resolver::query> query(
         new tcp::resolver::query(evt.host, evt.service)
@@ -99,34 +92,16 @@ boost::statechart::result StateWaiting::react(const EvtConnectRequest& evt)
 
 
     // dispatch an asynchronous resolve request
-    resolver->async_resolve(
+    outermost_context().resolver.async_resolve(
         *query,
         boost::bind(
             &StateNegotiating::resolveHandler,
             boost::asio::placeholders::error,
             boost::asio::placeholders::iterator,
             ClientnodeMachine::CountedReference(outermost_context()),
-            boost::ref(outermost_context()),
-            resolver, query
+            query
         )
     );
-
-#if 0
-    boost::shared_ptr<boost::asio::deadline_timer> timer(
-        new boost::asio::deadline_timer(
-            outermost_context().io_service, boost::posix_time::seconds(5)
-        )
-    );
-
-    timer->async_wait(
-        boost::bind(
-            StateNegotiating::tiktakHandler,
-            boost::asio::placeholders::error,
-            timer,
-            boost::ref(outermost_context())
-        )
-    );
-#endif
 
     return transit< StateNegotiating >();
 }
@@ -234,13 +209,11 @@ boost::statechart::result StateNegotiating::react(const EvtConnectRequest&)
 void StateNegotiating::resolveHandler(
     const boost::system::error_code& error,
     tcp::resolver::iterator endpoint_iterator,
-    ClientnodeMachine::CountedReference cm_ref,
-    boost::shared_ptr<tcp::resolver> /* resolver */,
+    ClientnodeMachine::CountedReference cm,
     boost::shared_ptr<tcp::resolver::query> /* query */
 )
 {
-    cm_ref.ref().logstreams.infostream<<
-        "resolveHandler invoked."<<std::endl;
+    cm.ref().logstreams.infostream<<"resolveHandler invoked."<<std::endl;
 
 
     // if there was an error, report it
@@ -260,31 +233,31 @@ void StateNegotiating::resolveHandler(
         else
             errmsg = "No hosts found.";
 
-        boost::mutex::scoped_lock lk(cm_ref.ref().machine_mutex);
-        cm_ref.ref().process_event(EvtConnectReport(false, errmsg));
+        boost::mutex::scoped_lock lk(cm.ref().machine_mutex);
+        cm.ref().process_event(EvtConnectReport(false, errmsg));
 
         return;
     }
 
-    cm_ref.ref().logstreams.infostream<<"Resolving finished. "
+    cm.ref().logstreams.infostream<<"Resolving finished. "
 		"The following records were found:\n";
 
 	// display all records for debugging purposes
     tcp::resolver::iterator disp_it = endpoint_iterator;
     while (disp_it != tcp::resolver::iterator())
     {
-        cm_ref.ref().logstreams.infostream<<"\tHost: "<<
+        cm.ref().logstreams.infostream<<"\tHost: "<<
             disp_it->endpoint().address().to_string()<<", Port: "<<
             disp_it->endpoint().port()<<'\n';
         ++disp_it;
     }
 
-    cm_ref.ref().socket.async_connect(
+    cm.ref().socket.async_connect(
         *endpoint_iterator,
         boost::bind(
             &StateNegotiating::connectHandler,
             boost::asio::placeholders::error,
-            cm_ref,
+            cm,
 			endpoint_iterator
         )
     );
@@ -295,12 +268,11 @@ void StateNegotiating::resolveHandler(
 
 void StateNegotiating::connectHandler(
     const boost::system::error_code& error,
-    ClientnodeMachine::CountedReference cm_ref,
+    ClientnodeMachine::CountedReference cm,
 	tcp::resolver::iterator endpoint_iterator
 )
 {
-    cm_ref.ref().logstreams.infostream<<
-		"connectHandler invoked. (host "<<
+    cm.ref().logstreams.infostream<<"connectHandler invoked. (host "<<
 		endpoint_iterator->endpoint().address().to_string()<<")"<<std::endl;
 
 	if(!error) // if there was no error, create a positive reply
@@ -312,33 +284,31 @@ void StateNegotiating::connectHandler(
 
         // start an asynchronous read to receive the header of the first packet
         async_read(
-            cm_ref.ref().socket,
+            cm.ref().socket,
             boost::asio::buffer(rcvbuf, SegmentationLayer::header_length),
             boost::bind(
                 &StateConnected::receiveSegmentationHeaderHandler,
                 boost::asio::placeholders::error,
                 boost::asio::placeholders::bytes_transferred,
-                cm_ref,
+                cm,
                 rcvbuf
             )
         );
 
-        boost::mutex::scoped_lock lk(cm_ref.ref().machine_mutex);
-        cm_ref.ref().process_event(
-            EvtConnectReport(true,"Connection succeeded.")
-        );
+        boost::mutex::scoped_lock lk(cm.ref().machine_mutex);
+        cm.ref().process_event(EvtConnectReport(true,"Connection succeeded."));
     }
 	// if there was an error, but we still have records,
 	// just try the next record
 	else if(error && ++endpoint_iterator != tcp::resolver::iterator())
     {
-        cm_ref.ref().socket.close();
-        cm_ref.ref().socket.async_connect(
+        cm.ref().socket.close();
+        cm.ref().socket.async_connect(
             *endpoint_iterator,
             boost::bind(
                 &StateNegotiating::connectHandler,
                 boost::asio::placeholders::error,
-                cm_ref,
+                cm,
                 endpoint_iterator
 			)
 		);
@@ -353,10 +323,8 @@ void StateNegotiating::connectHandler(
 
         byte_traits::native_string errmsg(error.message());
 
-        boost::mutex::scoped_lock lk(cm_ref.ref().machine_mutex);
-        cm_ref.ref().process_event(
-            EvtConnectReport(false, errmsg)
-        );
+        boost::mutex::scoped_lock lk(cm.ref().machine_mutex);
+        cm.ref().process_event(EvtConnectReport(false, errmsg));
     }
 
 }
@@ -476,11 +444,11 @@ boost::statechart::result StateConnected::react(const EvtConnectRequest&)
 void StateConnected::writeHandler(
     const boost::system::error_code& error,
     std::size_t bytes_transferred,
-    ClientnodeMachine::CountedReference cm_ref,
+    ClientnodeMachine::CountedReference cm,
     SegmentationLayer::dataptr_t data
 )
 {
-    cm_ref.ref().logstreams.infostream<<"Sending message finished"<<std::endl;
+    cm.ref().logstreams.infostream<<"Sending message finished"<<std::endl;
 
 
     if (!error)
@@ -490,7 +458,7 @@ void StateConnected::writeHandler(
         rprt->send_state = true;
         rprt->reason = SendReport::SR_SEND_OK;
 
-        cm_ref.ref().signals.sendReport(rprt);
+        cm.ref().signals.sendReport(rprt);
     }
     else
     {
@@ -507,10 +475,10 @@ void StateConnected::writeHandler(
         rprt->reason = SendReport::SR_CONNECTION_ERROR;
         rprt->reason_str = errmsg;
 
-        cm_ref.ref().signals.sendReport(rprt);
+        cm.ref().signals.sendReport(rprt);
 
-        boost::mutex::scoped_lock lk(cm_ref.ref().machine_mutex);
-        cm_ref.ref().process_event(EvtDisconnected(errmsg));
+        boost::mutex::scoped_lock lk(cm.ref().machine_mutex);
+        cm.ref().process_event(EvtDisconnected(errmsg));
 
     }
 }
@@ -518,11 +486,11 @@ void StateConnected::writeHandler(
 void StateConnected::receiveSegmentationHeaderHandler(
     const boost::system::error_code& error,
     std::size_t bytes_transferred,
-    ClientnodeMachine::CountedReference cm_ref,
+    ClientnodeMachine::CountedReference cm,
     byte_traits::byte_t rcvbuf[SegmentationLayer::header_length]
 )
 {
-    cm_ref.ref().logstreams.infostream<<"Reveived message"<<std::endl;
+    cm.ref().logstreams.infostream<<"Reveived message"<<std::endl;
 
     // if there was an error,
     // tear down the connection by posting a disconnection event
@@ -535,8 +503,8 @@ void StateConnected::receiveSegmentationHeaderHandler(
 
         byte_traits::native_string errmsg(error.message());
 
-        boost::mutex::scoped_lock lk(cm_ref.ref().machine_mutex);
-        cm_ref.ref().process_event(EvtDisconnected(errmsg));
+        boost::mutex::scoped_lock lk(cm.ref().machine_mutex);
+        cm.ref().process_event(EvtDisconnected(errmsg));
     }
     else // if no error occured, try to decode the header
     {
@@ -560,13 +528,13 @@ const byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
 
             // start an asynchronous receive for the body
             async_read(
-                cm_ref.ref().socket,
+                cm.ref().socket,
                 boost::asio::buffer(*body_buf),
                 boost::bind(
                     &StateConnected::receiveSegmentationBodyHandler,
                     boost::asio::placeholders::error,
                     boost::asio::placeholders::bytes_transferred,
-                    cm_ref,
+                    cm,
                     body_buf
                 )
             );
@@ -574,13 +542,13 @@ const byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
         // on failure, report back to application
         catch (const std::exception& e)
         {
-            boost::mutex::scoped_lock lk(cm_ref.ref().machine_mutex);
-            cm_ref.ref().process_event(EvtDisconnected(e.what()));
+            boost::mutex::scoped_lock lk(cm.ref().machine_mutex);
+            cm.ref().process_event(EvtDisconnected(e.what()));
         }
         catch(...)
         {
-            boost::mutex::scoped_lock lk(cm_ref.ref().machine_mutex);
-            cm_ref.ref().process_event(EvtDisconnected("Unknown Error"));
+            boost::mutex::scoped_lock lk(cm.ref().machine_mutex);
+            cm.ref().process_event(EvtDisconnected("Unknown Error"));
         }
     }
 
@@ -590,7 +558,7 @@ const byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
 void StateConnected::receiveSegmentationBodyHandler(
     const boost::system::error_code& error,
     std::size_t bytes_transferred,
-    ClientnodeMachine::CountedReference cm_ref,
+    ClientnodeMachine::CountedReference cm,
     SegmentationLayer::dataptr_t rcvbuf
 )
 {
@@ -603,16 +571,16 @@ void StateConnected::receiveSegmentationBodyHandler(
 		if (error == boost::asio::error::operation_aborted)
 			return;
 
-        boost::mutex::scoped_lock lk(cm_ref.ref().machine_mutex);
-        cm_ref.ref().process_event(EvtDisconnected(error.message()));
+        boost::mutex::scoped_lock lk(cm.ref().machine_mutex);
+        cm.ref().process_event(EvtDisconnected(error.message()));
     }
     else // if no error occured, report the received message to the application
     {
         SegmentationLayer segmlayer(rcvbuf);
 
         {
-            boost::mutex::scoped_lock lk(cm_ref.ref().machine_mutex);
-            cm_ref.ref().process_event(EvtRcvdMessage(segmlayer));
+            boost::mutex::scoped_lock lk(cm.ref().machine_mutex);
+            cm.ref().process_event(EvtRcvdMessage(segmlayer));
         }
         // start a new receive for the next message
 
@@ -622,13 +590,13 @@ void StateConnected::receiveSegmentationBodyHandler(
 
         // start an asynchronous read to receive the header of the first packet
         async_read(
-            cm_ref.ref().socket,
+            cm.ref().socket,
             boost::asio::buffer(rcvbuf, SegmentationLayer::header_length),
             boost::bind(
                 &StateConnected::receiveSegmentationHeaderHandler,
                 boost::asio::placeholders::error,
                 boost::asio::placeholders::bytes_transferred,
-                cm_ref,
+                cm,
                 rcvbuf
             )
         );

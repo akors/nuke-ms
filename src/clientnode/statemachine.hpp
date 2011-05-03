@@ -174,7 +174,7 @@ class ClientnodeMachine :
 #   error "class ClientnodeMachine does not make sense with a single-threaded class ReferenceCounter"
 #endif
 {
-    boost::shared_ptr<boost::asio::io_service> _io_service;
+    boost::shared_ptr<boost::asio::io_service> io_service;
 
     /** A thread object for all asynchronouy I/O operations. It will start in
     not-a-thread state. */
@@ -199,11 +199,11 @@ public:
     /** The Streams used for message output */
 	LoggingStreams logstreams;
 
-    /** I/O Service Object */
-    boost::asio::io_service& io_service;
-
     /** Socket used for the connection */
     boost::asio::ip::tcp::socket socket;
+
+    /** Resolver used for any resolve operations */
+    boost::asio::ip::tcp::resolver resolver;
 
     /** A reference to the mutex that is needed to access this machine */
     boost::mutex& machine_mutex;
@@ -286,15 +286,14 @@ struct StateNegotiating :
     static void resolveHandler(
         const boost::system::error_code& error,
         boost::asio::ip::tcp::resolver::iterator endpoint_iterator,
-        ClientnodeMachine::CountedReference cm_ref,
-        boost::shared_ptr<boost::asio::ip::tcp::resolver> /* resolver */,
+        ClientnodeMachine::CountedReference cm,
         boost::shared_ptr<boost::asio::ip::tcp::resolver::query> /* query */
     );
 
 
     static void connectHandler(
         const boost::system::error_code& error,
-        ClientnodeMachine::CountedReference cm_ref,
+        ClientnodeMachine::CountedReference cm,
         boost::asio::ip::tcp::resolver::iterator endpoint_iterator
     );
 
@@ -330,21 +329,21 @@ struct StateConnected :
     static void writeHandler(
         const boost::system::error_code& error,
         std::size_t bytes_transferred,
-        ClientnodeMachine::CountedReference cm_ref,
+        ClientnodeMachine::CountedReference cm,
         SegmentationLayer::dataptr_t data
     );
 
     static void receiveSegmentationHeaderHandler(
         const boost::system::error_code& error,
         std::size_t bytes_transferred,
-        ClientnodeMachine::CountedReference cm_ref,
+        ClientnodeMachine::CountedReference cm,
         byte_traits::byte_t rcvbuf[SegmentationLayer::header_length]
     );
 
     static void receiveSegmentationBodyHandler(
         const boost::system::error_code& error,
         std::size_t bytes_transferred,
-        ClientnodeMachine::CountedReference cm_ref,
+        ClientnodeMachine::CountedReference cm,
         SegmentationLayer::dataptr_t rcvbuf
     );
 
