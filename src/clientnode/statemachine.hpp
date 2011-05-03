@@ -287,7 +287,6 @@ struct StateNegotiating :
         const boost::system::error_code& error,
         boost::asio::ip::tcp::resolver::iterator endpoint_iterator,
         ClientnodeMachine::CountedReference cm_ref,
-        outermost_context_type& _outermost_context,
         boost::shared_ptr<boost::asio::ip::tcp::resolver> /* resolver */,
         boost::shared_ptr<boost::asio::ip::tcp::resolver::query> /* query */
     );
@@ -296,7 +295,6 @@ struct StateNegotiating :
     static void connectHandler(
         const boost::system::error_code& error,
         ClientnodeMachine::CountedReference cm_ref,
-        outermost_context_type& _outermost_context,
         boost::asio::ip::tcp::resolver::iterator endpoint_iterator
     );
 
@@ -332,7 +330,7 @@ struct StateConnected :
     static void writeHandler(
         const boost::system::error_code& error,
         std::size_t bytes_transferred,
-        outermost_context_type& _outermost_context,
+        ClientnodeMachine::CountedReference cm_ref,
         SegmentationLayer::dataptr_t data
     );
 
@@ -340,7 +338,6 @@ struct StateConnected :
         const boost::system::error_code& error,
         std::size_t bytes_transferred,
         ClientnodeMachine::CountedReference cm_ref,
-        outermost_context_type& _outermost_context,
         byte_traits::byte_t rcvbuf[SegmentationLayer::header_length]
     );
 
@@ -348,7 +345,6 @@ struct StateConnected :
         const boost::system::error_code& error,
         std::size_t bytes_transferred,
         ClientnodeMachine::CountedReference cm_ref,
-        outermost_context_type& _outermost_context,
         SegmentationLayer::dataptr_t rcvbuf
     );
 

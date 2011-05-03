@@ -2,7 +2,7 @@
 
 /*
  *   nuke-ms - Nuclear Messaging System
- *   Copyright (C) 2008, 2009, 2010  Alexander Korsunsky
+ *   Copyright (C) 2008, 2009, 2010, 2011  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -235,12 +235,11 @@ void StateNegotiating::resolveHandler(
     const boost::system::error_code& error,
     tcp::resolver::iterator endpoint_iterator,
     ClientnodeMachine::CountedReference cm_ref,
-    outermost_context_type& _outermost_context,
     boost::shared_ptr<tcp::resolver> /* resolver */,
     boost::shared_ptr<tcp::resolver::query> /* query */
 )
 {
-    _outermost_context.logstreams.infostream<<
+    cm_ref.ref().logstreams.infostream<<
         "resolveHandler invoked."<<std::endl;
 
 
@@ -261,32 +260,31 @@ void StateNegotiating::resolveHandler(
         else
             errmsg = "No hosts found.";
 
-        boost::mutex::scoped_lock lk(_outermost_context.machine_mutex);
-        _outermost_context.process_event(EvtConnectReport(false, errmsg));
+        boost::mutex::scoped_lock lk(cm_ref.ref().machine_mutex);
+        cm_ref.ref().process_event(EvtConnectReport(false, errmsg));
 
         return;
     }
 
-    _outermost_context.logstreams.infostream<<"Resolving finished. "
+    cm_ref.ref().logstreams.infostream<<"Resolving finished. "
 		"The following records were found:\n";
 
 	// display all records for debugging purposes
     tcp::resolver::iterator disp_it = endpoint_iterator;
     while (disp_it != tcp::resolver::iterator())
     {
-        _outermost_context.logstreams.infostream<<"\tHost: "<<
+        cm_ref.ref().logstreams.infostream<<"\tHost: "<<
             disp_it->endpoint().address().to_string()<<", Port: "<<
             disp_it->endpoint().port()<<'\n';
         ++disp_it;
     }
 
-    _outermost_context.socket.async_connect(
+    cm_ref.ref().socket.async_connect(
         *endpoint_iterator,
         boost::bind(
             &StateNegotiating::connectHandler,
             boost::asio::placeholders::error,
             cm_ref,
-            boost::ref(_outermost_context),
 			endpoint_iterator
         )
     );
@@ -298,11 +296,10 @@ void StateNegotiating::resolveHandler(
 void StateNegotiating::connectHandler(
     const boost::system::error_code& error,
     ClientnodeMachine::CountedReference cm_ref,
-    outermost_context_type& _outermost_context,
 	tcp::resolver::iterator endpoint_iterator
 )
 {
-    _outermost_context.logstreams.infostream<<
+    cm_ref.ref().logstreams.infostream<<
 		"connectHandler invoked. (host "<<
 		endpoint_iterator->endpoint().address().to_string()<<")"<<std::endl;
 
@@ -315,20 +312,19 @@ void StateNegotiating::connectHandler(
 
         // start an asynchronous read to receive the header of the first packet
         async_read(
-            _outermost_context.socket,
+            cm_ref.ref().socket,
             boost::asio::buffer(rcvbuf, SegmentationLayer::header_length),
             boost::bind(
                 &StateConnected::receiveSegmentationHeaderHandler,
                 boost::asio::placeholders::error,
                 boost::asio::placeholders::bytes_transferred,
                 cm_ref,
-                boost::ref(_outermost_context),
                 rcvbuf
             )
         );
 
-        boost::mutex::scoped_lock lk(_outermost_context.machine_mutex);
-        _outermost_context.process_event(
+        boost::mutex::scoped_lock lk(cm_ref.ref().machine_mutex);
+        cm_ref.ref().process_event(
             EvtConnectReport(true,"Connection succeeded.")
         );
     }
@@ -336,14 +332,13 @@ void StateNegotiating::connectHandler(
 	// just try the next record
 	else if(error && ++endpoint_iterator != tcp::resolver::iterator())
     {
-        _outermost_context.socket.close();
-        _outermost_context.socket.async_connect(
+        cm_ref.ref().socket.close();
+        cm_ref.ref().socket.async_connect(
             *endpoint_iterator,
             boost::bind(
                 &StateNegotiating::connectHandler,
                 boost::asio::placeholders::error,
                 cm_ref,
-                boost::ref(_outermost_context),
                 endpoint_iterator
 			)
 		);
@@ -358,8 +353,8 @@ void StateNegotiating::connectHandler(
 
         byte_traits::native_string errmsg(error.message());
 
-        boost::mutex::scoped_lock lk(_outermost_context.machine_mutex);
-        _outermost_context.process_event(
+        boost::mutex::scoped_lock lk(cm_ref.ref().machine_mutex);
+        cm_ref.ref().process_event(
             EvtConnectReport(false, errmsg)
         );
     }
@@ -409,7 +404,7 @@ boost::statechart::result StateConnected::react(const EvtSendMsg& evt)
             &StateConnected::writeHandler,
             boost::asio::placeholders::error,
             boost::asio::placeholders::bytes_transferred,
-            boost::ref(outermost_context()),
+            ClientnodeMachine::CountedReference(outermost_context()),
             data
         )
     );
@@ -481,11 +476,11 @@ boost::statechart::result StateConnected::react(const EvtConnectRequest&)
 void StateConnected::writeHandler(
     const boost::system::error_code& error,
     std::size_t bytes_transferred,
-    outermost_context_type& _outermost_context,
+    ClientnodeMachine::CountedReference cm_ref,
     SegmentationLayer::dataptr_t data
 )
 {
-    _outermost_context.logstreams.infostream<<"Sending message finished"<<std::endl;
+    cm_ref.ref().logstreams.infostream<<"Sending message finished"<<std::endl;
 
 
     if (!error)
@@ -495,7 +490,7 @@ void StateConnected::writeHandler(
         rprt->send_state = true;
         rprt->reason = SendReport::SR_SEND_OK;
 
-        _outermost_context.signals.sendReport(rprt);
+        cm_ref.ref().signals.sendReport(rprt);
     }
     else
     {
@@ -512,10 +507,10 @@ void StateConnected::writeHandler(
         rprt->reason = SendReport::SR_CONNECTION_ERROR;
         rprt->reason_str = errmsg;
 
-        _outermost_context.signals.sendReport(rprt);
+        cm_ref.ref().signals.sendReport(rprt);
 
-        boost::mutex::scoped_lock lk(_outermost_context.machine_mutex);
-        _outermost_context.process_event(EvtDisconnected(errmsg));
+        boost::mutex::scoped_lock lk(cm_ref.ref().machine_mutex);
+        cm_ref.ref().process_event(EvtDisconnected(errmsg));
 
     }
 }
@@ -524,11 +519,10 @@ void StateConnected::receiveSegmentationHeaderHandler(
     const boost::system::error_code& error,
     std::size_t bytes_transferred,
     ClientnodeMachine::CountedReference cm_ref,
-    outermost_context_type& _outermost_context,
     byte_traits::byte_t rcvbuf[SegmentationLayer::header_length]
 )
 {
-    _outermost_context.logstreams.infostream<<"Reveived message"<<std::endl;
+    cm_ref.ref().logstreams.infostream<<"Reveived message"<<std::endl;
 
     // if there was an error,
     // tear down the connection by posting a disconnection event
@@ -541,8 +535,8 @@ void StateConnected::receiveSegmentationHeaderHandler(
 
         byte_traits::native_string errmsg(error.message());
 
-        boost::mutex::scoped_lock lk(_outermost_context.machine_mutex);
-        _outermost_context.process_event(EvtDisconnected(errmsg));
+        boost::mutex::scoped_lock lk(cm_ref.ref().machine_mutex);
+        cm_ref.ref().process_event(EvtDisconnected(errmsg));
     }
     else // if no error occured, try to decode the header
     {
@@ -566,14 +560,13 @@ const byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
 
             // start an asynchronous receive for the body
             async_read(
-                _outermost_context.socket,
+                cm_ref.ref().socket,
                 boost::asio::buffer(*body_buf),
                 boost::bind(
                     &StateConnected::receiveSegmentationBodyHandler,
                     boost::asio::placeholders::error,
                     boost::asio::placeholders::bytes_transferred,
                     cm_ref,
-                    boost::ref(_outermost_context),
                     body_buf
                 )
             );
@@ -581,13 +574,13 @@ const byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
         // on failure, report back to application
         catch (const std::exception& e)
         {
-            boost::mutex::scoped_lock lk(_outermost_context.machine_mutex);
-            _outermost_context.process_event(EvtDisconnected(e.what()));
+            boost::mutex::scoped_lock lk(cm_ref.ref().machine_mutex);
+            cm_ref.ref().process_event(EvtDisconnected(e.what()));
         }
         catch(...)
         {
-            boost::mutex::scoped_lock lk(_outermost_context.machine_mutex);
-            _outermost_context.process_event(EvtDisconnected("Unknown Error"));
+            boost::mutex::scoped_lock lk(cm_ref.ref().machine_mutex);
+            cm_ref.ref().process_event(EvtDisconnected("Unknown Error"));
         }
     }
 
@@ -598,7 +591,6 @@ void StateConnected::receiveSegmentationBodyHandler(
     const boost::system::error_code& error,
     std::size_t bytes_transferred,
     ClientnodeMachine::CountedReference cm_ref,
-    outermost_context_type& _outermost_context,
     SegmentationLayer::dataptr_t rcvbuf
 )
 {
@@ -611,16 +603,16 @@ void StateConnected::receiveSegmentationBodyHandler(
 		if (error == boost::asio::error::operation_aborted)
 			return;
 
-        boost::mutex::scoped_lock lk(_outermost_context.machine_mutex);
-        _outermost_context.process_event(EvtDisconnected(error.message()));
+        boost::mutex::scoped_lock lk(cm_ref.ref().machine_mutex);
+        cm_ref.ref().process_event(EvtDisconnected(error.message()));
     }
     else // if no error occured, report the received message to the application
     {
         SegmentationLayer segmlayer(rcvbuf);
 
         {
-            boost::mutex::scoped_lock lk(_outermost_context.machine_mutex);
-            _outermost_context.process_event(EvtRcvdMessage(segmlayer));
+            boost::mutex::scoped_lock lk(cm_ref.ref().machine_mutex);
+            cm_ref.ref().process_event(EvtRcvdMessage(segmlayer));
         }
         // start a new receive for the next message
 
@@ -630,14 +622,13 @@ void StateConnected::receiveSegmentationBodyHandler(
 
         // start an asynchronous read to receive the header of the first packet
         async_read(
-            _outermost_context.socket,
+            cm_ref.ref().socket,
             boost::asio::buffer(rcvbuf, SegmentationLayer::header_length),
             boost::bind(
                 &StateConnected::receiveSegmentationHeaderHandler,
                 boost::asio::placeholders::error,
                 boost::asio::placeholders::bytes_transferred,
                 cm_ref,
-                boost::ref(_outermost_context),
                 rcvbuf
             )
         );
