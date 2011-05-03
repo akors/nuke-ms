@@ -7,3 +7,7 @@ unset(CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 
 add_subdirectory(common)
 
+add_custom_target(testsuite DEPENDS
+    testsuite-common
+)
+
