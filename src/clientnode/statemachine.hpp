@@ -167,6 +167,8 @@ struct ClientnodeMachine :
         StateWaiting
     >
 {
+    boost::shared_ptr<boost::asio::io_service> _io_service;
+
     enum {thread_timeout = 3000u};
 
     /** Callback signals that will be used to inform the application */
@@ -176,7 +178,7 @@ struct ClientnodeMachine :
 	LoggingStreams logstreams;
 
     /** I/O Service Object */
-    boost::asio::io_service io_service;
+    boost::asio::io_service& io_service;
 
     /** Socket used for the connection */
     boost::asio::ip::tcp::socket socket;

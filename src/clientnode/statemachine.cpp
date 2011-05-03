@@ -27,7 +27,8 @@ using namespace boost::asio::ip;
 ClientnodeMachine::ClientnodeMachine(ClientNodeSignals&  _signals,
 	LoggingStreams logstreams_, boost::mutex& _machine_mutex
 )
-    : signals(_signals), socket(io_service),
+    : signals(_signals), _io_service(new boost::asio::io_service),
+        io_service(*_io_service), socket(io_service),
         logstreams(logstreams_), machine_mutex(_machine_mutex)
 {}
 
@@ -40,10 +41,7 @@ void ClientnodeMachine::startIOOperations()
 {
     // start a new thread that processes all asynchronous operations
     io_thread = boost::thread(
-        boost::bind(
-            &boost::asio::io_service::run,
-            &outermost_context().io_service
-        )
+        boost::bind(&boost::asio::io_service::run, &io_service)
     );
 }
 
