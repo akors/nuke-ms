@@ -28,6 +28,7 @@
 #define STATEMACHINE_HPP
 
 #include <boost/thread/thread.hpp>
+#include <boost/thread/condition_variable.hpp>
 #include <boost/asio.hpp>
 #include <boost/statechart/state_machine.hpp>
 #include <boost/statechart/state.hpp>
@@ -38,6 +39,7 @@
 #include "msglayer.hpp"
 #include "clientnode/logstreams.hpp"
 #include "clientnode/sigtypes.hpp"
+#include "refcounter.hpp"
 
 namespace nuke_ms
 {
@@ -146,9 +148,9 @@ struct EvtRcvdMessage :
     {}
 };
 
+
 // Forward declaration of the Initial State
 struct StateWaiting;
-
 
 
 /** The Protoc State Machine.
@@ -161,20 +163,40 @@ struct StateWaiting;
 * thread. Refer to the documention of Boost.Statechart for details on how to
 * create and use this class, and how to dispatch events.
 */
-struct ClientnodeMachine :
+class ClientnodeMachine :
     public boost::statechart::state_machine<
         ClientnodeMachine,
         StateWaiting
-    >
+    >,
+    public ReferenceCounter<ClientnodeMachine>
+
+#ifdef NUKE_MS_REFCOUNTER_NOT_MULTITHREADED
+#   error "class ClientnodeMachine does not make sense with a single-threaded class ReferenceCounter"
+#endif
 {
     boost::shared_ptr<boost::asio::io_service> _io_service;
 
+    /** A thread object for all asynchronouy I/O operations. It will start in
+    not-a-thread state. */
+    boost::thread io_thread;
+
+    /**
+     * Condition that is true when all currently invoked handlers have returned
+    */
+    boost::condition_variable returned_condition;
+
+    /** Callback that will be called when all handlers have returned */
+    void on_returned()
+    { returned_condition.notify_all(); }
+
+
+public:
     enum {thread_timeout = 3000u};
 
     /** Callback signals that will be used to inform the application */
     ClientNodeSignals& signals;
 
-	/** The Streams used for message output */
+    /** The Streams used for message output */
 	LoggingStreams logstreams;
 
     /** I/O Service Object */
@@ -185,10 +207,6 @@ struct ClientnodeMachine :
 
     /** A reference to the mutex that is needed to access this machine */
     boost::mutex& machine_mutex;
-
-    /** A thread object for all asynchronouy I/O operations. It will start in
-    not-a-thread state. */
-    boost::thread io_thread;
 
 
     /** Constructor.
@@ -214,6 +232,7 @@ struct ClientnodeMachine :
     * they are running.
     */
     void stopIOOperations();
+
 };
 
 
@@ -267,6 +286,7 @@ struct StateNegotiating :
     static void resolveHandler(
         const boost::system::error_code& error,
         boost::asio::ip::tcp::resolver::iterator endpoint_iterator,
+        ClientnodeMachine::CountedReference cm_ref,
         outermost_context_type& _outermost_context,
         boost::shared_ptr<boost::asio::ip::tcp::resolver> /* resolver */,
         boost::shared_ptr<boost::asio::ip::tcp::resolver::query> /* query */
@@ -275,8 +295,9 @@ struct StateNegotiating :
 
     static void connectHandler(
         const boost::system::error_code& error,
+        ClientnodeMachine::CountedReference cm_ref,
         outermost_context_type& _outermost_context,
-        boost::asio::ip::tcp::resolver::iterator endpoint_iterator		
+        boost::asio::ip::tcp::resolver::iterator endpoint_iterator
     );
 
 
@@ -318,6 +339,7 @@ struct StateConnected :
     static void receiveSegmentationHeaderHandler(
         const boost::system::error_code& error,
         std::size_t bytes_transferred,
+        ClientnodeMachine::CountedReference cm_ref,
         outermost_context_type& _outermost_context,
         byte_traits::byte_t rcvbuf[SegmentationLayer::header_length]
     );
@@ -325,6 +347,7 @@ struct StateConnected :
     static void receiveSegmentationBodyHandler(
         const boost::system::error_code& error,
         std::size_t bytes_transferred,
+        ClientnodeMachine::CountedReference cm_ref,
         outermost_context_type& _outermost_context,
         SegmentationLayer::dataptr_t rcvbuf
     );
