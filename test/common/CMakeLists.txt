@@ -4,19 +4,24 @@
 
 
 add_custom_target(testsuite-common DEPENDS
-    ownership
-    msglayer
-    byteorder
+    testownership
+    testmsglayer
+    testbyteorder
 )
 
 # Add top level include directory
 include_directories(${nuke-ms_SOURCE_DIR}/include)
 
-add_executable(ownership testownership.cpp)
-target_link_libraries(ownership nuke-ms-common)
 
-add_executable(msglayer testmsglayer.cpp byteprinter.cpp)
-target_link_libraries(msglayer nuke-ms-common)
 
-add_executable(byteorder testbyteorder.cpp byteprinter.cpp)
+add_executable(testownership testownership.cpp)
+target_link_libraries(testownership nuke-ms-common)
+add_test(ownership testownership)
+
+add_executable(testmsglayer testmsglayer.cpp byteprinter.cpp)
+target_link_libraries(testmsglayer nuke-ms-common)
+add_test(msglayer testmsglayer)
+
+add_executable(testbyteorder testbyteorder.cpp byteprinter.cpp)
+add_test(byteorder testbyteorder)
 

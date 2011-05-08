@@ -6,6 +6,8 @@ cmake_minimum_required(VERSION 2.6)
 # we are compiling nuke-ms, and it's C++-Code
 project(nuke-ms)
 
+enable_testing()
+
 # Add source directory, place resulting files in build directory
 add_subdirectory(src)
 
