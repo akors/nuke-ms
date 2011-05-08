@@ -11,7 +11,7 @@ option(BUILD_SHARED_LIBS
     "Build shared libraries instead of linking statically" OFF)
 
 option(BOOSTASIO_OWNLIB
-    "Build Boost.Asio as a standalone library" OFF)
+    "Build Boost.Asio as a standalone library" ON)
 
 
 # We need boost for all executeables
