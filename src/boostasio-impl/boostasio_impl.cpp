@@ -17,5 +17,10 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// including Boost.Asio magic
-#include <boost/asio/impl/src.hpp>
+#include <boost/version.hpp>
+
+#if (BOOST_VERSION == 104400)
+#	include <boost/asio/impl/src.cpp>
+#elif (BOOST_VERSION >= 104500)
+#	include <boost/asio/impl/src.hpp>
+#endif // if (BOOST_VERSION == 104400)
