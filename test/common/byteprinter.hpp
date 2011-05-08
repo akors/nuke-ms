@@ -64,13 +64,16 @@ std::ostream& operator << (std::ostream& os,
     const HexPrinter<ByteSequenceIterator>& p)
 {
     ByteSequenceIterator begin = p.begin;
+    std::ios_base::fmtflags oldfmtflags = os.flags();
 
     for (; begin < p.end; ++begin)
     {
-        std::cout.width(2);
-        std::cout<<std::hex<<std::right<<std::setfill('0')<<
-            static_cast<unsigned>(*begin)<<' ';
+        os.width(2);
+        os<<std::hex<<std::right<<
+            std::setfill('0')<<static_cast<unsigned>(*begin)<<' ';
     }
+
+    os.flags(oldfmtflags);
     return os;
 }
 
