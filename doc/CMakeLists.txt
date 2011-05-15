@@ -7,8 +7,12 @@ cmake_minimum_required(VERSION 2.6)
 find_package(Doxygen)
 
 if(DOXYGEN_FOUND)
+    # strip absolute project path from file location strings
+    set(DOXYGEN_STRIP_PATH "${PROJECT_SOURCE_DIR}")
+
+
     # feed source directory to doxygen
-    set(DOXYGEN_INPUT_DIR ${PROJECT_SOURCE_DIR}/src)
+    set(DOXYGEN_INPUT_DIR "${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/include")
 
     # output to html dir
     set(DOXYGEN_OUTPUT_DIR ${PROJECT_BINARY_DIR})
