@@ -61,6 +61,23 @@ class TestModule
     TestModule(const TestModule& other);
 
 public:
+    ~TestModule()
+    {
+        std::size_t testname_length  = std::strlen(testname);
+
+        if (17 + testname_length < 80)
+            std::cout<<&linestr[40+(17 + testname_length)/2+(17 + testname_length)%2]<<
+                "  "<<testname<<" test "<<(teststate ? "FAILED!  " : "passed.  ")<<
+                &linestr[40+(17 + testname_length)/2]<<
+                std::endl;
+        else
+            std::cout<<linestr<<
+                "  "<<testname<<" test "<<
+                (teststate ? "FAILED!  " : "passed.  ")
+                <<'\n'<<linestr<<std::endl;
+
+    }
+
     /** Static const reference to an instance of this class */
     static TestModule& test_module;
 
@@ -87,19 +104,6 @@ public:
 
     int conclude_test()
     {
-        std::size_t testname_length  = std::strlen(testname);
-
-        if (17 + testname_length < 80)
-            std::cout<<&linestr[40+(17 + testname_length)/2+(17 + testname_length)%2]<<
-                "  "<<testname<<" test "<<(teststate ? "FAILED!  " : "passed.  ")<<
-                &linestr[40+(17 + testname_length)/2]<<
-                std::endl;
-        else
-            std::cout<<linestr<<
-                "  "<<testname<<" test "<<
-                (teststate ? "FAILED!  " : "passed.  ")
-                <<'\n'<<linestr<<std::endl;
-
         return teststate;
     }
 };
