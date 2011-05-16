@@ -5,7 +5,7 @@
 
 add_custom_target(testsuite-common DEPENDS
     test_ownership
-    test_msglayer
+    test_stringwraplayer
     test_byteorder
 )
 
@@ -18,9 +18,9 @@ add_executable(test_ownership test_ownership.cpp)
 target_link_libraries(test_ownership nuke-ms-common)
 add_test(ownership test_ownership)
 
-add_executable(test_msglayer test_msglayer.cpp byteprinter.cpp)
-target_link_libraries(test_msglayer nuke-ms-common)
-add_test(msglayer test_msglayer)
+add_executable(test_stringwraplayer test_stringwraplayer.cpp byteprinter.cpp)
+target_link_libraries(test_stringwraplayer nuke-ms-common)
+add_test(stringwraplayer test_stringwraplayer)
 
 add_executable(test_byteorder test_byteorder.cpp byteprinter.cpp)
 add_test(byteorder test_byteorder)
