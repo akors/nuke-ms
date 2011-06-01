@@ -14,14 +14,6 @@ option(BOOSTASIO_OWNLIB
     "Build Boost.Asio as a standalone library" ON)
 
 
-# We need boost for all executeables
-set(Boost_USE_MULTITHREADED ON)
-find_package( Boost 1.39.0 REQUIRED thread system)
-
-# Add Boost header and library directories
-include_directories(${Boost_INCLUDE_DIRS})
-link_directories(${Boost_LIBRARY_DIRS})
-
 # Add top level include directory
 include_directories(${nuke-ms_SOURCE_DIR}/include)
 

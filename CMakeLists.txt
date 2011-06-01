@@ -8,6 +8,16 @@ project(nuke-ms)
 
 enable_testing()
 
+
+# We need boost for all executeables
+set(Boost_USE_MULTITHREADED ON)
+find_package( Boost 1.39.0 REQUIRED thread system)
+
+# Add Boost header and library directories
+include_directories(${Boost_INCLUDE_DIRS})
+link_directories(${Boost_LIBRARY_DIRS})
+
+
 # Add source directory, place resulting files in build directory
 add_subdirectory(src)
 
