@@ -225,19 +225,13 @@ class SerializedData;
 * the derived class from serialized data. If this data is malformed, the
 * constructor should throw an instance of MsgLayerError.
 */
+template <typename DerivedType>
 class BasicMessageLayer
 {
 public:
-    typedef boost::shared_ptr<BasicMessageLayer> ptr_t; 
-    typedef boost::shared_ptr<BasicMessageLayer> const_ptr_t;
     typedef boost::shared_ptr<byte_traits::byte_sequence> dataptr_t;
-
     typedef byte_traits::byte_sequence::iterator data_it;
     typedef byte_traits::byte_sequence::const_iterator const_data_it;
-
-    /** Virtual destructor */
-    virtual ~BasicMessageLayer()
-    {}
 
     /** Retrieve the serialized size.
      * Returns the length of the returned sequence of a successive call to
@@ -245,38 +239,35 @@ public:
      *
      * @return The number of bytes the serialized byte sequence would have.
     */
-    virtual std::size_t size() const = 0;
+    std::size_t size() const
+    {
+        return DerivedType::size();
+    }
 
 
     /** Fill a buffer with the serialized version of this object.
     * This function serializes this layer (and its upper layers) and writes
     * the bytes into a buffer that is pointed to by buffer.
     * The buffer has to have at least the size that is returned by the
-    * size() functions. Beware! No checks will be performed
+    * size() function. Beware! No checks will be performed
     * to assure proper buffer size. Use the function size() to
     * obtain the minimal required size.
     *
+    * @tparam ByteOutputIterator
     * @param buffer An iterator pointing to a range in the buffer that will be
     * filled
+    *
     * @returns An iterator pointing past the filled range in the buffer. This
     * is the same iterator as buffer but it is incremented size()
     * times.
     */
-    virtual data_it fillSerialized(data_it buffer) const= 0;
-
-    /** Retrieve serialized version of the current message layer.
-     * Ensures that an appropriate amount of memory is allocated and writes a
-     * serialized version of the current message layer to the memory location.
-     *
-     * @return Serialized version of current message layer, holding ownership
-     * of the underlying _memblock
-    */
-    virtual SerializedData getSerializedData() const;
+    template <typename ByteOutputIterator>
+    ByteOutputIterator fillSerialized(ByteOutputIterator it) const
+    { return DerivedType::fillSerialized(it); }
 };
 
 /** Alias for a Memory ownership of a boost::shared_ptr pointer */
-typedef MemoryOwnership<BasicMessageLayer::dataptr_t> DataOwnership;
-
+typedef MemoryOwnership<boost::shared_ptr<byte_traits::byte_sequence> > DataOwnership;
 
 
 /** Message of an unknown message layer.
@@ -285,15 +276,13 @@ typedef MemoryOwnership<BasicMessageLayer::dataptr_t> DataOwnership;
 * It provides a possibility to access the contained data to determine the real
 * message layer class.
 */
-class SerializedData : public BasicMessageLayer
+class SerializedData : public BasicMessageLayer<SerializedData>
 {
-    DataOwnership memblock; /**< Ownership to the memory block */
-    const_data_it begin_it; /**< Iterater to the beginning data */
-    std::size_t datasize; /**< Size of the data */
+    DataOwnership _memblock; /**< Ownership to the memory block */
+    const_data_it _begin_it; /**< Iterater to the beginning data */
+    std::size_t _datasize; /**< Size of the data */
 
 public:
-    typedef boost::shared_ptr<SerializedData> ptr_t;
-
 
     /** Constructor.
     * Constructs a new object and passes memory ownership, data iterator and
@@ -308,27 +297,24 @@ public:
     * @param _datasize size of the message in bytes
     */
     SerializedData(
-        DataOwnership _memblock,
-        const_data_it _begin_it,
-        std::size_t _datasize
+        DataOwnership memblock,
+        const_data_it begin_it,
+        std::size_t datasize
     )
-        : memblock(_memblock), begin_it(_begin_it), datasize(_datasize)
+        : _memblock(memblock), _begin_it(begin_it), _datasize(datasize)
     {}
 
     // overriding base class version
-    virtual std::size_t size() const;
+    std::size_t size() const
+    { return _datasize; }
 
     // overriding base class version
-    virtual data_it fillSerialized(data_it buffer) const;
-
-    /** Retrieve serialized version of the current message layer.
-     * As opposed to the base class version of this method, this version simply
-     * returns a copy of this object.
-     *
-     * @return Serialized version of current message layer, holding ownership
-     * of the underlying _memblock
-    */
-    virtual SerializedData getSerializedData() const;
+    template <typename ByteOutputIterator>
+    ByteOutputIterator fillSerialized(ByteOutputIterator it) const
+    {
+        // copy the maintained data into the specified buffer
+        return std::copy(_begin_it, _begin_it + _datasize, it);
+    }
 
     /** Get iterator to message data.
     * This function can be used to access the buffer directly, either to copy
@@ -340,7 +326,7 @@ public:
     * SerializedData() or this object is alive.
     */
     const_data_it getDataIterator() const
-    { return begin_it; }
+    { return _begin_it; }
 
     /** Get ownership to message data.
     * This function returns the ownership object that ensures that the data
@@ -350,56 +336,10 @@ public:
     * getDataIterator() is valid.
     */
     DataOwnership getOwnership() const
-    { return memblock; }
+    { return _memblock; }
 };
 
-
-/** Message Layer containing another layer
- * This abstract base class is used to denote a non-atomic message. This means
- * this class holds a reference to an upper layer message.
-*/
-class ContainingLayer : public BasicMessageLayer
-{
-protected:
-    BasicMessageLayer::ptr_t upper_layer; /**< Message of an upper layer */
-
-    /** Constructor.
-     * @param _upper_layer Message of an upper layer this message holds
-    */
-    ContainingLayer(BasicMessageLayer::ptr_t _upper_layer)
-        : upper_layer(_upper_layer)
-    {}
-
-public:
-
-    /** Get upper layer message.
-     * @note it might not be usefull to call this function on objects coming
-     * from the application. You would lose type information and have to create
-     * the upper layer message from a SerializedData object.
-     *
-     * @return Pointer to the upper layer message
-    */
-    BasicMessageLayer::ptr_t getUpperLayer()
-    {
-        return upper_layer;
-    }
-
-    /** Get upper layer message.
-     * @note it might not be usefull to call this function on objects coming
-     * from the application. You would lose type information and have to create
-     * the upper layer message from a SerializedData object.
-     *
-     * @return Pointer to the upper layer message
-    */
-    BasicMessageLayer::const_ptr_t getUpperLayer() const
-    {
-        return upper_layer;
-    }
-
-    /** Virtual destructor */
-    virtual ~ContainingLayer()
-    {}
-};
+#if 0
 
 /** Layer ensuring correct segmentation of messages
 *
@@ -413,7 +353,9 @@ public:
 * 3:      Zero, Value 0x0
 *
 */
-class SegmentationLayer : public ContainingLayer
+template <typename InnerLayer>
+class SegmentationLayer
+    : public BasicMessageLayer<SegmentationLayer<InnerLayer> >
 {
     std::size_t serializedsize; /**< size of the data for fast access */
 
@@ -485,7 +427,6 @@ public:
 };
 
 
-
 template <typename InputIterator>
 SegmentationLayer::HeaderType
 SegmentationLayer::decodeHeader(InputIterator headerbuf)
@@ -509,29 +450,28 @@ SegmentationLayer::decodeHeader(InputIterator headerbuf)
 }
 
 
+#endif
 
 
 /** Layer wrapping a string.
 * This class is a simple wrapper around a wstring message.
 * No header is prepended to the message.
 */
-class StringwrapLayer : public BasicMessageLayer
+class StringwrapLayer : public BasicMessageLayer<StringwrapLayer>
 {
+    typedef byte_traits::msg_string StringType;
+
     /** The actual text message */
-    byte_traits::msg_string message_string;
+    StringType _message_string;
 
 public:
-    /** Typedef for this shared pointer*/
-    typedef boost::shared_ptr<StringwrapLayer> ptr_t;
-
-
     /** Constructor.
     * Create a StringwrapLayer message from an byte_traits::msg_string.
     *
     * @param msg msg The string the message shall contain.
     */
-    StringwrapLayer(const byte_traits::msg_string& msg) throw ()
-        : message_string(msg)
+    StringwrapLayer(const StringType& msg) throw ()
+        : _message_string(msg)
     {}
 
     /** Constructor.
@@ -549,10 +489,14 @@ public:
     StringwrapLayer(const SerializedData& msg);
 
     // overriding base class version
-    virtual std::size_t size() const;
+    std::size_t size() const
+    {
+        return _message_string.length() *  sizeof(StringType::value_type);
+    }
 
     // overriding base class version
-    virtual data_it fillSerialized(data_it buffer) const;
+    template <typename ByteOutputIterator>
+    ByteOutputIterator fillSerialized(ByteOutputIterator it) const;
 
     /** Return the string contained in the layer message.
     *
@@ -564,8 +508,8 @@ public:
     *
     * @returns A constant reference to the string contained in this message
     */
-    const byte_traits::msg_string& getString() const
-    { return message_string; }
+    const StringType& getString() const
+    { return _message_string; }
 
     /** Return the string contained in the layer message.
     *
@@ -577,9 +521,25 @@ public:
     *
     * @returns A constant reference to the string contained in this message
     */
-    operator const byte_traits::msg_string& () const
-    { return message_string; }
+    operator const StringType& () const
+    { return _message_string; }
 };
+
+
+template <typename ByteOutputIterator>
+ByteOutputIterator StringwrapLayer::fillSerialized(ByteOutputIterator it) const
+{
+    // an iterator to the message of string type
+    StringType::const_iterator in_iter = _message_string.begin();
+
+    // write all bytes of one character into the buffer, advance the output
+    // iterator
+    for (; in_iter < _message_string.end(); in_iter++)
+        it = writebytes(it, to_netbo(*in_iter));
+
+    return it;
+}
+
 
 /**@}*/ // addtogroup common
 

@@ -25,55 +25,7 @@
 using namespace nuke_ms;
 
 
-
-
-///////////////////////////// BasicMessageLayer ////////////////////////////////
-
-SerializedData BasicMessageLayer::getSerializedData() const
-{
-    std::size_t serializedsize = this->size();
-
-    // allocate buffer with appropriate size
-    dataptr_t data(new byte_traits::byte_sequence(serializedsize));
-
-    // write serialized version of this layer into the buffer
-    this->fillSerialized(data->begin());
-
-    return SerializedData(data, data->begin(),serializedsize);
-}
-
-
-
-
-/////////////////////////////// SerializedData /////////////////////////////////
-
-
-std::size_t SerializedData::size() const
-{
-    // return the size of the memory block
-    return datasize;
-}
-
-
-BasicMessageLayer::data_it
-SerializedData::fillSerialized(data_it buffer) const
-{
-    // copy the maintained data into the specified buffer
-    return std::copy(
-        begin_it,
-        begin_it + datasize,
-        buffer
-    );
-}
-
-
-SerializedData SerializedData::getSerializedData() const
-{
-    // this is a no-op, just copy the iterators and memory block
-    return *this;
-}
-
-
+#if 0
 //////////////////////////// SegmentationLayer /////////////////////////////////
 
 SegmentationLayer::SegmentationLayer(BasicMessageLayer::dataptr_t data)
@@ -112,7 +64,7 @@ SegmentationLayer::fillSerialized(BasicMessageLayer::data_it buffer) const
     return upper_layer->fillSerialized(buffer);
 }
 
-
+#endif
 
 ////////////////////////////// StringwrapLayer /////////////////////////////////
 
@@ -122,16 +74,16 @@ StringwrapLayer::StringwrapLayer(const SerializedData& msg)
     const_data_it data_it = msg.getDataIterator();
 
     // bail out if the string is not aligned
-    if (datasize % sizeof(byte_traits::msg_string::value_type) !=0)
+    if (datasize % sizeof(StringType::value_type) !=0)
         throw MsgLayerError("Unaligned packet");
 
     // set message_string to the proper size
-    message_string.resize((datasize)/sizeof(byte_traits::msg_string::value_type));
+    _message_string.resize((datasize)/sizeof(StringType::value_type));
 
     // iterator to the message_string
-    byte_traits::msg_string::iterator out_iter = message_string.begin();
+    StringType::iterator out_iter = _message_string.begin();
 
-    byte_traits::msg_string::value_type tmpval;
+    StringType::value_type tmpval;
 
     // iterate through all bytes in the sequence
     for ( const_data_it it = data_it; it < data_it + datasize; )
@@ -142,27 +94,4 @@ StringwrapLayer::StringwrapLayer(const SerializedData& msg)
     }
 
 }
-
-
-std::size_t StringwrapLayer::size() const
-{
-    return message_string.length() * sizeof(byte_traits::msg_string::value_type);
-}
-
-BasicMessageLayer::data_it
-StringwrapLayer::fillSerialized(BasicMessageLayer::data_it buffer) const
-{
-    // an iterator to the message of string type
-    byte_traits::msg_string::const_iterator in_iter = message_string.begin();
-
-    // write all bytes of one character into the buffer, advance the output
-    // iterator
-    for (; in_iter < message_string.end(); in_iter++)
-        buffer = writebytes(buffer, to_netbo(*in_iter));
-
-    return buffer;
-}
-
-
-
 

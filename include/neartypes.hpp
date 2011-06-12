@@ -90,7 +90,7 @@ struct UniqueUserID
     { return std::copy(id, id+id_length, buffer); }
 };
 
-
+#if 0
 /** Class representing a user message
  *
  * This class shall be used, whenever a client sends a message to another client
@@ -183,6 +183,7 @@ struct NearUserMessage : public ContainingLayer
         return StringwrapLayer(upper_layer->getSerializedData());
     }
 };
+#endif
 
 /**@}*/ // addtogroup common
 

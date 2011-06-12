@@ -24,7 +24,7 @@ using namespace nuke_ms;
 
 const UniqueUserID UniqueUserID::user_id_none;
 
-
+#if 0
 NearUserMessage::NearUserMessage(const SerializedData& data)
     : ContainingLayer(BasicMessageLayer::ptr_t())
 {
@@ -90,3 +90,4 @@ NearUserMessage::fillSerialized(BasicMessageLayer::data_it buffer) const
     // the rest is the message string
     return upper_layer->fillSerialized(buffer);
 }
+#endif
