@@ -22,6 +22,9 @@
 
 #include <iostream>
 #include <utility>
+#include <vector>
+#include <list>
+#include <deque>
 
 #include "msglayer.hpp"
 #include "testutils.hpp"
@@ -30,6 +33,13 @@
 
 DECLARE_TEST("class StringWrapLayer");
 
+
+struct ConvertibleToInt {
+    int value;
+    ConvertibleToInt() {}
+    ConvertibleToInt(int _value) : value(_value) {}
+    operator int () { return value; }
+};
 
 using namespace nuke_ms;
 
@@ -54,17 +64,17 @@ int main()
 
 
     // get serialized version
-    byte_traits::byte_sequence bytewise;
-    bytewise.resize(stringwrap_down.size());
+    byte_traits::byte_sequence bytewise(stringwrap_down.size());
     stringwrap_down.fillSerialized(bytewise.begin());
 
     std::cout<<"Serialized StringwrapLayer (size "<<bytewise.size()<<"):\n"<<
         hexprint(bytewise.begin(), bytewise.end())<<'\n';
 
-    // create a string from this data. It still has to be correct, even after being serialized
+    // create a string from this data.
+    // It still has to be correct, even after being serialized
     {
         // create raw byte array
-        byte_traits::byte_t* str_raw =new byte_traits::byte_t[bytewise.size()];
+        byte_traits::byte_t* str_raw = new byte_traits::byte_t[bytewise.size()];
 
         // copy data
         std::copy(bytewise.begin(), bytewise.end(), str_raw);
@@ -72,7 +82,7 @@ int main()
         // create string
         byte_traits::msg_string serialized_string(
             reinterpret_cast<byte_traits::msg_string::value_type*>(str_raw),
-            bytewise.size()
+            bytewise.size() / sizeof(byte_traits::msg_string::value_type)
         );
         std::cout<<"serialized_string: \""<<serialized_string<<"\"\n";
 
@@ -80,6 +90,22 @@ int main()
 
         delete[] str_raw;
     }
+
+    // test fillSerialized function with vector of char iterators
+    std::vector<char> char_vec(stringwrap_down.size());
+    stringwrap_down.fillSerialized(char_vec.begin());
+    TEST_ASSERT(std::equal(bytewise.begin(), bytewise.end(), char_vec.begin()));
+
+    // test fillSerialized function with list of int iterators
+    std::list<int> int_list(stringwrap_down.size());
+    stringwrap_down.fillSerialized(int_list.begin());
+    TEST_ASSERT(std::equal(bytewise.begin(), bytewise.end(), int_list.begin()));
+
+    // test fillSerialized function with deque of ConvertibleToInt iterators
+    std::deque<ConvertibleToInt> convint_list(stringwrap_down.size());
+    stringwrap_down.fillSerialized(convint_list.begin());
+    TEST_ASSERT(std::equal(bytewise.begin(), bytewise.end(), convint_list.begin()));
+
 
     SerializedData ser_data(DataOwnership(), bytewise.begin(), bytewise.size());
 

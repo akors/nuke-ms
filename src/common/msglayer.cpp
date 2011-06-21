@@ -83,7 +83,7 @@ StringwrapLayer::StringwrapLayer(const SerializedData& msg)
     // iterator to the message_string
     StringType::iterator out_iter = _message_string.begin();
 
-    StringType::value_type tmpval;
+    std::remove_reference<decltype(*out_iter)>::type tmpval;
 
     // iterate through all bytes in the sequence
     for ( const_data_it it = data_it; it < data_it + datasize; )

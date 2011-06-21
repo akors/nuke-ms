@@ -112,8 +112,8 @@
 
 #include <stdexcept>
 #include <limits>
-
-#include <boost/shared_ptr.hpp>
+#include <memory>
+#include <type_traits>
 
 #include "bytes.hpp"
 
@@ -229,7 +229,6 @@ template <typename DerivedType>
 class BasicMessageLayer
 {
 public:
-    typedef boost::shared_ptr<byte_traits::byte_sequence> dataptr_t;
     typedef byte_traits::byte_sequence::iterator data_it;
     typedef byte_traits::byte_sequence::const_iterator const_data_it;
 
@@ -266,8 +265,8 @@ public:
     { return DerivedType::fillSerialized(it); }
 };
 
-/** Alias for a Memory ownership of a boost::shared_ptr pointer */
-typedef MemoryOwnership<boost::shared_ptr<byte_traits::byte_sequence> > DataOwnership;
+/** Alias for a Memory ownership of a std::shared_ptr pointer */
+typedef MemoryOwnership<std::shared_ptr<byte_traits::byte_sequence>> DataOwnership;
 
 
 /** Message of an unknown message layer.
@@ -313,7 +312,7 @@ public:
     ByteOutputIterator fillSerialized(ByteOutputIterator it) const
     {
         // copy the maintained data into the specified buffer
-        return std::copy(_begin_it, _begin_it + _datasize, it);
+        return std::copy(_begin_it, std::advance(_begin_it, _datasize), it);
     }
 
     /** Get iterator to message data.
@@ -340,6 +339,10 @@ public:
 };
 
 #if 0
+struct SegmentationLayerBase
+{
+
+};
 
 /** Layer ensuring correct segmentation of messages
 *
@@ -361,7 +364,7 @@ class SegmentationLayer
 
 public:
     /** Type of pointer to this class. */
-    typedef boost::shared_ptr<SegmentationLayer> ptr_t;
+    typedef std::shared_ptr<SegmentationLayer> ptr_t;
 
     enum { LAYER_ID = 0x80  /**< Layer Identifier */ };
     enum { header_length = 4 };
@@ -396,7 +399,7 @@ public:
     * message to the base class Pointer, BasicMessageLayer::ptr_t. Otherwise
     * the overload with SegmentationLayer(BasicMessageLayer::dataptr_t)
     * will not resolve. This is because overloads of functions with different
-    * instantiations of boost::shared_ptr<> do not resolve with base class
+    * instantiations of std::shared_ptr<> do not resolve with base class
     * pointers.
     *
     * @param _upper_layer The message of the upper layer you want to send.
@@ -449,9 +452,7 @@ SegmentationLayer::decodeHeader(InputIterator headerbuf)
     return headerdata;
 }
 
-
 #endif
-
 
 /** Layer wrapping a string.
 * This class is a simple wrapper around a wstring message.
@@ -472,6 +473,14 @@ public:
     */
     StringwrapLayer(const StringType& msg) throw ()
         : _message_string(msg)
+    {}
+
+    /** Move constructor.
+     * Create a StringwrapLayer message from a temporary StringwrapLayer object
+     * @param other The other StringwrapLayer object you want to steal from
+    */
+    StringwrapLayer(StringwrapLayer&& other)
+        : _message_string(std::move(other._message_string))
     {}
 
     /** Constructor.
@@ -516,7 +525,7 @@ public:
     * This function returns a constant reference to the internal string message.
     * When using this string object bear in mind that this is only a reference,
     * not a copy. This reference is valid as long as *this is alive.
-    * If you need to pass this string on, copy construvt a new instance from
+    * If you need to pass this string on, copy construct a new instance from
     * this reference.
     *
     * @returns A constant reference to the string contained in this message
@@ -529,13 +538,10 @@ public:
 template <typename ByteOutputIterator>
 ByteOutputIterator StringwrapLayer::fillSerialized(ByteOutputIterator it) const
 {
-    // an iterator to the message of string type
-    StringType::const_iterator in_iter = _message_string.begin();
-
     // write all bytes of one character into the buffer, advance the output
     // iterator
-    for (; in_iter < _message_string.end(); in_iter++)
-        it = writebytes(it, to_netbo(*in_iter));
+    for (auto in_it  = _message_string.begin(); in_it < _message_string.end(); in_it++)
+        it = writebytes(it, to_netbo(*in_it));
 
     return it;
 }
