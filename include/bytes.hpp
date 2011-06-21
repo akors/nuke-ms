@@ -20,23 +20,23 @@
 /** @file bytes.hpp
  * @ingroup common
  * @brief Datatypes and functions for handling bytewise data.
- * 
- * This file defines sizes and implementations of binary (bytewise) datatypes 
+ *
+ * This file defines sizes and implementations of binary (bytewise) datatypes
  * used in nuke-ms uniformly across platforms and modules.
- * 
- * When encoding data that is to be transmitted over the network, it is 
- * neccessary that the encoding is the same on any platform. To ensure this 
- * compatibility, any data that will be transmitted shall use the datatype 
+ *
+ * When encoding data that is to be transmitted over the network, it is
+ * neccessary that the encoding is the same on any platform. To ensure this
+ * compatibility, any data that will be transmitted shall use the datatype
  * definitions in this file instead of native datatypes.
- * The definitions for bytewise datatypes can be found in the 
+ * The definitions for bytewise datatypes can be found in the
  * @ref nuke_ms::byte_traits class.
- * 
- * To ensure the correct encoding of integer values across platforms with 
- * different MSB/LSB encodings, all integers shall be converted using the 
- * to_netbo() and to_hostbo() functions before sending or using the integer 
+ *
+ * To ensure the correct encoding of integer values across platforms with
+ * different MSB/LSB encodings, all integers shall be converted using the
+ * to_netbo() and to_hostbo() functions before sending or using the integer
  * value.
- * 
- * Additional routines for reading and writing raw sequences of bytes to/from 
+ *
+ * Additional routines for reading and writing raw sequences of bytes to/from
  * POD variables are provided by the functions readbytes() and writebytes().
 */
 
@@ -47,7 +47,7 @@
 #include <algorithm>
 #include <string>
 #include <vector>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 
 /** General namespace for the Nuclear Messaging System project */
 namespace nuke_ms
@@ -63,19 +63,19 @@ namespace nuke_ms
 struct byte_traits
 {
     /** The type of the smallest adressable data unit in memory */
-    typedef boost::uint8_t byte_t;
+    typedef std::uint_least8_t byte_t;
 
     /** The type of an unsigned integer with the width of two bytes*/
-    typedef boost::uint16_t uint2b_t;
+    typedef std::uint_least16_t uint2b_t;
 
     /** The type of a signed integer with the width of two bytes*/
-    typedef boost::int16_t int2b_t;
+    typedef std::int_least16_t int2b_t;
 
     /** The type of an unsigned integer with the width of four bytes*/
-    typedef boost::uint32_t uint4b_t;
+    typedef std::uint_least32_t uint4b_t;
 
     /** The type of a signed integer with the width of four bytes*/
-    typedef boost::int32_t int4b_t;
+    typedef std::int_least32_t int4b_t;
 
     /** The type for a sequence of bytes */
     typedef std::vector<byte_t> byte_sequence;
