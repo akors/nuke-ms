@@ -49,7 +49,8 @@ namespace nuke_ms
 */
 struct UniqueUserID
 {
-    enum { id_length = 8 /**< Length of a User ID */ };
+    /** Length of a User ID */
+    static constexpr std::size_t id_length = 8 ;
 
     /** The User ID, as a series of bytes */
     byte_traits::byte_t id[id_length];
@@ -59,9 +60,7 @@ struct UniqueUserID
 
     /** Default constructor, initialize the User ID to user_id_none */
     UniqueUserID()
-    {
-        std::memset(id, '\0', id_length);
-    }
+    { std::memset(id, '\0', id_length); }
 
     /** Copy constructor */
     UniqueUserID(const UniqueUserID& other)
@@ -90,42 +89,40 @@ struct UniqueUserID
     { return std::copy(id, id+id_length, buffer); }
 };
 
-#if 0
 /** Class representing a user message
  *
  * This class shall be used, whenever a client sends a message to another client
  * that is connected to the same server.
 */
-struct NearUserMessage : public ContainingLayer
+struct NearUserMessage : BasicMessageLayer<NearUserMessage>
 {
-    typedef boost::shared_ptr<NearUserMessage> ptr_t;
-    typedef boost::shared_ptr<NearUserMessage> const_ptr_t;
-
     /** Type for a more or less unique message identifier */
     typedef byte_traits::uint4b_t msg_id_t;
 
-    enum { LAYER_ID = 0x41  /**< Layer Identifier */ };
-    enum { header_length =
-        1 + sizeof(msg_id_t) + UniqueUserID::id_length + UniqueUserID::id_length
-    };
+    /**< Layer Identifier */
+    static constexpr byte_traits::byte_t LAYER_ID = 0x41;
+    static constexpr std::size_t header_length =
+        1+ sizeof(msg_id_t) + UniqueUserID::id_length + UniqueUserID::id_length;
 
     /** ID of the message.
      * This object can be used to identify the message uniquely. This is
      * necessary for example when processing send reports
     */
-    msg_id_t msg_id;
+    msg_id_t _msg_id;
 
     /** Who this message is intended to.
      * Set this field to specify a recipient of the message
     */
-    UniqueUserID recipient;
+    UniqueUserID _recipient;
 
     /** Who sent this message
      * This field will be set to the client that sent the message.
      * It is not neccessary to specify this field when sending a message,
      * because it will be set by the clientnode implicitly.
     */
-    UniqueUserID sender;
+    UniqueUserID _sender;
+
+    StringwrapLayer _stringwrap;
 
     /** Construct from a stringwraplayer message
      * @param stringwrap The message to be sent
@@ -134,29 +131,13 @@ struct NearUserMessage : public ContainingLayer
 	 * @param _msg_id use this as message identifier
     */
 	NearUserMessage(
-        StringwrapLayer::ptr_t stringwrap,
+        const StringwrapLayer& stringwrap,
         const UniqueUserID& to = UniqueUserID(),
         const UniqueUserID& from = UniqueUserID(),
-        msg_id_t _msg_id = msg_id_t()
+        msg_id_t msg_id = msg_id_t()
     )
-        : ContainingLayer(stringwrap), recipient(to), sender(from),
-            msg_id(_msg_id)
-    {}
-
-    /** Construct from a string
-     * @param msg The message to be sent
-     * @param to Recipient of the message
-     * @param from sender of the message
-	 * @param _msg_id use this as message identifier
-    */
-    NearUserMessage(
-        const byte_traits::msg_string& msg,
-        const UniqueUserID& to = UniqueUserID(),
-        const UniqueUserID& from = UniqueUserID(),
-        msg_id_t _msg_id = msg_id_t()
-    )
-        : ContainingLayer(StringwrapLayer::ptr_t(new StringwrapLayer(msg))),
-            recipient(to), sender(from), msg_id(_msg_id)
+        : _stringwrap(stringwrap), _recipient(to), _sender(from),
+            _msg_id(msg_id)
     {}
 
     /** Construct from serialized Data
@@ -168,22 +149,49 @@ struct NearUserMessage : public ContainingLayer
     NearUserMessage(const SerializedData& data);
 
     // implementing base class version
-    virtual std::size_t size() const;
+    std::size_t size() const
+    { return header_length + _stringwrap.size(); }
 
     // implementing base class version
-    virtual data_it fillSerialized(data_it buffer) const;
+    template <typename ByteOutputIterator>
+    ByteOutputIterator fillSerialized(ByteOutputIterator it) const;
 
     /** Return the string contained in the layer message.
     *
     * @throws InvalidHeaderError when the stringwrap message is not aligned
     * @return A stringwraplayer object
     */
-    const StringwrapLayer getStringwrap() const
+    const StringwrapLayer& getStringwrap() const
     {
-        return StringwrapLayer(upper_layer->getSerializedData());
+        return _stringwrap;
     }
 };
-#endif
+
+
+
+
+template <typename ByteOutputIterator>
+ByteOutputIterator NearUserMessage::fillSerialized(ByteOutputIterator it) const
+{
+    // first byte is layer identifier
+    *it++ = static_cast<byte_traits::byte_t>(LAYER_ID);
+
+    // next four bytes are the message id
+    it = writebytes(
+        it,
+        to_netbo(_msg_id)
+    );
+
+    // recipient
+    it = std::copy(_recipient.id, _recipient.id+UniqueUserID::id_length, it);
+
+    // sender
+    it = std::copy(_sender.id, _sender.id+UniqueUserID::id_length, it);
+
+    // the rest is the message string
+    return _stringwrap.fillSerialized(it);
+}
+
 
 /**@}*/ // addtogroup common
 

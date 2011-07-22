@@ -182,8 +182,8 @@ struct UndersizedPacketError : public MsgLayerError
 * type specified as template parameter. Make sure the template parameter is
 * a smart pointer, otherwise this class will not work.
 *
-* Thread safety: equal to the construction and destruction
-* thread safety of the smart pointer type.
+* Thread safety: equal to the construction and destruction thread safety of the
+* smart pointer type.
 *
 * @tparam PointerType Type of a smart pointer
 */
@@ -239,9 +239,7 @@ public:
      * @return The number of bytes the serialized byte sequence would have.
     */
     std::size_t size() const
-    {
-        return DerivedType::size();
-    }
+    { return DerivedType::size(); }
 
 
     /** Fill a buffer with the serialized version of this object.
@@ -282,6 +280,7 @@ class SerializedData : public BasicMessageLayer<SerializedData>
     std::size_t _datasize; /**< Size of the data */
 
 public:
+
 
     /** Constructor.
     * Constructs a new object and passes memory ownership, data iterator and
@@ -466,6 +465,9 @@ class StringwrapLayer : public BasicMessageLayer<StringwrapLayer>
     StringType _message_string;
 
 public:
+    /** Default Constructor. */
+    StringwrapLayer() = default;
+
     /** Constructor.
     * Create a StringwrapLayer message from an byte_traits::msg_string.
     *
