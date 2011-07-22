@@ -27,6 +27,7 @@
 #define NEARTYPES_HPP_INCLUDED
 
 
+#include <iostream>
 #include <algorithm>
 #include <cstring>
 
@@ -49,22 +50,23 @@ namespace nuke_ms
 */
 struct UniqueUserID
 {
-    /** Length of a User ID */
-    static constexpr std::size_t id_length = 8 ;
-
     /** The User ID, as a series of bytes */
-    byte_traits::byte_t id[id_length];
+    long long unsigned id;
+
+    /** Length of a User ID */
+    static constexpr std::size_t id_length = sizeof(id);
 
     /** UniqueUserID that means "no user id" */
     static const UniqueUserID user_id_none;
 
-    /** Default constructor, initialize the User ID to user_id_none */
-    UniqueUserID()
-    { std::memset(id, '\0', id_length); }
+    /** Construct from long long uint.
+    * _id Identifier as integer variable
+    */
+    UniqueUserID(long long unsigned _id = 0ull) : id(_id) {}
 
     /** Copy constructor */
-    UniqueUserID(const UniqueUserID& other)
-    { std::copy(other.id, other.id+id_length, this->id); }
+    UniqueUserID(const UniqueUserID& other) = default;
+
 
     /** Construct ID from a buffer
      * @tparam RandomAccessIterator Random access output iterator type
@@ -72,12 +74,13 @@ struct UniqueUserID
     */
     template<typename RandomAccessIterator>
     UniqueUserID(RandomAccessIterator in)
-    { std::copy(in, in+id_length, id); }
-
+    {
+        std::copy(in,in+id_length, reinterpret_cast<byte_traits::byte_t*>(&id));
+    }
 
     /** Compare two ID's */
     bool operator == (const UniqueUserID& other) const
-    { return std::equal(this->id, this->id+id_length, other.id); }
+    { return this->id == other.id; }
 
     /** Return serialized size of the User ID */
     inline std::size_t size() const
@@ -86,7 +89,13 @@ struct UniqueUserID
     /** Write the ID into a buffer */
     template<typename OutputIterator>
     OutputIterator fillSerialized(OutputIterator buffer) const
-    { return std::copy(id, id+id_length, buffer); }
+    {
+        return std::copy(
+            reinterpret_cast<const byte_traits::byte_t*>(&id),
+            reinterpret_cast<const byte_traits::byte_t*>(&id) + id_length,
+            buffer
+        );
+    }
 };
 
 /** Class representing a user message
@@ -138,7 +147,31 @@ struct NearUserMessage : BasicMessageLayer<NearUserMessage>
     )
         : _stringwrap(stringwrap), _recipient(to), _sender(from),
             _msg_id(msg_id)
-    {}
+    {
+#if defined(NUKE_MS_TESTSUITE)
+        std::cout<<"NearUserMessage copy-constructed\n";
+#endif // if defined(NUKE_MS_TESTSUITE)
+    }
+
+    /** Move-construct from a stringwraplayer message
+     * @param stringwrap The message to be sent
+     * @param to Recipient of the message
+     * @param from sender of the message
+	 * @param _msg_id use this as message identifier
+    */
+	NearUserMessage(
+        StringwrapLayer&& stringwrap,
+        const UniqueUserID& to = UniqueUserID(),
+        const UniqueUserID& from = UniqueUserID(),
+        msg_id_t msg_id = msg_id_t()
+    )
+        : _stringwrap(std::move(stringwrap)), _recipient(to), _sender(from),
+            _msg_id(msg_id)
+    {
+#if defined(NUKE_MS_TESTSUITE)
+        std::cout<<"NearUserMessage move-constructed\n";
+#endif // if defined(NUKE_MS_TESTSUITE)
+    }
 
     /** Construct from serialized Data
      *
@@ -162,12 +195,8 @@ struct NearUserMessage : BasicMessageLayer<NearUserMessage>
     * @return A stringwraplayer object
     */
     const StringwrapLayer& getStringwrap() const
-    {
-        return _stringwrap;
-    }
+    { return _stringwrap; }
 };
-
-
 
 
 template <typename ByteOutputIterator>
@@ -183,10 +212,10 @@ ByteOutputIterator NearUserMessage::fillSerialized(ByteOutputIterator it) const
     );
 
     // recipient
-    it = std::copy(_recipient.id, _recipient.id+UniqueUserID::id_length, it);
+    it = _recipient.fillSerialized(it);
 
     // sender
-    it = std::copy(_sender.id, _sender.id+UniqueUserID::id_length, it);
+    it = _sender.fillSerialized(it);
 
     // the rest is the message string
     return _stringwrap.fillSerialized(it);

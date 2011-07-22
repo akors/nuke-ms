@@ -20,23 +20,23 @@
 /** @file bytes.hpp
  * @ingroup common
  * @brief Datatypes and functions for handling bytewise data.
- * 
- * This file defines sizes and implementations of binary (bytewise) datatypes 
+ *
+ * This file defines sizes and implementations of binary (bytewise) datatypes
  * used in nuke-ms uniformly across platforms and modules.
- * 
- * When encoding data that is to be transmitted over the network, it is 
- * neccessary that the encoding is the same on any platform. To ensure this 
- * compatibility, any data that will be transmitted shall use the datatype 
+ *
+ * When encoding data that is to be transmitted over the network, it is
+ * neccessary that the encoding is the same on any platform. To ensure this
+ * compatibility, any data that will be transmitted shall use the datatype
  * definitions in this file instead of native datatypes.
- * The definitions for bytewise datatypes can be found in the 
+ * The definitions for bytewise datatypes can be found in the
  * @ref nuke_ms::byte_traits class.
- * 
- * To ensure the correct encoding of integer values across platforms with 
- * different MSB/LSB encodings, all integers shall be converted using the 
- * to_netbo() and to_hostbo() functions before sending or using the integer 
+ *
+ * To ensure the correct encoding of integer values across platforms with
+ * different MSB/LSB encodings, all integers shall be converted using the
+ * to_netbo() and to_hostbo() functions before sending or using the integer
  * value.
- * 
- * Additional routines for reading and writing raw sequences of bytes to/from 
+ *
+ * Additional routines for reading and writing raw sequences of bytes to/from
  * POD variables are provided by the functions readbytes() and writebytes().
 */
 

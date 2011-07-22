@@ -21,8 +21,7 @@
 
 using namespace nuke_ms;
 
-
-const UniqueUserID UniqueUserID::user_id_none;
+const UniqueUserID UniqueUserID::user_id_none = UniqueUserID();
 
 NearUserMessage::NearUserMessage(const SerializedData& data)
 {
@@ -42,11 +41,11 @@ NearUserMessage::NearUserMessage(const SerializedData& data)
     _msg_id = to_hostbo(_msg_id);
 
     // recipient
-    std::copy(in_it, in_it + UniqueUserID::id_length, _recipient.id);
+    _recipient = UniqueUserID(in_it);
     in_it += UniqueUserID::id_length;
 
     // sender
-    std::copy(in_it, in_it+UniqueUserID::id_length, _sender.id);
+    _sender = UniqueUserID(in_it);
     in_it += UniqueUserID::id_length;
 
     // the rest is the message string
