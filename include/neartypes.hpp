@@ -51,7 +51,7 @@ namespace nuke_ms
 struct UniqueUserID
 {
     /** The User ID, as a series of bytes */
-    long long unsigned id;
+    unsigned long long id;
 
     /** Length of a User ID */
     static constexpr std::size_t id_length = sizeof(id);
@@ -62,7 +62,7 @@ struct UniqueUserID
     /** Construct from long long uint.
     * _id Identifier as integer variable
     */
-    UniqueUserID(long long unsigned _id = 0ull) : id(_id) {}
+    UniqueUserID(unsigned long long _id = 0ull) : id(_id) {}
 
     /** Copy constructor */
     UniqueUserID(const UniqueUserID& other) = default;
@@ -76,6 +76,7 @@ struct UniqueUserID
     UniqueUserID(RandomAccessIterator in)
     {
         std::copy(in,in+id_length, reinterpret_cast<byte_traits::byte_t*>(&id));
+        id = to_hostbo(id);
     }
 
     /** Compare two ID's */
@@ -90,9 +91,10 @@ struct UniqueUserID
     template<typename OutputIterator>
     OutputIterator fillSerialized(OutputIterator buffer) const
     {
+        unsigned long long temp = to_netbo(id);
         return std::copy(
-            reinterpret_cast<const byte_traits::byte_t*>(&id),
-            reinterpret_cast<const byte_traits::byte_t*>(&id) + id_length,
+            reinterpret_cast<const byte_traits::byte_t*>(&temp),
+            reinterpret_cast<const byte_traits::byte_t*>(&temp) + id_length,
             buffer
         );
     }
