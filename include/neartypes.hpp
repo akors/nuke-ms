@@ -176,8 +176,11 @@ struct NearUserMessage : BasicMessageLayer<NearUserMessage>
     /** Construct from serialized Data
      *
      * @param data Serialized Data layer
+     *
      * @throw UndersizedPacketError when the datasize is less than the minimum
      * packet header
+     * @throw InvalidHeaderError if the first byte of the data does not contain
+     * the correct layer identifier.
     */
     NearUserMessage(const SerializedData& data);
 
