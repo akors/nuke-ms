@@ -281,7 +281,6 @@ class SerializedData : public BasicMessageLayer<SerializedData>
 
 public:
 
-
     /** Constructor.
     * Constructs a new object and passes memory ownership, data iterator and
     * data size. Note that the memory block can contain more data than is
@@ -302,6 +301,18 @@ public:
         : _memblock(memblock), _begin_it(begin_it), _datasize(datasize)
     {}
 
+    SerializedData(const SerializedData&) = default;
+
+    SerializedData(SerializedData&& other)
+        : _memblock(std::move(other._memblock)),
+        _begin_it(other._begin_it), _datasize(other._datasize)
+    {
+        // invalidate iterator of rvalue object by assigning a default
+        // constructed one
+        other._begin_it = const_data_it{};
+        other._datasize = 0;
+    }
+
     // overriding base class version
     std::size_t size() const
     { return _datasize; }
@@ -311,7 +322,7 @@ public:
     ByteOutputIterator fillSerialized(ByteOutputIterator it) const
     {
         // copy the maintained data into the specified buffer
-        return std::copy(_begin_it, std::advance(_begin_it, _datasize), it);
+        return std::copy(_begin_it, _begin_it + _datasize, it);
     }
 
     /** Get iterator to message data.
@@ -337,41 +348,17 @@ public:
     { return _memblock; }
 };
 
-#if 0
+
 struct SegmentationLayerBase
 {
-
-};
-
-/** Layer ensuring correct segmentation of messages
-*
-* This class should be used as the lowest layer of a message - the one that
-* shall be sent over the network. The next level lower than this one is the TCP
-* layer.
-* This class tags messages with a binary header in the following layout:
-* Bits
-* 0:      Layer Identifier, Value 0x80
-* 1-2:    Packet size in Network Byte Order
-* 3:      Zero, Value 0x0
-*
-*/
-template <typename InnerLayer>
-class SegmentationLayer
-    : public BasicMessageLayer<SegmentationLayer<InnerLayer> >
-{
-    std::size_t serializedsize; /**< size of the data for fast access */
-
-public:
-    /** Type of pointer to this class. */
-    typedef std::shared_ptr<SegmentationLayer> ptr_t;
-
-    enum { LAYER_ID = 0x80  /**< Layer Identifier */ };
-    enum { header_length = 4 };
+    static constexpr byte_traits::byte_t LAYER_ID = 0x80;
+    static constexpr std::size_t header_length = 4;
 
     /** Type representing the header of a packet. */
     struct HeaderType {
         byte_traits::uint2b_t packetsize /**< Size of the packet */;
     };
+
 
     /** Header decoding function.
     *
@@ -388,8 +375,53 @@ public:
     */
     template <typename InputIterator>
     static HeaderType decodeHeader(InputIterator headerbuf);
+};
 
 
+template <typename InputIterator>
+SegmentationLayerBase::HeaderType
+SegmentationLayerBase::decodeHeader(InputIterator headerbuf)
+{
+    HeaderType headerdata;
+
+    // check first byte to be the correct layer identifier
+    if ( headerbuf[0] !=
+        static_cast<byte_traits::byte_t>(SegmentationLayerBase::LAYER_ID) )
+        throw InvalidHeaderError();
+
+    // get the size of the packet
+    readbytes<byte_traits::uint2b_t>(&headerdata.packetsize, &headerbuf[1]);
+
+    headerdata.packetsize = to_hostbo(headerdata.packetsize);
+
+    if (headerbuf[3] != 0)
+        throw InvalidHeaderError{};
+
+    return headerdata;
+}
+
+
+/** Layer ensuring correct segmentation of messages
+*
+* This class should be used as the lowest layer of a message - the one that
+* shall be sent over the network. The next level lower than this one is the TCP
+* layer.
+* This class tags messages with a binary header in the following layout:
+* Bits
+* 0:      Layer Identifier, Value 0x80
+* 1-2:    Packet size in Network Byte Order
+* 3:      Zero, Value 0x0
+*
+*/
+template <typename InnerLayer>
+class SegmentationLayer
+    : public SegmentationLayerBase,
+    public BasicMessageLayer<SegmentationLayer<InnerLayer>>
+{
+    InnerLayer _inner_layer;
+    std::size_t serializedsize; /**< size of the data for fast access */
+
+public:
     /** Constructor.
     * Construct a SegmentationLayer message from an upper layer, say a message
     * coming from the application.
@@ -403,55 +435,49 @@ public:
     *
     * @param _upper_layer The message of the upper layer you want to send.
     */
-    SegmentationLayer(BasicMessageLayer::ptr_t _upper_layer)
-        : serializedsize(_upper_layer->size() + header_length),
-          ContainingLayer(_upper_layer)
+    SegmentationLayer(const InnerLayer& upper_layer)
+        : serializedsize(upper_layer.size() + header_length),
+          _inner_layer(upper_layer)
     { }
 
-
-    /** Constructor.
-    * Construct a SegmentationLayer message from network data, say a message
-    * coming directly from the network.
-    *
-    * @param data A BasicMessageLayer::ptr_t, a shared pointer to a vector of
-    * bytes. This vector has to contain the body of the message (not the
-    * header).
-    *
-    * pointers.
-    */
-    SegmentationLayer(BasicMessageLayer::dataptr_t data);
+    SegmentationLayer(InnerLayer&& upper_layer)
+        : _inner_layer(std::move(upper_layer)),
+        serializedsize(_inner_layer.size() + header_length)
+    { }
 
     // overriding base class version
-    virtual std::size_t size() const;
+    std::size_t size() const
+    { return serializedsize; }
 
     // overriding base class version
-    virtual data_it fillSerialized(data_it buffer) const;
+    template <typename ByteOutputIterator>
+    ByteOutputIterator fillSerialized(ByteOutputIterator it) const;
 };
 
 
-template <typename InputIterator>
-SegmentationLayer::HeaderType
-SegmentationLayer::decodeHeader(InputIterator headerbuf)
+// overriding base class version
+template <typename InnerLayer>
+template <typename ByteOutputIterator>
+ByteOutputIterator
+SegmentationLayer<InnerLayer>::fillSerialized(ByteOutputIterator it) const
 {
-    HeaderType headerdata;
+    // first byte is layer identifier
+    *it++ = static_cast<byte_traits::byte_t>(LAYER_ID);
 
-    // check first byte to be the correct layer identifier
-    if ( headerbuf[0] !=
-        static_cast<byte_traits::byte_t>(SegmentationLayer::LAYER_ID) )
-        throw InvalidHeaderError();
+    // second and third bytes are the size of the whole packet
+    it = writebytes(
+        it,
+        to_netbo(static_cast<byte_traits::uint2b_t>(serializedsize))
+    );
 
-    // get the size of the packet
-    readbytes<byte_traits::uint2b_t>(&headerdata.packetsize, &headerbuf[1]);
+    // fourth byte is a zero
+    *it++ = 0;
 
-    headerdata.packetsize = to_hostbo(headerdata.packetsize);
-
-    if (headerbuf[3] != 0)
-        throw InvalidHeaderError();
-
-    return headerdata;
+    // the rest is the message
+    return _inner_layer.fillSerialized(it);
 }
 
-#endif
+
 
 /** Layer wrapping a string.
 * This class is a simple wrapper around a wstring message.

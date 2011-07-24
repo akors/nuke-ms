@@ -25,46 +25,6 @@
 using namespace nuke_ms;
 
 
-#if 0
-//////////////////////////// SegmentationLayer /////////////////////////////////
-
-SegmentationLayer::SegmentationLayer(BasicMessageLayer::dataptr_t data)
-    : serializedsize(data->size() + header_length),
-      ContainingLayer(SerializedData::ptr_t(
-            new SerializedData(
-                data,
-                data->begin(),
-                data->size()
-      )))
-{
-}
-
-
-// overriding base class version
-std::size_t SegmentationLayer::size() const
-{ return serializedsize; }
-
-
-BasicMessageLayer::data_it
-SegmentationLayer::fillSerialized(BasicMessageLayer::data_it buffer) const
-{
-    // first byte is layer identifier
-    *buffer++ = static_cast<byte_traits::byte_t>(LAYER_ID);
-
-    // second and third bytes are the size of the whole packet
-    buffer = writebytes(
-        buffer,
-        to_netbo(static_cast<byte_traits::uint2b_t>(serializedsize))
-    );
-
-    // fourth byte is a zero
-    *buffer++ = 0;
-
-    // the rest is the message
-    return upper_layer->fillSerialized(buffer);
-}
-
-#endif
 
 ////////////////////////////// StringwrapLayer /////////////////////////////////
 

@@ -90,14 +90,7 @@ struct UniqueUserID
     /** Write the ID into a buffer */
     template<typename OutputIterator>
     OutputIterator fillSerialized(OutputIterator buffer) const
-    {
-        unsigned long long temp = to_netbo(id);
-        return std::copy(
-            reinterpret_cast<const byte_traits::byte_t*>(&temp),
-            reinterpret_cast<const byte_traits::byte_t*>(&temp) + id_length,
-            buffer
-        );
-    }
+    { return writebytes(buffer, to_netbo(id)); }
 };
 
 /** Class representing a user message
