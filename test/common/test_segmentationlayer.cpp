@@ -56,8 +56,19 @@ int main()
 
         // pretty C++0x "uniform initialization" syntax
         SegmentationLayer<SerializedData> rcvd({body, body->begin(), body->size()});
-
         TEST_ASSERT(rcvd.size() == src_arraysize + 4);
+
+        // retrieve data, steal from from rcvd object
+        SerializedData serdat_up(std::move(rcvd.getUpperLayer()));
+        TEST_ASSERT(rcvd.size() == 4); // rcvd now has to be empty
+        TEST_ASSERT( // data must of course be still the same
+            std::equal(serdat_up.getDataIterator(),
+                serdat_up.getDataIterator() + serdat_up.size(),
+                &src_array[0])
+        );
+
+        std::cout<<"Data received: "<<hexprint(serdat_up.getDataIterator(),
+                serdat_up.getDataIterator() + serdat_up.size())<<std::endl;
     }
     catch(const InvalidHeaderError&)
     { TEST_ASSERT(false && "Exception occured"); }

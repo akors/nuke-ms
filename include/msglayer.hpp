@@ -419,7 +419,6 @@ class SegmentationLayer
     public BasicMessageLayer<SegmentationLayer<InnerLayer>>
 {
     InnerLayer _inner_layer;
-    std::size_t serializedsize; /**< size of the data for fast access */
 
 public:
     /** Constructor.
@@ -436,22 +435,26 @@ public:
     * @param _upper_layer The message of the upper layer you want to send.
     */
     SegmentationLayer(const InnerLayer& upper_layer)
-        : serializedsize(upper_layer.size() + header_length),
-          _inner_layer(upper_layer)
+        : _inner_layer(upper_layer)
     { }
 
     SegmentationLayer(InnerLayer&& upper_layer)
-        : _inner_layer(std::move(upper_layer)),
-        serializedsize(_inner_layer.size() + header_length)
+        : _inner_layer(std::move(upper_layer))
     { }
 
     // overriding base class version
     std::size_t size() const
-    { return serializedsize; }
+    { return _inner_layer.size() + header_length; }
 
     // overriding base class version
     template <typename ByteOutputIterator>
     ByteOutputIterator fillSerialized(ByteOutputIterator it) const;
+
+    InnerLayer&& getUpperLayer()
+    { return std::move(_inner_layer); }
+
+    const InnerLayer& getUpperLayer() const
+    { return _inner_layer; }
 };
 
 
@@ -465,10 +468,8 @@ SegmentationLayer<InnerLayer>::fillSerialized(ByteOutputIterator it) const
     *it++ = static_cast<byte_traits::byte_t>(LAYER_ID);
 
     // second and third bytes are the size of the whole packet
-    it = writebytes(
-        it,
-        to_netbo(static_cast<byte_traits::uint2b_t>(serializedsize))
-    );
+    it = writebytes(it, to_netbo(
+        static_cast<byte_traits::uint2b_t>(_inner_layer.size()+header_length)));
 
     // fourth byte is a zero
     *it++ = 0;
