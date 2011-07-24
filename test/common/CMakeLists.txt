@@ -3,7 +3,7 @@
 # directory instead.
 
 
-add_custom_target(testsuite-common DEPENDS
+add_dependencies(testsuite
     test_byteorder
     test_ownership
     test_stringwraplayer

@@ -10,9 +10,5 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_definitions(-DNUKE_MS_TESTSUITE)
 
+add_custom_target(testsuite COMMAND ${CMAKE_CTEST_COMMAND})
 add_subdirectory(common)
-
-add_custom_target(testsuite DEPENDS
-    testsuite-common
-)
-
