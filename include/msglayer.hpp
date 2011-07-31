@@ -394,13 +394,12 @@ struct SegmentationLayerBase
 *
 */
 template <typename InnerLayer>
-class SegmentationLayer
+struct SegmentationLayer
     : public SegmentationLayerBase,
     public BasicMessageLayer<SegmentationLayer<InnerLayer>>
 {
     InnerLayer _inner_layer;
 
-public:
     /** Constructor.
     * Construct a SegmentationLayer message from an upper layer, say a message
     * coming from the application.
@@ -430,11 +429,6 @@ public:
     template <typename ByteOutputIterator>
     ByteOutputIterator fillSerialized(ByteOutputIterator it) const;
 
-    InnerLayer&& getUpperLayer()
-    { return std::move(_inner_layer); }
-
-    const InnerLayer& getUpperLayer() const
-    { return _inner_layer; }
 };
 
 
