@@ -142,11 +142,7 @@ struct NearUserMessage : BasicMessageLayer<NearUserMessage>
     )
         : _stringwrap(stringwrap), _recipient(to), _sender(from),
             _msg_id(msg_id)
-    {
-#if defined(NUKE_MS_TESTSUITE)
-        std::cout<<"NearUserMessage copy-constructed\n";
-#endif // if defined(NUKE_MS_TESTSUITE)
-    }
+    { }
 
     /** Move-construct from a stringwraplayer message
      * @param stringwrap The message to be sent
@@ -162,11 +158,7 @@ struct NearUserMessage : BasicMessageLayer<NearUserMessage>
     )
         : _stringwrap(std::move(stringwrap)), _recipient(to), _sender(from),
             _msg_id(msg_id)
-    {
-#if defined(NUKE_MS_TESTSUITE)
-        std::cout<<"NearUserMessage move-constructed\n";
-#endif // if defined(NUKE_MS_TESTSUITE)
-    }
+    { }
 
     /** Construct from serialized Data
      *
@@ -222,6 +214,14 @@ ByteOutputIterator NearUserMessage::fillSerialized(ByteOutputIterator it) const
 
 /**@}*/ // addtogroup common
 
+extern template class BasicMessageLayer<NearUserMessage>;
+extern template class SegmentationLayer<NearUserMessage>;
+
+extern template byte_traits::byte_sequence::iterator 
+NearUserMessage::fillSerialized(byte_traits::byte_sequence::iterator it) const;
+
+
 } // namespace nuke_ms
 
 #endif // ifndef NEARTYPES_HPP_INCLUDED
+

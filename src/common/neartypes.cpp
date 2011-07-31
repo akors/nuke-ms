@@ -23,6 +23,10 @@ using namespace nuke_ms;
 
 const UniqueUserID UniqueUserID::user_id_none = UniqueUserID();
 
+// template function specializations
+template byte_traits::byte_sequence::iterator 
+NearUserMessage::fillSerialized(byte_traits::byte_sequence::iterator it) const;
+
 NearUserMessage::NearUserMessage(const SerializedData& data)
 {
     auto in_it = data.getDataIterator();
@@ -53,3 +57,4 @@ NearUserMessage::NearUserMessage(const SerializedData& data)
         SerializedData(data.getOwnership(), in_it, data.size() - header_length)
     );
 }
+

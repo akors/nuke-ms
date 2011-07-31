@@ -239,7 +239,7 @@ public:
      * @return The number of bytes the serialized byte sequence would have.
     */
     std::size_t size() const
-    { return DerivedType::size(); }
+    { return static_cast<const DerivedType*>(this)->size(); }
 
 
     /** Fill a buffer with the serialized version of this object.
@@ -265,6 +265,9 @@ public:
 
 /** Alias for a Memory ownership of a std::shared_ptr pointer */
 typedef MemoryOwnership<std::shared_ptr<byte_traits::byte_sequence>> DataOwnership;
+
+extern template class MemoryOwnership<
+    std::shared_ptr<byte_traits::byte_sequence>>;
 
 
 /** Message of an unknown message layer.
@@ -348,7 +351,6 @@ public:
     { return _memblock; }
 };
 
-
 struct SegmentationLayerBase
 {
     static constexpr byte_traits::byte_t LAYER_ID = 0x80;
@@ -377,28 +379,6 @@ struct SegmentationLayerBase
     static HeaderType decodeHeader(InputIterator headerbuf);
 };
 
-
-template <typename InputIterator>
-SegmentationLayerBase::HeaderType
-SegmentationLayerBase::decodeHeader(InputIterator headerbuf)
-{
-    HeaderType headerdata;
-
-    // check first byte to be the correct layer identifier
-    if ( headerbuf[0] !=
-        static_cast<byte_traits::byte_t>(SegmentationLayerBase::LAYER_ID) )
-        throw InvalidHeaderError();
-
-    // get the size of the packet
-    readbytes<byte_traits::uint2b_t>(&headerdata.packetsize, &headerbuf[1]);
-
-    headerdata.packetsize = to_hostbo(headerdata.packetsize);
-
-    if (headerbuf[3] != 0)
-        throw InvalidHeaderError{};
-
-    return headerdata;
-}
 
 
 /** Layer ensuring correct segmentation of messages
@@ -457,26 +437,6 @@ public:
     { return _inner_layer; }
 };
 
-
-// overriding base class version
-template <typename InnerLayer>
-template <typename ByteOutputIterator>
-ByteOutputIterator
-SegmentationLayer<InnerLayer>::fillSerialized(ByteOutputIterator it) const
-{
-    // first byte is layer identifier
-    *it++ = static_cast<byte_traits::byte_t>(LAYER_ID);
-
-    // second and third bytes are the size of the whole packet
-    it = writebytes(it, to_netbo(
-        static_cast<byte_traits::uint2b_t>(_inner_layer.size()+header_length)));
-
-    // fourth byte is a zero
-    *it++ = 0;
-
-    // the rest is the message
-    return _inner_layer.fillSerialized(it);
-}
 
 
 
@@ -564,6 +524,53 @@ public:
 };
 
 
+template <typename InputIterator>
+SegmentationLayerBase::HeaderType
+SegmentationLayerBase::decodeHeader(InputIterator headerbuf)
+{
+    HeaderType headerdata;
+
+    // check first byte to be the correct layer identifier
+    if ( headerbuf[0] !=
+        static_cast<byte_traits::byte_t>(SegmentationLayerBase::LAYER_ID) )
+        throw InvalidHeaderError();
+
+    // get the size of the packet
+    readbytes<byte_traits::uint2b_t>(&headerdata.packetsize, &headerbuf[1]);
+
+    headerdata.packetsize = to_hostbo(headerdata.packetsize);
+
+    if (headerbuf[3] != 0)
+        throw InvalidHeaderError{};
+
+    return headerdata;
+}
+
+extern template
+SegmentationLayerBase::HeaderType SegmentationLayerBase::decodeHeader(
+    byte_traits::byte_sequence::iterator headerbuf);
+
+
+// overriding base class version
+template <typename InnerLayer>
+template <typename ByteOutputIterator>
+ByteOutputIterator
+SegmentationLayer<InnerLayer>::fillSerialized(ByteOutputIterator it) const
+{
+    // first byte is layer identifier
+    *it++ = static_cast<byte_traits::byte_t>(LAYER_ID);
+
+    // second and third bytes are the size of the whole packet
+    it = writebytes(it, to_netbo(
+        static_cast<byte_traits::uint2b_t>(_inner_layer.size()+header_length)));
+
+    // fourth byte is a zero
+    *it++ = 0;
+
+    // the rest is the message
+    return _inner_layer.fillSerialized(it);
+}
+
 template <typename ByteOutputIterator>
 ByteOutputIterator StringwrapLayer::fillSerialized(ByteOutputIterator it) const
 {
@@ -575,9 +582,22 @@ ByteOutputIterator StringwrapLayer::fillSerialized(ByteOutputIterator it) const
     return it;
 }
 
+extern template 
+byte_traits::byte_sequence::iterator 
+StringwrapLayer::fillSerialized(byte_traits::byte_sequence::iterator it) const;
+
+
+extern template class BasicMessageLayer<SerializedData>;
+extern template class SegmentationLayer<SerializedData>;
+extern template class BasicMessageLayer<StringwrapLayer>;
+extern template class SegmentationLayer<StringwrapLayer>;
+
+
+
 
 /**@}*/ // addtogroup common
 
 } // namespace nuke_ms
 
 #endif // ifndef MSGLAYERS_HPP_INCLUDED
+
