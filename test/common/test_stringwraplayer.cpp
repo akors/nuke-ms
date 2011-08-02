@@ -107,7 +107,7 @@ int main()
     TEST_ASSERT(std::equal(bytewise.begin(), bytewise.end(), convint_list.begin()));
 
 
-    SerializedData ser_data(DataOwnership(), bytewise.begin(), bytewise.size());
+    SerializedData ser_data({}, bytewise.begin(), bytewise.size());
 
     try
     {

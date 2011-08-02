@@ -1,5 +1,5 @@
 #include <iostream>
-
+#include <memory>
 
 #include "msglayer.hpp"
 #include "neartypes.hpp"
@@ -18,7 +18,7 @@ int main()
 	const int src_arraysize = sizeof(src_array)/sizeof(*src_array);
 
     byte_traits::byte_sequence somedata(src_array, src_array + src_arraysize);
-    SerializedData serdat_down(DataOwnership(), somedata.begin(), src_arraysize);
+    SerializedData serdat_down({}, somedata.begin(), src_arraysize);
 	TEST_ASSERT(serdat_down.size() == src_arraysize);
 
 	// create SegmentationLayer from Serialized data
@@ -48,9 +48,9 @@ int main()
             SegmentationLayerBase::decodeHeader(raw_ser.begin());
 
         // create buffer for message data
-        std::shared_ptr<byte_traits::byte_sequence> body(
-            new byte_traits::byte_sequence(header.packetsize-4)
-        );
+        auto body = 
+        std::make_shared<byte_traits::byte_sequence>(header.packetsize-4);
+
         // "read" body from network
         std::copy(it, raw_ser.end(), body->begin());
 
@@ -62,13 +62,12 @@ int main()
         SerializedData serdat_up(std::move(rcvd._inner_layer));
         TEST_ASSERT(rcvd.size() == 4); // rcvd now has to be empty
         TEST_ASSERT( // data must of course be still the same
-            std::equal(serdat_up.getDataIterator(),
-                serdat_up.getDataIterator() + serdat_up.size(),
+            std::equal(serdat_up.begin(), serdat_up.begin() + serdat_up.size(),
                 &src_array[0])
         );
 
-        std::cout<<"Data received: "<<hexprint(serdat_up.getDataIterator(),
-                serdat_up.getDataIterator() + serdat_up.size())<<std::endl;
+        std::cout<<"Data received: "<<hexprint(serdat_up.begin(),
+                serdat_up.begin() + serdat_up.size())<<std::endl;
     }
     catch(const InvalidHeaderError&)
     { TEST_ASSERT(false && "Exception occured"); }

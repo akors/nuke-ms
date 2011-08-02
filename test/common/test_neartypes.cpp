@@ -63,7 +63,7 @@ int main()
     down.fillSerialized(bytes.begin());
 
 
-    SerializedData serdat(DataOwnership(), bytes.begin(), bytes.size());
+    SerializedData serdat({}, bytes.begin(), bytes.size());
 
     bool no_exception_thrown = false;
     try
