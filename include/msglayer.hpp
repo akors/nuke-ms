@@ -186,11 +186,8 @@ struct UndersizedPacketError : public MsgLayerError
 * constructor should throw an instance of MsgLayerError.
 */
 template <typename DerivedType>
-class BasicMessageLayer
+struct BasicMessageLayer
 {
-public:
-    typedef byte_traits::byte_sequence::iterator data_it;
-    typedef byte_traits::byte_sequence::const_iterator const_data_it;
 
     /** Retrieve the serialized size.
      * Returns the length of the returned sequence of a successive call to
@@ -231,13 +228,15 @@ public:
 * message layer class.
 */
 class SerializedData : public BasicMessageLayer<SerializedData>
-{
+{    
     /** Ownership of the memory block */
     std::shared_ptr<const byte_traits::byte_sequence> _memblock;
-    const_data_it _begin_it; /**< Iterater to the beginning data */
+    decltype(_memblock->begin()) _begin_it; /**< Iterater to the beginning data */
     std::size_t _datasize; /**< Size of the data */
 
 public:
+
+    typedef byte_traits::byte_sequence::const_iterator const_data_it;
 
     /** Constructor.
     * Constructs a new object and passes memory ownership, data iterator and

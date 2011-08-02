@@ -45,7 +45,7 @@ template SegmentationLayerBase::HeaderType SegmentationLayerBase::decodeHeader(
 StringwrapLayer::StringwrapLayer(const SerializedData& msg)
 {
     std::size_t datasize = msg.size();
-    const_data_it data_it = msg.begin();
+    SerializedData::const_data_it data_it = msg.begin();
 
     // bail out if the string is not aligned
     if (datasize % sizeof(StringType::value_type) !=0)
@@ -60,7 +60,7 @@ StringwrapLayer::StringwrapLayer(const SerializedData& msg)
     std::remove_reference<decltype(*out_iter)>::type tmpval;
 
     // iterate through all bytes in the sequence
-    for ( const_data_it it = data_it; it < data_it + datasize; )
+    for ( auto it = data_it; it < data_it + datasize; )
     {
         // read bytes into a character, convert byte endianness
         it = readbytes(&tmpval, it);
