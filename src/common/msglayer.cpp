@@ -26,16 +26,15 @@ using namespace nuke_ms;
 
 
 // explicit class template instantions
-template class MemoryOwnership<
-    std::shared_ptr<byte_traits::byte_sequence>>;
 template class BasicMessageLayer<SerializedData>;
 template class BasicMessageLayer<StringwrapLayer>;
 template class SegmentationLayer<SerializedData>;
 template class SegmentationLayer<StringwrapLayer>;
 
 // explicit function template instantions
-template 
-byte_traits::byte_sequence::iterator StringwrapLayer::fillSerialized(byte_traits::byte_sequence::iterator it) const;
+template
+byte_traits::byte_sequence::iterator StringwrapLayer::fillSerialized(
+    byte_traits::byte_sequence::iterator it) const;
 template SegmentationLayerBase::HeaderType SegmentationLayerBase::decodeHeader(
     byte_traits::byte_sequence::iterator headerbuf);
 
@@ -46,7 +45,7 @@ template SegmentationLayerBase::HeaderType SegmentationLayerBase::decodeHeader(
 StringwrapLayer::StringwrapLayer(const SerializedData& msg)
 {
     std::size_t datasize = msg.size();
-    const_data_it data_it = msg.getDataIterator();
+    const_data_it data_it = msg.begin();
 
     // bail out if the string is not aligned
     if (datasize % sizeof(StringType::value_type) !=0)

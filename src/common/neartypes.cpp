@@ -29,13 +29,13 @@ NearUserMessage::fillSerialized(byte_traits::byte_sequence::iterator it) const;
 
 NearUserMessage::NearUserMessage(const SerializedData& data)
 {
-    auto in_it = data.getDataIterator();
+    auto in_it = data.begin();
 
     // bail out, if data is too small
     if (data.size() < header_length)
         throw UndersizedPacketError();
 
-    // if first byte isn't the correct layer identifier, that's a wrong packet
+    // if first byte isn't the correct layer identifier that's a wrong packet
     if (*in_it++ != LAYER_ID) throw InvalidHeaderError();
 
     // get msg id

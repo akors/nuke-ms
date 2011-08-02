@@ -2,7 +2,7 @@
 
 /*
  *   nuke-ms - Nuclear Messaging System
- *   Copyright (C) 2008, 2009, 2010  Alexander Korsunsky
+ *   Copyright (C) 2008, 2009, 2010, 2011  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -172,46 +172,6 @@ struct UndersizedPacketError : public MsgLayerError
 };
 
 
-/** Object holding an ownership to memory.
-* This class is a capsule around a smart pointer.
-* As long as an object of this class exists, its underlying memory block
-* (specified in the constructor) also exists.
-* Only when all of the objects holding the ownership to one memory block
-* go out of scope, the memory block will be deleted.
-* The reference counting functionality will be provided by the smart pointer
-* type specified as template parameter. Make sure the template parameter is
-* a smart pointer, otherwise this class will not work.
-*
-* Thread safety: equal to the construction and destruction thread safety of the
-* smart pointer type.
-*
-* @tparam PointerType Type of a smart pointer
-*/
-template <typename PointerType>
-class MemoryOwnership
-{
-    PointerType memory_pointer; /**< A smart pointer to the memory block */
-
-public:
-    /** Default constructor.
-    * Construct object with no ownership to any memory block.
-    * The memory pointer will be default constructed.
-    */
-    MemoryOwnership() {}
-
-    /** Constructor.
-    * Construct object with ownership to the memory block pointed to by
-    * _memory_pointer.
-    */
-    MemoryOwnership(const PointerType& _memory_pointer)
-        : memory_pointer(_memory_pointer)
-    {}
-};
-
-
-// forward declaration for SerializedData
-class SerializedData;
-
 /** Message Layer base class.
 *
 * This virtual base class presents a basic interface to it's deriving classes.
@@ -263,12 +223,6 @@ public:
     { return DerivedType::fillSerialized(it); }
 };
 
-/** Alias for a Memory ownership of a std::shared_ptr pointer */
-typedef MemoryOwnership<std::shared_ptr<byte_traits::byte_sequence>> DataOwnership;
-
-extern template class MemoryOwnership<
-    std::shared_ptr<byte_traits::byte_sequence>>;
-
 
 /** Message of an unknown message layer.
 * This class should be used to hold a serialized message of an unknown type.
@@ -278,7 +232,8 @@ extern template class MemoryOwnership<
 */
 class SerializedData : public BasicMessageLayer<SerializedData>
 {
-    DataOwnership _memblock; /**< Ownership to the memory block */
+    /** Ownership of the memory block */
+    std::shared_ptr<const byte_traits::byte_sequence> _memblock;
     const_data_it _begin_it; /**< Iterater to the beginning data */
     std::size_t _datasize; /**< Size of the data */
 
@@ -297,7 +252,7 @@ public:
     * @param _datasize size of the message in bytes
     */
     SerializedData(
-        DataOwnership memblock,
+        std::shared_ptr<const byte_traits::byte_sequence> memblock,
         const_data_it begin_it,
         std::size_t datasize
     )
@@ -335,9 +290,9 @@ public:
     *
     * @returns An iterator to the message data. This iterator is valid as long
     * as the underlying memory block that was passed to the constructor
-    * SerializedData() or this object is alive.
+    * is referenced somewhere.
     */
-    const_data_it getDataIterator() const
+    const_data_it begin() const
     { return _begin_it; }
 
     /** Get ownership to message data.
@@ -345,9 +300,9 @@ public:
     * iterator pointed to by getDataIterator() is valid.
     *
     * @returns An ownership object ensuring that a pointer returned by
-    * getDataIterator() is valid.
+    * begin() is valid.
     */
-    DataOwnership getOwnership() const
+    std::shared_ptr<const byte_traits::byte_sequence> getOwnership() const
     { return _memblock; }
 };
 
