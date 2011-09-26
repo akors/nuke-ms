@@ -2,7 +2,7 @@
 
 /*
  *   nuke-ms - Nuclear Messaging System
- *   Copyright (C) 2008, 2009, 2010  Alexander Korsunsky
+ *   Copyright (C) 2008, 2009, 2010, 2011  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -66,7 +66,7 @@ void ClientNode::connectTo(ServerLocation::const_ptr_t where)
     else // on failure, report back to application
     {
         using namespace clientnode;
-        ConnectionStatusReport::ptr_t rprt(new ConnectionStatusReport);
+        auto rprt = std::make_shared<ConnectionStatusReport>();
         rprt->newstate = ConnectionStatusReport::CNST_DISCONNECTED;
         rprt->statechange_reason = ConnectionStatusReport::STCHR_CONNECT_FAILED;
         rprt->msg = "Invalid remote site identifier";
@@ -78,18 +78,18 @@ void ClientNode::connectTo(ServerLocation::const_ptr_t where)
 
 
 NearUserMessage::msg_id_t ClientNode::sendUserMessage(
-    const byte_traits::msg_string& msg,
+    byte_traits::msg_string&& msg,
     const UniqueUserID& recipient
 )
 {
-    NearUserMessage::ptr_t usermsg(new NearUserMessage(msg, recipient));
-    usermsg->msg_id = getNextMessageId();
+    NearUserMessage usermsg{std::move(msg), recipient};
+    usermsg._msg_id = getNextMessageId();
 
     // lock the mutex to the machine
     boost::mutex::scoped_lock(machine_mutex);
-    statemachine.process_event(EvtSendMsg(usermsg));
+    statemachine.process_event(EvtSendMsg<NearUserMessage>{std::move(usermsg)});
 
-    return usermsg->msg_id;
+    return usermsg._msg_id;
 }
 
 
@@ -98,7 +98,7 @@ void ClientNode::disconnect()
 {
     // lock the mutex to the machine, dispatch disconnect request
     boost::mutex::scoped_lock(machine_mutex);
-    statemachine.process_event(EvtDisconnectRequest());
+    statemachine.process_event(EvtDisconnectRequest{});
 }
 
 

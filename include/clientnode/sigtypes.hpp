@@ -32,7 +32,7 @@
 #define SIGTYPES_HPP
 
 #include <boost/signals2/signal.hpp>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include "bytes.hpp"
 #include "neartypes.hpp"
@@ -53,9 +53,6 @@ namespace clientnode
 /** Identification of the server location */
 struct ServerLocation
 {
-    typedef boost::shared_ptr<ServerLocation> ptr_t;
-    typedef boost::shared_ptr<const ServerLocation> const_ptr_t;
-
     byte_traits::native_string where; /**< String with hostname or ip address */
 };
 
@@ -63,9 +60,6 @@ struct ServerLocation
 */
 struct ConnectionStatusReport
 {
-    typedef boost::shared_ptr<ConnectionStatusReport> ptr_t;
-    typedef boost::shared_ptr<const ConnectionStatusReport> const_ptr_t;
-
     /** Type for the current connection state */
     enum connect_state_t
     {
@@ -96,10 +90,6 @@ struct ConnectionStatusReport
 */
 struct SendReport
 {
-    typedef boost::shared_ptr<SendReport> ptr_t;
-    typedef boost::shared_ptr<const SendReport> const_ptr_t;
-
-
     NearUserMessage::msg_id_t message_id; /**< ID of the message in question */
     bool send_state; /**< Was it sent or not */
 
@@ -119,17 +109,15 @@ struct SendReport
 // Signals issued by the Protocol
 
 /** Signal for incoming messages*/
-typedef boost::signals2::signal<void (NearUserMessage::const_ptr_t)>
+typedef boost::signals2::signal<void (std::shared_ptr<const NearUserMessage>)> // FIXME Thinko? Pass messages in signals, what type?
     SignalRcvMessage;
 
 /** signal for connection status reports */
-typedef boost::signals2::signal<
-    void (ConnectionStatusReport::const_ptr_t)>
+typedef boost::signals2::signal<void (std::shared_ptr<const ConnectionStatusReport>)>
     SignalConnectionStatusReport;
 
 /** signal for send reports */
-typedef boost::signals2::signal<
-    void (SendReport::const_ptr_t)>
+typedef boost::signals2::signal<void (std::shared_ptr<const SendReport>)>
     SignalSendReport;
 
 

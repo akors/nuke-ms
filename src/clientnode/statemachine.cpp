@@ -86,9 +86,7 @@ StateWaiting::StateWaiting(my_context ctx)
 boost::statechart::result StateWaiting::react(const EvtConnectRequest& evt)
 {
     // create a query
-    boost::shared_ptr<tcp::resolver::query> query(
-        new tcp::resolver::query(evt.host, evt.service)
-    );
+    auto query = std::make_shared<tcp::resolver::query>(evt.host, evt.service);
 
 
     // dispatch an asynchronous resolve request
@@ -108,7 +106,7 @@ boost::statechart::result StateWaiting::react(const EvtConnectRequest& evt)
 
 boost::statechart::result StateWaiting::react(const EvtSendMsg& evt)
 {
-    SendReport::ptr_t rprt(new SendReport);
+    auto rprt = std::make_shared<SendReport>();
     rprt->send_state = false;
     rprt->reason = SendReport::SR_SERVER_NOT_CONNECTED;
     rprt->reason_str = "Not Connected.";
@@ -145,7 +143,7 @@ StateNegotiating::StateNegotiating(my_context ctx)
 
 boost::statechart::result StateNegotiating::react(const EvtSendMsg& evt)
 {
-    SendReport::ptr_t rprt(new SendReport);
+    auto rprt = std::make_shared<SendReport>();
     rprt->send_state = false;
     rprt->reason = SendReport::SR_SERVER_NOT_CONNECTED;
     rprt->reason_str = "Not yet Connected.";
@@ -157,8 +155,7 @@ boost::statechart::result StateNegotiating::react(const EvtSendMsg& evt)
 
 boost::statechart::result StateNegotiating::react(const EvtConnectReport& evt)
 {
-    ConnectionStatusReport::ptr_t
-        rprt(new ConnectionStatusReport);
+    auto rprt = std::make_shared<ConnectionStatusReport>();
 
     // change state according to the outcome of a connection attempt
     if ( evt.success )
@@ -183,7 +180,7 @@ boost::statechart::result StateNegotiating::react(const EvtConnectReport& evt)
 
 boost::statechart::result StateNegotiating::react(const EvtDisconnectRequest&)
 {
-    ConnectionStatusReport::ptr_t rprt(new ConnectionStatusReport);
+    auto rprt = std::make_shared<ConnectionStatusReport>();
 
     rprt->newstate = ConnectionStatusReport::CNST_DISCONNECTED;
     rprt->statechange_reason = ConnectionStatusReport::STCHR_USER_REQUESTED;
@@ -194,7 +191,7 @@ boost::statechart::result StateNegotiating::react(const EvtDisconnectRequest&)
 
 boost::statechart::result StateNegotiating::react(const EvtConnectRequest&)
 {
-    ConnectionStatusReport::ptr_t rprt(new ConnectionStatusReport);
+    auto rprt = std::make_shared<ConnectionStatusReport>();
 
     rprt->newstate = ConnectionStatusReport::CNST_CONNECTING;
     rprt->statechange_reason = ConnectionStatusReport::STCHR_BUSY;
@@ -210,7 +207,7 @@ void StateNegotiating::resolveHandler(
     const boost::system::error_code& error,
     tcp::resolver::iterator endpoint_iterator,
     ClientnodeMachine::CountedReference cm,
-    boost::shared_ptr<tcp::resolver::query> /* query */
+    std::shared_ptr<tcp::resolver::query> /* query */
 )
 {
     cm.ref().logstreams.infostream<<"resolveHandler invoked."<<std::endl;
@@ -343,7 +340,7 @@ StateConnected::StateConnected(my_context ctx)
 
 boost::statechart::result StateConnected::react(const EvtDisconnectRequest&)
 {
-    ConnectionStatusReport::ptr_t rprt(new ConnectionStatusReport);
+    auto rprt = std::make_shared<ConnectionStatusReport>();
 
     rprt->newstate = ConnectionStatusReport::CNST_DISCONNECTED;
     rprt->statechange_reason = ConnectionStatusReport::STCHR_USER_REQUESTED;
@@ -359,8 +356,8 @@ boost::statechart::result StateConnected::react(const EvtSendMsg& evt)
     SegmentationLayer segm_layer(evt.data);
 
     // create buffer, fill it with the serialized message
-    SegmentationLayer::dataptr_t data(
-        new byte_traits::byte_sequence(segm_layer.size())
+    auto data = std::make_shared<byte_traits::byte_sequence>(
+        segm_layer.size()
     );
 
     segm_layer.fillSerialized(data->begin());
@@ -383,7 +380,7 @@ boost::statechart::result StateConnected::react(const EvtSendMsg& evt)
 
 boost::statechart::result StateConnected::react(const EvtDisconnected& evt)
 {
-    ConnectionStatusReport::ptr_t rprt(new ConnectionStatusReport);
+    auto rprt = std::make_shared<ConnectionStatusReport>();
 
     rprt->newstate = ConnectionStatusReport::CNST_DISCONNECTED;
     rprt->statechange_reason = ConnectionStatusReport::STCHR_SOCKET_CLOSED;
@@ -406,7 +403,7 @@ boost::statechart::result StateConnected::react(const EvtRcvdMessage& evt)
         if (*data.getDataIterator() ==
             static_cast<byte_traits::byte_t>(NearUserMessage::LAYER_ID))
         {
-            NearUserMessage::ptr_t usermsg(new NearUserMessage(data));
+            auto usermsg = std::make_shared<NearUserMessage>(data);
             context<ClientnodeMachine>().signals.rcvMessage(usermsg);
         }
         else
@@ -429,7 +426,7 @@ boost::statechart::result StateConnected::react(const EvtRcvdMessage& evt)
 
 boost::statechart::result StateConnected::react(const EvtConnectRequest&)
 {
-    ConnectionStatusReport::ptr_t rprt(new ConnectionStatusReport);
+    auto rprt = std::make_shared<ConnectionStatusReport>();
 
     rprt->newstate = ConnectionStatusReport::CNST_CONNECTED;
     rprt->statechange_reason = ConnectionStatusReport::STCHR_BUSY;
@@ -445,7 +442,7 @@ void StateConnected::writeHandler(
     const boost::system::error_code& error,
     std::size_t bytes_transferred,
     ClientnodeMachine::CountedReference cm,
-    SegmentationLayer::dataptr_t data
+    std::shared_ptr<byte_traits::byte_sequence> data
 )
 {
     cm.ref().logstreams.infostream<<"Sending message finished"<<std::endl;
@@ -453,8 +450,7 @@ void StateConnected::writeHandler(
 
     if (!error)
     {
-
-        SendReport::ptr_t rprt(new SendReport);
+        auto rprt = std::make_shared<SendReport>();
         rprt->send_state = true;
         rprt->reason = SendReport::SR_SEND_OK;
 
@@ -470,7 +466,7 @@ void StateConnected::writeHandler(
 
         byte_traits::native_string errmsg(error.message());
 
-        SendReport::ptr_t rprt(new SendReport);
+        auto rprt = std::make_shared<SendReport>();
         rprt->send_state = false;
         rprt->reason = SendReport::SR_CONNECTION_ERROR;
         rprt->reason_str = errmsg;
@@ -519,12 +515,8 @@ const byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
             if (header_data.packetsize > MAX_PACKETSIZE)
                 throw MsgLayerError("Oversized packet.");
 
-
-            SegmentationLayer::dataptr_t body_buf(
-                new byte_traits::byte_sequence(
-                    header_data.packetsize-SegmentationLayer::header_length
-                )
-            );
+            auto body_buf = std::make_shared<byte_traits::byte_sequence>(
+                header_data.packetsize-SegmentationLayer::header_length); 
 
             // start an asynchronous receive for the body
             async_read(
@@ -559,7 +551,7 @@ void StateConnected::receiveSegmentationBodyHandler(
     const boost::system::error_code& error,
     std::size_t bytes_transferred,
     ClientnodeMachine::CountedReference cm,
-    SegmentationLayer::dataptr_t rcvbuf
+    std::shared_ptr<byte_traits::byte_sequence> rcvbuf
 )
 {
     // if there was an error,

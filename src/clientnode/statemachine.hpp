@@ -174,7 +174,7 @@ class ClientnodeMachine :
 #   error "class ClientnodeMachine does not make sense with a single-threaded class ReferenceCounter"
 #endif
 {
-    boost::shared_ptr<boost::asio::io_service> io_service;
+    std::shared_ptr<boost::asio::io_service> io_service;
 
     /** A thread object for all asynchronouy I/O operations. It will start in
     not-a-thread state. */
@@ -287,7 +287,7 @@ struct StateNegotiating :
         const boost::system::error_code& error,
         boost::asio::ip::tcp::resolver::iterator endpoint_iterator,
         ClientnodeMachine::CountedReference cm,
-        boost::shared_ptr<boost::asio::ip::tcp::resolver::query> /* query */
+        std::shared_ptr<boost::asio::ip::tcp::resolver::query> /* query */
     );
 
 
@@ -330,7 +330,7 @@ struct StateConnected :
         const boost::system::error_code& error,
         std::size_t bytes_transferred,
         ClientnodeMachine::CountedReference cm,
-        SegmentationLayer::dataptr_t data
+        std::shared_ptr<byte_traits::byte_sequence> data
     );
 
     static void receiveSegmentationHeaderHandler(
@@ -344,7 +344,7 @@ struct StateConnected :
         const boost::system::error_code& error,
         std::size_t bytes_transferred,
         ClientnodeMachine::CountedReference cm,
-        SegmentationLayer::dataptr_t rcvbuf
+        std::shared_ptr<byte_traits::byte_sequence> rcvbuf
     );
 
 };
