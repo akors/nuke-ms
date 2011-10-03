@@ -30,7 +30,7 @@ ClientnodeMachine::ClientnodeMachine(ClientNodeSignals&  _signals,
     : signals(_signals), io_service(new boost::asio::io_service),
         socket(*io_service), resolver(*io_service),
         logstreams(logstreams_), machine_mutex(_machine_mutex),
-        ReferenceCounter(boost::bind(&ClientnodeMachine::on_returned, this))
+        ReferenceCounter(std::bind(&ClientnodeMachine::on_returned, this))
 {}
 
 ClientnodeMachine::~ClientnodeMachine()
@@ -54,7 +54,7 @@ void ClientnodeMachine::startIOOperations()
 
     // start a new thread that processes all asynchronous operations
     io_thread = boost::thread(
-        boost::bind(&boost::asio::io_service::run, io_service)
+        std::bind(&boost::asio::io_service::run, io_service)
     );
 }
 
@@ -92,10 +92,10 @@ boost::statechart::result StateWaiting::react(const EvtConnectRequest& evt)
     // dispatch an asynchronous resolve request
     outermost_context().resolver.async_resolve(
         *query,
-        boost::bind(
+        std::bind(
             &StateNegotiating::resolveHandler,
-            boost::asio::placeholders::error,
-            boost::asio::placeholders::iterator,
+            std::placeholders::_1,
+            std::placeholders::_2,
             ClientnodeMachine::CountedReference(outermost_context()),
             query
         )
@@ -251,9 +251,9 @@ void StateNegotiating::resolveHandler(
 
     cm.ref().socket.async_connect(
         *endpoint_iterator,
-        boost::bind(
+        std::bind(
             &StateNegotiating::connectHandler,
-            boost::asio::placeholders::error,
+            std::placeholders::_1,
             cm,
 			endpoint_iterator
         )
@@ -282,11 +282,11 @@ void StateNegotiating::connectHandler(
         // start an asynchronous read to receive the header of the first packet
         async_read(
             cm.ref().socket,
-            boost::asio::buffer(rcvbuf, SegmentationLayer::header_length),
-            boost::bind(
+            boost::asio::buffer(rcvbuf, SegmentationLayerBase::header_length),
+            std::bind(
                 &StateConnected::receiveSegmentationHeaderHandler,
-                boost::asio::placeholders::error,
-                boost::asio::placeholders::bytes_transferred,
+                std::placeholders::_1,
+                std::placeholders::_2,
                 cm,
                 rcvbuf
             )
@@ -302,9 +302,9 @@ void StateNegotiating::connectHandler(
         cm.ref().socket.close();
         cm.ref().socket.async_connect(
             *endpoint_iterator,
-            boost::bind(
+            std::bind(
                 &StateNegotiating::connectHandler,
-                boost::asio::placeholders::error,
+                std::placeholders::_1,
                 cm,
                 endpoint_iterator
 			)
@@ -365,10 +365,10 @@ boost::statechart::result StateConnected::react(const EvtSendMsg& evt)
     async_write(
         context<ClientnodeMachine>().socket,
         boost::asio::buffer(*data),
-        boost::bind(
+        std::bind(
             &StateConnected::writeHandler,
-            boost::asio::placeholders::error,
-            boost::asio::placeholders::bytes_transferred,
+            std::placeholders::_1,
+            std::placeholders::_2,
             ClientnodeMachine::CountedReference(outermost_context()),
             data
         )
@@ -522,10 +522,10 @@ const byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
             async_read(
                 cm.ref().socket,
                 boost::asio::buffer(*body_buf),
-                boost::bind(
+                std::bind(
                     &StateConnected::receiveSegmentationBodyHandler,
-                    boost::asio::placeholders::error,
-                    boost::asio::placeholders::bytes_transferred,
+                    std::placeholders::_1 /* boost::asio::placeholders::error */,
+                    std::placeholders::_2 /* boost::asio::placeholders::bytes_transferred */ ,
                     cm,
                     body_buf
                 )
@@ -583,11 +583,11 @@ void StateConnected::receiveSegmentationBodyHandler(
         // start an asynchronous read to receive the header of the first packet
         async_read(
             cm.ref().socket,
-            boost::asio::buffer(rcvbuf, SegmentationLayer::header_length),
-            boost::bind(
+            boost::asio::buffer(rcvbuf, SegmentationLayerBase::header_length),
+            std::bind(
                 &StateConnected::receiveSegmentationHeaderHandler,
-                boost::asio::placeholders::error,
-                boost::asio::placeholders::bytes_transferred,
+                std::placeholders::_1,
+                std::placeholders::_2,
                 cm,
                 rcvbuf
             )
