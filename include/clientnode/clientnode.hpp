@@ -43,6 +43,7 @@
 #include "bytes.hpp"
 #include "neartypes.hpp"
 #include "clientnode/sigtypes.hpp"
+#include "clientnode/logstreams.hpp"
 #include "clientnode/statemachine.hpp"
 
 
