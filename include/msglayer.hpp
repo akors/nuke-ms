@@ -228,7 +228,7 @@ struct BasicMessageLayer
 * message layer class.
 */
 class SerializedData : public BasicMessageLayer<SerializedData>
-{    
+{
     /** Ownership of the memory block */
     std::shared_ptr<const byte_traits::byte_sequence> _memblock;
     decltype(_memblock->begin()) _begin_it; /**< Iterater to the beginning data */
@@ -530,8 +530,8 @@ ByteOutputIterator StringwrapLayer::fillSerialized(ByteOutputIterator it) const
     return it;
 }
 
-extern template 
-byte_traits::byte_sequence::iterator 
+extern template
+byte_traits::byte_sequence::iterator
 StringwrapLayer::fillSerialized(byte_traits::byte_sequence::iterator it) const;
 
 

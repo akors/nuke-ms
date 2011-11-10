@@ -2,7 +2,7 @@
 
 /*
  *   nuke-ms - Nuclear Messaging System
- *   Copyright (C) 2010  Alexander Korsunsky
+ *   Copyright (C) 2010, 2011  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by

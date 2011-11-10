@@ -104,7 +104,7 @@ boost::statechart::result StateWaiting::react(const EvtConnectRequest& evt)
     return transit< StateNegotiating >();
 }
 
-boost::statechart::result StateWaiting::react(const EvtSendMsg& evt)
+boost::statechart::result StateWaiting::react(const EvtSendMsg<NearUserMessage>& evt)
 {
     auto rprt = std::make_shared<SendReport>();
     rprt->send_state = false;
@@ -141,7 +141,7 @@ StateNegotiating::StateNegotiating(my_context ctx)
 
 }
 
-boost::statechart::result StateNegotiating::react(const EvtSendMsg& evt)
+boost::statechart::result StateNegotiating::react(const EvtSendMsg<NearUserMessage>& evt)
 {
     auto rprt = std::make_shared<SendReport>();
     rprt->send_state = false;
@@ -277,7 +277,7 @@ void StateNegotiating::connectHandler(
 
         // create a receive buffer
         byte_traits::byte_t* rcvbuf =
-            new byte_traits::byte_t[SegmentationLayer::header_length];
+            new byte_traits::byte_t[SegmentationLayerBase::header_length];
 
         // start an asynchronous read to receive the header of the first packet
         async_read(
@@ -350,10 +350,10 @@ boost::statechart::result StateConnected::react(const EvtDisconnectRequest&)
 }
 
 
-boost::statechart::result StateConnected::react(const EvtSendMsg& evt)
+boost::statechart::result StateConnected::react(const EvtSendMsg<NearUserMessage>& evt)
 {
     // create segmentation layer from the data to be sent
-    SegmentationLayer segm_layer(evt.data);
+    SegmentationLayer<NearUserMessage> segm_layer{std::move(*evt._data)};
 
     // create buffer, fill it with the serialized message
     auto data = std::make_shared<byte_traits::byte_sequence>(
@@ -391,16 +391,17 @@ boost::statechart::result StateConnected::react(const EvtDisconnected& evt)
 }
 
 
-boost::statechart::result StateConnected::react(const EvtRcvdMessage& evt)
+boost::statechart::result
+StateConnected::react(const EvtRcvdMessage<SerializedData>& evt)
 {
     // whatever it is, we need a SerializedData object from it
-    SerializedData data(evt.data.getUpperLayer()->getSerializedData());
+    SerializedData data{std::move(evt._data->_inner_layer)};
 
 
     try {
         // check out the layer identifier if it's a string, dispatch it.
         // If not, discard
-        if (*data.getDataIterator() ==
+        if (*data.begin() ==
             static_cast<byte_traits::byte_t>(NearUserMessage::LAYER_ID))
         {
             auto usermsg = std::make_shared<NearUserMessage>(data);
@@ -479,18 +480,19 @@ void StateConnected::writeHandler(
     }
 }
 
+
 void StateConnected::receiveSegmentationHeaderHandler(
     const boost::system::error_code& error,
     std::size_t bytes_transferred,
     ClientnodeMachine::CountedReference cm,
-    byte_traits::byte_t rcvbuf[SegmentationLayer::header_length]
+    byte_traits::byte_t rcvbuf[SegmentationLayerBase::header_length]
 )
 {
     cm.ref().logstreams.infostream<<"Reveive (header) handler invoked"<<std::endl;
 
     // if there was an error,
     // tear down the connection by posting a disconnection event
-    if (error || bytes_transferred != SegmentationLayer::header_length)
+    if (error || bytes_transferred != SegmentationLayerBase::header_length)
     {
 		// if the operation was aborted, the state machine might not be alive,
 		// so we STFU and return
@@ -506,8 +508,8 @@ void StateConnected::receiveSegmentationHeaderHandler(
     {
         try {
             // decode and verify the header of the message
-            SegmentationLayer::HeaderType header_data
-                = SegmentationLayer::decodeHeader(rcvbuf);
+            SegmentationLayerBase::HeaderType header_data
+                = SegmentationLayerBase::decodeHeader(rcvbuf);
 
 /// @todo Magic number, set to something proper or make configurable
 const byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
@@ -516,7 +518,7 @@ const byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
                 throw MsgLayerError("Oversized packet.");
 
             auto body_buf = std::make_shared<byte_traits::byte_sequence>(
-                header_data.packetsize-SegmentationLayer::header_length); 
+                header_data.packetsize-SegmentationLayerBase::header_length);
 
             // start an asynchronous receive for the body
             async_read(
@@ -568,17 +570,21 @@ void StateConnected::receiveSegmentationBodyHandler(
     }
     else // if no error occured, report the received message to the application
     {
-        SegmentationLayer segmlayer(rcvbuf);
+        SegmentationLayer<SerializedData> segmlayer{
+            {rcvbuf, rcvbuf->begin(), rcvbuf->size()}
+        };
 
         {
             boost::mutex::scoped_lock lk(cm.ref().machine_mutex);
-            cm.ref().process_event(EvtRcvdMessage(segmlayer));
+            cm.ref().process_event(
+                EvtRcvdMessage<SerializedData>{std::move(segmlayer)}
+            );
         }
         // start a new receive for the next message
 
         // create a receive buffer
         byte_traits::byte_t* rcvbuf =
-            new byte_traits::byte_t[SegmentationLayer::header_length];
+            new byte_traits::byte_t[SegmentationLayerBase::header_length];
 
         // start an asynchronous read to receive the header of the first packet
         async_read(
