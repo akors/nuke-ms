@@ -48,14 +48,15 @@ StringwrapLayer::StringwrapLayer(const SerializedData& msg)
     SerializedData::const_data_it data_it = msg.begin();
 
     // bail out if the string is not aligned
-    if (datasize % sizeof(StringType::value_type) !=0)
+    if (datasize % sizeof(byte_traits::msg_string::value_type) !=0)
         throw MsgLayerError("Unaligned packet");
 
     // set message_string to the proper size
-    _message_string.resize((datasize)/sizeof(StringType::value_type));
+    _message_string.resize((datasize)/
+        sizeof(byte_traits::msg_string::value_type));
 
     // iterator to the message_string
-    StringType::iterator out_iter = _message_string.begin();
+    byte_traits::msg_string::iterator out_iter = _message_string.begin();
 
     std::remove_reference<decltype(*out_iter)>::type tmpval;
 

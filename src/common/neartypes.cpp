@@ -28,7 +28,7 @@ template class BasicMessageLayer<NearUserMessage>;
 template class SegmentationLayer<NearUserMessage>;
 
 // template function specializations
-template byte_traits::byte_sequence::iterator 
+template byte_traits::byte_sequence::iterator
 NearUserMessage::fillSerialized(byte_traits::byte_sequence::iterator it) const;
 
 NearUserMessage::NearUserMessage(const SerializedData& data)

@@ -178,14 +178,6 @@ struct NearUserMessage : BasicMessageLayer<NearUserMessage>
     // implementing base class version
     template <typename ByteOutputIterator>
     ByteOutputIterator fillSerialized(ByteOutputIterator it) const;
-
-    /** Return the string contained in the layer message.
-    *
-    * @throws InvalidHeaderError when the stringwrap message is not aligned
-    * @return A stringwraplayer object
-    */
-    const StringwrapLayer& getStringwrap() const
-    { return _stringwrap; }
 };
 
 
@@ -217,7 +209,7 @@ ByteOutputIterator NearUserMessage::fillSerialized(ByteOutputIterator it) const
 extern template class BasicMessageLayer<NearUserMessage>;
 extern template class SegmentationLayer<NearUserMessage>;
 
-extern template byte_traits::byte_sequence::iterator 
+extern template byte_traits::byte_sequence::iterator
 NearUserMessage::fillSerialized(byte_traits::byte_sequence::iterator it) const;
 
 

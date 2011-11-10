@@ -41,9 +41,9 @@ int main()
     NearUserMessage num3(sw);
 
     TEST_ASSERT(
-        num1.getStringwrap().getString() == num2.getStringwrap().getString()
-        && num1.getStringwrap().getString() == num3.getStringwrap().getString()
-        && num2.getStringwrap().getString() == num3.getStringwrap().getString()
+        num1._stringwrap._message_string == num2._stringwrap._message_string
+        && num1._stringwrap._message_string == num3._stringwrap._message_string
+        && num2._stringwrap._message_string == num3._stringwrap._message_string
     );
     }
 
@@ -70,13 +70,13 @@ int main()
     {
         NearUserMessage up(serdat);
 
-        TEST_ASSERT(up._stringwrap.getString() == message_string);
+        TEST_ASSERT(up._stringwrap._message_string == message_string);
         TEST_ASSERT(up._recipient == recipient);
         TEST_ASSERT(up._sender == sender);
         TEST_ASSERT(up._msg_id == NearUserMessage::msg_id_t(0xF0));
 
         std::cout<<"Message string:\n"<<
-            up._stringwrap.getString()<<", "<<
+            up._stringwrap._message_string<<", "<<
             reinterpret_cast<char*>(&up._sender.id)<<' '<<
             reinterpret_cast<char*>(&up._recipient.id)<<std::endl;
 

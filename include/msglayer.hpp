@@ -392,25 +392,18 @@ struct SegmentationLayer
 * This class is a simple wrapper around a wstring message.
 * No header is prepended to the message.
 */
-class StringwrapLayer : public BasicMessageLayer<StringwrapLayer>
+struct StringwrapLayer : public BasicMessageLayer<StringwrapLayer>
 {
-    typedef byte_traits::msg_string StringType;
 
     /** The actual text message */
-    StringType _message_string;
+    byte_traits::msg_string _message_string;
 
-public:
+
     /** Default Constructor. */
     StringwrapLayer() = default;
 
-    /** Constructor.
-    * Create a StringwrapLayer message from an byte_traits::msg_string.
-    *
-    * @param msg msg The string the message shall contain.
-    */
-    StringwrapLayer(const StringType& msg) throw ()
-        : _message_string(msg)
-    {}
+    /** Copy constructor */
+    StringwrapLayer(const StringwrapLayer& msg) = default;
 
     /** Move constructor.
      * Create a StringwrapLayer message from a temporary StringwrapLayer object
@@ -418,6 +411,15 @@ public:
     */
     StringwrapLayer(StringwrapLayer&& other)
         : _message_string(std::move(other._message_string))
+    {}
+
+    /** Constructor.
+    * Create a StringwrapLayer message from an byte_traits::msg_string.
+    *
+    * @param msg msg The string the message shall contain.
+    */
+    StringwrapLayer(const byte_traits::msg_string& msg) throw ()
+        : _message_string(msg)
     {}
 
     /** Constructor.
@@ -437,38 +439,13 @@ public:
     // overriding base class version
     std::size_t size() const
     {
-        return _message_string.length() *  sizeof(StringType::value_type);
+        return _message_string.length() *
+            sizeof(byte_traits::msg_string::value_type);
     }
 
     // overriding base class version
     template <typename ByteOutputIterator>
     ByteOutputIterator fillSerialized(ByteOutputIterator it) const;
-
-    /** Return the string contained in the layer message.
-    *
-    * This function returns a constant reference to the internal string message.
-    * When using this string object bear in mind that this is only a reference,
-    * not a copy. This reference is valid as long as *this is alive.
-    * If you need to pass this string on, copy construvt a new instance from
-    * this reference.
-    *
-    * @returns A constant reference to the string contained in this message
-    */
-    const StringType& getString() const
-    { return _message_string; }
-
-    /** Return the string contained in the layer message.
-    *
-    * This function returns a constant reference to the internal string message.
-    * When using this string object bear in mind that this is only a reference,
-    * not a copy. This reference is valid as long as *this is alive.
-    * If you need to pass this string on, copy construct a new instance from
-    * this reference.
-    *
-    * @returns A constant reference to the string contained in this message
-    */
-    operator const StringType& () const
-    { return _message_string; }
 };
 
 

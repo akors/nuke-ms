@@ -53,7 +53,7 @@ int main()
     // create stringwrap from string
     StringwrapLayer stringwrap_down(orig_string);
 
-    TEST_ASSERT(stringwrap_down.getString() == orig_string);
+    TEST_ASSERT(stringwrap_down._message_string == orig_string);
 
 
     // check string length
@@ -113,8 +113,8 @@ int main()
     {
         StringwrapLayer stringwrap_up(ser_data);
 
-        std::cout<<"\nResulting String: \""<<stringwrap_up.getString()<<"\"\n";
-        TEST_ASSERT(stringwrap_up.getString() == orig_string);
+        std::cout<<"\nResulting String: \""<<stringwrap_up._message_string<<"\"\n";
+        TEST_ASSERT(stringwrap_up._message_string == orig_string);
     }
     catch(...)
     {

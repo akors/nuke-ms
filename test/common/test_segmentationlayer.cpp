@@ -48,7 +48,7 @@ int main()
             SegmentationLayerBase::decodeHeader(raw_ser.begin());
 
         // create buffer for message data
-        auto body = 
+        auto body =
         std::make_shared<byte_traits::byte_sequence>(header.packetsize-4);
 
         // "read" body from network
