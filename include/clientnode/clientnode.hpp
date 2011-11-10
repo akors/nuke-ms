@@ -151,9 +151,20 @@ public:
      * @return the message identifier of the sent message
      */
     NearUserMessage::msg_id_t sendUserMessage(
-        const byte_traits::msg_string& msg,
+        byte_traits::msg_string&& msg,
         const UniqueUserID& recipient = UniqueUserID()
     );
+
+    NearUserMessage::msg_id_t sendUserMessage(
+        const byte_traits::msg_string& msg,
+        const UniqueUserID& recipient = UniqueUserID()
+    )
+    {
+        // create copy and move it into the sendUserMessage function
+        /* FIXME use initializer list syntax, seems like a compiler bug? */
+        // return sendUserMessage(std::move(byte_traits::msg_string{msg}), recipient);
+        return sendUserMessage(std::move(byte_traits::msg_string(msg)), recipient);
+    }
 
 
     /** Disconnect from the remote site.
