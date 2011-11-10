@@ -52,10 +52,11 @@ void ClientnodeMachine::startIOOperations()
     // Before starting a new thread, the old thread must be joined.
     catchThread(io_thread, thread_timeout);
 
+    // help std::bind find the right overload
+    std::size_t (boost::asio::io_service::*r)() = &boost::asio::io_service::run;
+
     // start a new thread that processes all asynchronous operations
-    io_thread = boost::thread(
-        std::bind(&boost::asio::io_service::run, io_service)
-    );
+    io_thread = boost::thread(std::bind(r, io_service.get()));
 }
 
 void ClientnodeMachine::stopIOOperations()
@@ -459,12 +460,6 @@ void StateConnected::writeHandler(
     }
     else
     {
-		// if the operation was aborted, the state machine might not be alive,
-		// so we STFU and return
-		if (error == boost::asio::error::operation_aborted)
-			return;
-
-
         byte_traits::native_string errmsg(error.message());
 
         auto rprt = std::make_shared<SendReport>();
@@ -512,7 +507,7 @@ void StateConnected::receiveSegmentationHeaderHandler(
                 = SegmentationLayerBase::decodeHeader(rcvbuf);
 
 /// @todo Magic number, set to something proper or make configurable
-const byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
+constexpr byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
 
             if (header_data.packetsize > MAX_PACKETSIZE)
                 throw MsgLayerError("Oversized packet.");
@@ -560,11 +555,6 @@ void StateConnected::receiveSegmentationBodyHandler(
     // tear down the connection by posting a disconnection event
     if (error)
     {
-		// if the operation was aborted, the state machine might not be alive,
-		// so we STFU and return
-		if (error == boost::asio::error::operation_aborted)
-			return;
-
         boost::mutex::scoped_lock lk(cm.ref().machine_mutex);
         cm.ref().process_event(EvtDisconnected(error.message()));
     }

@@ -179,9 +179,6 @@ class ClientnodeMachine :
     >,
     public ReferenceCounter<ClientnodeMachine>
 
-#ifdef NUKE_MS_REFCOUNTER_NOT_MULTITHREADED
-#   error "class ClientnodeMachine does not make sense with a single-threaded class ReferenceCounter"
-#endif
 {
     std::shared_ptr<boost::asio::io_service> io_service;
 
