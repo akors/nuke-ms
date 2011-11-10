@@ -52,11 +52,11 @@ ClientNode::~ClientNode()
 }
 
 
-void ClientNode::connectTo(ServerLocation::const_ptr_t where)
+void ClientNode::connectTo(const ServerLocation& where)
 {
     // Get Host/Service pair from the destination string
     byte_traits::native_string host, service;
-    if (parseDestinationString(host, service, where->where))
+    if (parseDestinationString(host, service, where.where))
     {  // on success, pass on event
 
         // lock the mutex to the machine, process event

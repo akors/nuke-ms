@@ -2,7 +2,7 @@
 
 /*
  *   nuke-ms - Nuclear Messaging System
- *   Copyright (C) 2010  Alexander Korsunsky
+ *   Copyright (C) 2010, 2011  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -109,7 +109,7 @@ struct SendReport
 // Signals issued by the Protocol
 
 /** Signal for incoming messages*/
-typedef boost::signals2::signal<void (std::shared_ptr<const NearUserMessage>)> // FIXME Thinko? Pass messages in signals, what type?
+typedef boost::signals2::signal<void (std::shared_ptr<NearUserMessage>)> // FIXME Thinko? Pass messages in signals, what type?
     SignalRcvMessage;
 
 /** signal for connection status reports */
@@ -127,20 +127,19 @@ struct ClientNodeSignals
      * The slot connecting to be signal can be called by multiple threads
      * and must thus esnure thread safety.
     */
-    boost::signals2::signal<void (NearUserMessage::const_ptr_t)> rcvMessage;
+    SignalRcvMessage rcvMessage;
 
     /** Signal for connection status reports
      * The slot connecting to be signal can be called by multiple threads
      * and must thus esnure thread safety.
     */
-    boost::signals2::signal<void (ConnectionStatusReport::const_ptr_t)>
-    connectStatReport;
+    SignalConnectionStatusReport connectStatReport;
 
     /** Signal for send reports
      * The slot connecting to be signal can be called by multiple threads
      * and must thus esnure thread safety.
     */
-    boost::signals2::signal<void (SendReport::const_ptr_t)> sendReport;
+    SignalSendReport sendReport;
 };
 
 
