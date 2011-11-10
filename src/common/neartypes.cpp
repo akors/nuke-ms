@@ -23,6 +23,10 @@ using namespace nuke_ms;
 
 const UniqueUserID UniqueUserID::user_id_none = UniqueUserID();
 
+// explicit class template instantions
+template class BasicMessageLayer<NearUserMessage>;
+template class SegmentationLayer<NearUserMessage>;
+
 // template function specializations
 template byte_traits::byte_sequence::iterator 
 NearUserMessage::fillSerialized(byte_traits::byte_sequence::iterator it) const;
