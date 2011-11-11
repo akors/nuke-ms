@@ -26,7 +26,6 @@ Contents of this file:
         2.2.1 Using MinGW
 		2.2.2 Using Visual Studio 2008
 		2.2.3 Using Visual Studio 2010
-		2.2.4 Using Visual Studio 2005
 
 
 ---------------------------------------------------------------------------------
@@ -40,7 +39,7 @@ To compile nuke-ms from source you need to install some libraries and tools. The
 These are the tools and libraries needed to build nuke-ms, their minimum required versions and their homepages:
 
     C++ Compiler
-    A fairly recent C++ compiler is required to build nuke-ms. GCC is allways a safe bet, however other compilers might work as well. It's best to simply try out if you are able to compile nuke-ms. The following compilers were tested: gcc-3.4.5 (MinGW), gcc-4.5.1 (MinGW), gcc-4.3, gcc-4.4, gcc 4.5, MSVC9/10 (Visual Studio 2008/2010). MSVC8 (Visual Studio 2005) works as well but it requires a little bit more effort due to missing Windows SDK libraries.
+    A recent C++ compiler with C++11 support is required to build nuke-ms. Currently, only GCC >= 4.6 is known to compile nuke-ms successfully.
 
     Boost C++ Libraries,    1.39,       http://www.boost.org/
     The Boost Libraries are a set of portable high quality libraries of which most are header-only. The libraries that need to be included at link-time are Boost.System and Boost.Thread.
@@ -63,19 +62,15 @@ On many GNU/Linux or Unix distributions the tools are packaged and ready to use.
 
 
 Debian GNU/Linux:
-    5.0 ("Lenny"):
-        Install the following packages and their dependencies: build-essentials cmake libboost-system1.40-dev libboost-thread1.40-dev libwxgtk2.8-dev
-        The Boost libraries are not contained in the official archives, however Debian Backpors provides these packages. Follow the instruction on this site to install the necessary packages: http://www.backports.org/dokuwiki/doku.php?id=instructions .
-
-    6.0 ("Squeeze"), Testing ("Wheezy"), Unstable ("Sid"):
+    Testing ("Wheezy"), Unstable ("Sid"):
         Install the following packages and their dependencies: build-essentials cmake libboost-system-dev libboost-thread-dev libwxgtk2.8-dev
 
 Ubuntu:
-    9.10 ("Karmic Koala"), 10.04 ("Lucid Lynx"), 10.10 ("Maverick Meerkat"):
+    11.10 ("Oineric Ocelot"), 12.04 ("Precise Penguin"):
         Install the following packages and their dependencies: build-essentials cmake libboost-system-dev libboost-thread-dev libwxgtk2.8-dev
 
 Fedora:
-    12 ("Constantine"), 13 ("Goddard"), 14 ("Laughlin"):
+    15 ("Lovelock"), 16 ("Verne"):
         Install the following packages and their dependencies: cmake boost-devel wxGTK-devel
 
 Arch Linux:
@@ -115,7 +110,7 @@ Finally call your favourite toolchain to compile the source. This will simply be
 A simple compilation of nuke-ms might look like this:
     $ mkdir ~/nuke-ms/build
     $ cd ~/nuke-ms/build
-    $ cmake ~/nuke-ms/
+    $ cmake ..
     $ make -j3
 
 Of course you have to change the path for the project directory according to where you put it.
@@ -133,8 +128,6 @@ These are a few links that could help you in case of troubles:
     http://www.vtk.org/Wiki/CMake_Generator_Specific_Information
     http://www.cmake.org/cmake/help/cmake2.6docs.html#module:FindBoost
     http://www.cmake.org/cmake/help/cmake2.6docs.html#section_Variables%20that%20Control%20the%20Build
-    http://msdn.microsoft.com/en-us/library/8kche8ah(VS.71).aspx
-    http://garrys-brain.blogspot.com/2006/10/boost-library-and-visual-studio-2005.html
 
 
 2.2.1) Using MinGW (Recommended)
@@ -213,29 +206,7 @@ A few things to bear in mind:
 	- All runtime Libraries are now called msvc*100 instead of msvc*90. The link to the redistributable package changes to: http://www.microsoft.com/downloads/en/details.aspx?FamilyID=a7b7a05e-6de6-4d3a-a423-37bf0912db84
 	- If you don't want to open the Visual Studio GUI, you can use the tool "msbuild.exe" (call with the generated "nuke-ms.sln" file) for command line building, which was broken for non-english systems in Visual Studio 2008.
 
-2.2.4) Using Visual Studio 2005
 
-Compiling with Visual Studio 2005 is not recommended, but possible. 
-
-1) Download the "Microsoft Platform SDK for Windows Server 2003 R2" from here: http://www.microsoft.com/downloads/en/details.aspx?FamilyId=0BAF2B35-C656-4969-ACE8-E4C0C0716ADB&displaylang=en .
-
-2)Install it into any location, I installed it into the Visual Studio Directory (C:\Program Files (x86)\Microsoft Visual Studio 8\VC\PlatformSDK). You don't have to install the whole SDK, the components needed are:
- - Microsoft Core SDK: Build Environment for x86 (and/or amd64 if you want to build a 64 bit version), Redistributable Components)
- - Microsoft Data Accession Services: Build Environment for x86 (and/or amd64) for odbc32.lib, required by wxWidgets.
-
-3) This won't do, since this way Visual Studio won't find the PlatformSDK libraries. You have to manually add the Include and Lib directories of the PlatformSDK installation to the environment variables "INCLUDE" and "LIB", respectively in the build environment you are using.
-I edited the link to the "Visual Studio 2005 Command Prompt" in the Start Menu to call my own batch script called "my_vcvarsall.bat" instead of the default "C:\Program Files (x86)\Microsoft Visual Studio 8\VC\vcvarsall.bat".
-This "my_vcvarsall.bat" in turn first calls the default file and then adds the Bin/, Include/ and Lib/ directories to the environment. It looks like this:
-
-	@echo off
-	call "C:\Program Files (x86)\Microsoft Visual Studio 8\VC\vcvarsall.bat" %*
-
-	REM set variables to the Platform SDK directories
-	set "PATH=%PATH%C:\Program Files (x86)\Microsoft Visual Studio 8\VC\PlatformSDK\Bin;"
-	set "INCLUDE=%INCLUDE%C:\Program Files (x86)\Microsoft Visual Studio 8\VC\PlatformSDK\Include;"
-	set "LIB=%LIB%C:\Program Files (x86)\Microsoft Visual Studio 8\VC\PlatformSDK\Lib;"
-
-4) Continue with the Steps in 2.2.2) (Using Visual Studio 2008), using either the "Visual Studio 8 2005" generator or the "NMake Makefiles" generator.
 
 
 
