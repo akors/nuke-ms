@@ -2,7 +2,7 @@
 
 /*
  *   nuke-ms - Nuclear Messaging System
- *   Copyright (C) 2008, 2009, 2010  Alexander Korsunsky
+ *   Copyright (C) 2008, 2009, 2010, 2011  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -112,8 +112,8 @@
 
 #include <stdexcept>
 #include <limits>
-
-#include <boost/shared_ptr.hpp>
+#include <memory>
+#include <type_traits>
 
 #include "bytes.hpp"
 
@@ -172,46 +172,6 @@ struct UndersizedPacketError : public MsgLayerError
 };
 
 
-/** Object holding an ownership to memory.
-* This class is a capsule around a smart pointer.
-* As long as an object of this class exists, its underlying memory block
-* (specified in the constructor) also exists.
-* Only when all of the objects holding the ownership to one memory block
-* go out of scope, the memory block will be deleted.
-* The reference counting functionality will be provided by the smart pointer
-* type specified as template parameter. Make sure the template parameter is
-* a smart pointer, otherwise this class will not work.
-*
-* Thread safety: equal to the construction and destruction
-* thread safety of the smart pointer type.
-*
-* @tparam PointerType Type of a smart pointer
-*/
-template <typename PointerType>
-class MemoryOwnership
-{
-    PointerType memory_pointer; /**< A smart pointer to the memory block */
-
-public:
-    /** Default constructor.
-    * Construct object with no ownership to any memory block.
-    * The memory pointer will be default constructed.
-    */
-    MemoryOwnership() {}
-
-    /** Constructor.
-    * Construct object with ownership to the memory block pointed to by
-    * _memory_pointer.
-    */
-    MemoryOwnership(const PointerType& _memory_pointer)
-        : memory_pointer(_memory_pointer)
-    {}
-};
-
-
-// forward declaration for SerializedData
-class SerializedData;
-
 /** Message Layer base class.
 *
 * This virtual base class presents a basic interface to it's deriving classes.
@@ -225,19 +185,9 @@ class SerializedData;
 * the derived class from serialized data. If this data is malformed, the
 * constructor should throw an instance of MsgLayerError.
 */
-class BasicMessageLayer
+template <typename DerivedType>
+struct BasicMessageLayer
 {
-public:
-    typedef boost::shared_ptr<BasicMessageLayer> ptr_t; 
-    typedef boost::shared_ptr<BasicMessageLayer> const_ptr_t;
-    typedef boost::shared_ptr<byte_traits::byte_sequence> dataptr_t;
-
-    typedef byte_traits::byte_sequence::iterator data_it;
-    typedef byte_traits::byte_sequence::const_iterator const_data_it;
-
-    /** Virtual destructor */
-    virtual ~BasicMessageLayer()
-    {}
 
     /** Retrieve the serialized size.
      * Returns the length of the returned sequence of a successive call to
@@ -245,38 +195,30 @@ public:
      *
      * @return The number of bytes the serialized byte sequence would have.
     */
-    virtual std::size_t size() const = 0;
+    std::size_t size() const
+    { return static_cast<const DerivedType*>(this)->size(); }
 
 
     /** Fill a buffer with the serialized version of this object.
     * This function serializes this layer (and its upper layers) and writes
     * the bytes into a buffer that is pointed to by buffer.
     * The buffer has to have at least the size that is returned by the
-    * size() functions. Beware! No checks will be performed
+    * size() function. Beware! No checks will be performed
     * to assure proper buffer size. Use the function size() to
     * obtain the minimal required size.
     *
+    * @tparam ByteOutputIterator
     * @param buffer An iterator pointing to a range in the buffer that will be
     * filled
+    *
     * @returns An iterator pointing past the filled range in the buffer. This
     * is the same iterator as buffer but it is incremented size()
     * times.
     */
-    virtual data_it fillSerialized(data_it buffer) const= 0;
-
-    /** Retrieve serialized version of the current message layer.
-     * Ensures that an appropriate amount of memory is allocated and writes a
-     * serialized version of the current message layer to the memory location.
-     *
-     * @return Serialized version of current message layer, holding ownership
-     * of the underlying _memblock
-    */
-    virtual SerializedData getSerializedData() const;
+    template <typename ByteOutputIterator>
+    ByteOutputIterator fillSerialized(ByteOutputIterator it) const
+    { return DerivedType::fillSerialized(it); }
 };
-
-/** Alias for a Memory ownership of a boost::shared_ptr pointer */
-typedef MemoryOwnership<BasicMessageLayer::dataptr_t> DataOwnership;
-
 
 
 /** Message of an unknown message layer.
@@ -285,15 +227,16 @@ typedef MemoryOwnership<BasicMessageLayer::dataptr_t> DataOwnership;
 * It provides a possibility to access the contained data to determine the real
 * message layer class.
 */
-class SerializedData : public BasicMessageLayer
+class SerializedData : public BasicMessageLayer<SerializedData>
 {
-    DataOwnership memblock; /**< Ownership to the memory block */
-    const_data_it begin_it; /**< Iterater to the beginning data */
-    std::size_t datasize; /**< Size of the data */
+    /** Ownership of the memory block */
+    std::shared_ptr<const byte_traits::byte_sequence> _memblock;
+    decltype(_memblock->begin()) _begin_it; /**< Iterater to the beginning data */
+    std::size_t _datasize; /**< Size of the data */
 
 public:
-    typedef boost::shared_ptr<SerializedData> ptr_t;
 
+    typedef byte_traits::byte_sequence::const_iterator const_data_it;
 
     /** Constructor.
     * Constructs a new object and passes memory ownership, data iterator and
@@ -308,27 +251,36 @@ public:
     * @param _datasize size of the message in bytes
     */
     SerializedData(
-        DataOwnership _memblock,
-        const_data_it _begin_it,
-        std::size_t _datasize
+        std::shared_ptr<const byte_traits::byte_sequence> memblock,
+        const_data_it begin_it,
+        std::size_t datasize
     )
-        : memblock(_memblock), begin_it(_begin_it), datasize(_datasize)
+        : _memblock(memblock), _begin_it(begin_it), _datasize(datasize)
     {}
 
-    // overriding base class version
-    virtual std::size_t size() const;
+    SerializedData(const SerializedData&) = default;
+
+    SerializedData(SerializedData&& other)
+        : _memblock(std::move(other._memblock)),
+        _begin_it(other._begin_it), _datasize(other._datasize)
+    {
+        // invalidate iterator of rvalue object by assigning a default
+        // constructed one
+        other._begin_it = const_data_it{};
+        other._datasize = 0;
+    }
 
     // overriding base class version
-    virtual data_it fillSerialized(data_it buffer) const;
+    std::size_t size() const
+    { return _datasize; }
 
-    /** Retrieve serialized version of the current message layer.
-     * As opposed to the base class version of this method, this version simply
-     * returns a copy of this object.
-     *
-     * @return Serialized version of current message layer, holding ownership
-     * of the underlying _memblock
-    */
-    virtual SerializedData getSerializedData() const;
+    // overriding base class version
+    template <typename ByteOutputIterator>
+    ByteOutputIterator fillSerialized(ByteOutputIterator it) const
+    {
+        // copy the maintained data into the specified buffer
+        return std::copy(_begin_it, _begin_it + _datasize, it);
+    }
 
     /** Get iterator to message data.
     * This function can be used to access the buffer directly, either to copy
@@ -337,97 +289,32 @@ public:
     *
     * @returns An iterator to the message data. This iterator is valid as long
     * as the underlying memory block that was passed to the constructor
-    * SerializedData() or this object is alive.
+    * is referenced somewhere.
     */
-    const_data_it getDataIterator() const
-    { return begin_it; }
+    const_data_it begin() const
+    { return _begin_it; }
 
     /** Get ownership to message data.
     * This function returns the ownership object that ensures that the data
     * iterator pointed to by getDataIterator() is valid.
     *
     * @returns An ownership object ensuring that a pointer returned by
-    * getDataIterator() is valid.
+    * begin() is valid.
     */
-    DataOwnership getOwnership() const
-    { return memblock; }
+    std::shared_ptr<const byte_traits::byte_sequence> getOwnership() const
+    { return _memblock; }
 };
 
-
-/** Message Layer containing another layer
- * This abstract base class is used to denote a non-atomic message. This means
- * this class holds a reference to an upper layer message.
-*/
-class ContainingLayer : public BasicMessageLayer
+struct SegmentationLayerBase
 {
-protected:
-    BasicMessageLayer::ptr_t upper_layer; /**< Message of an upper layer */
-
-    /** Constructor.
-     * @param _upper_layer Message of an upper layer this message holds
-    */
-    ContainingLayer(BasicMessageLayer::ptr_t _upper_layer)
-        : upper_layer(_upper_layer)
-    {}
-
-public:
-
-    /** Get upper layer message.
-     * @note it might not be usefull to call this function on objects coming
-     * from the application. You would lose type information and have to create
-     * the upper layer message from a SerializedData object.
-     *
-     * @return Pointer to the upper layer message
-    */
-    BasicMessageLayer::ptr_t getUpperLayer()
-    {
-        return upper_layer;
-    }
-
-    /** Get upper layer message.
-     * @note it might not be usefull to call this function on objects coming
-     * from the application. You would lose type information and have to create
-     * the upper layer message from a SerializedData object.
-     *
-     * @return Pointer to the upper layer message
-    */
-    BasicMessageLayer::const_ptr_t getUpperLayer() const
-    {
-        return upper_layer;
-    }
-
-    /** Virtual destructor */
-    virtual ~ContainingLayer()
-    {}
-};
-
-/** Layer ensuring correct segmentation of messages
-*
-* This class should be used as the lowest layer of a message - the one that
-* shall be sent over the network. The next level lower than this one is the TCP
-* layer.
-* This class tags messages with a binary header in the following layout:
-* Bits
-* 0:      Layer Identifier, Value 0x80
-* 1-2:    Packet size in Network Byte Order
-* 3:      Zero, Value 0x0
-*
-*/
-class SegmentationLayer : public ContainingLayer
-{
-    std::size_t serializedsize; /**< size of the data for fast access */
-
-public:
-    /** Type of pointer to this class. */
-    typedef boost::shared_ptr<SegmentationLayer> ptr_t;
-
-    enum { LAYER_ID = 0x80  /**< Layer Identifier */ };
-    enum { header_length = 4 };
+    static constexpr byte_traits::byte_t LAYER_ID = 0x80;
+    static constexpr std::size_t header_length = 4;
 
     /** Type representing the header of a packet. */
     struct HeaderType {
         byte_traits::uint2b_t packetsize /**< Size of the packet */;
     };
+
 
     /** Header decoding function.
     *
@@ -444,7 +331,28 @@ public:
     */
     template <typename InputIterator>
     static HeaderType decodeHeader(InputIterator headerbuf);
+};
 
+
+
+/** Layer ensuring correct segmentation of messages
+*
+* This class should be used as the lowest layer of a message - the one that
+* shall be sent over the network. The next level lower than this one is the TCP
+* layer.
+* This class tags messages with a binary header in the following layout:
+* Bits
+* 0:      Layer Identifier, Value 0x80
+* 1-2:    Packet size in Network Byte Order
+* 3:      Zero, Value 0x0
+*
+*/
+template <typename InnerLayer>
+struct SegmentationLayer
+    : public SegmentationLayerBase,
+    public BasicMessageLayer<SegmentationLayer<InnerLayer>>
+{
+    InnerLayer _inner_layer;
 
     /** Constructor.
     * Construct a SegmentationLayer message from an upper layer, say a message
@@ -454,59 +362,28 @@ public:
     * message to the base class Pointer, BasicMessageLayer::ptr_t. Otherwise
     * the overload with SegmentationLayer(BasicMessageLayer::dataptr_t)
     * will not resolve. This is because overloads of functions with different
-    * instantiations of boost::shared_ptr<> do not resolve with base class
+    * instantiations of std::shared_ptr<> do not resolve with base class
     * pointers.
     *
     * @param _upper_layer The message of the upper layer you want to send.
     */
-    SegmentationLayer(BasicMessageLayer::ptr_t _upper_layer)
-        : serializedsize(_upper_layer->size() + header_length),
-          ContainingLayer(_upper_layer)
+    SegmentationLayer(const InnerLayer& upper_layer)
+        : _inner_layer(upper_layer)
     { }
 
-
-    /** Constructor.
-    * Construct a SegmentationLayer message from network data, say a message
-    * coming directly from the network.
-    *
-    * @param data A BasicMessageLayer::ptr_t, a shared pointer to a vector of
-    * bytes. This vector has to contain the body of the message (not the
-    * header).
-    *
-    * pointers.
-    */
-    SegmentationLayer(BasicMessageLayer::dataptr_t data);
+    SegmentationLayer(InnerLayer&& upper_layer)
+        : _inner_layer(std::move(upper_layer))
+    { }
 
     // overriding base class version
-    virtual std::size_t size() const;
+    std::size_t size() const
+    { return _inner_layer.size() + header_length; }
 
     // overriding base class version
-    virtual data_it fillSerialized(data_it buffer) const;
+    template <typename ByteOutputIterator>
+    ByteOutputIterator fillSerialized(ByteOutputIterator it) const;
+
 };
-
-
-
-template <typename InputIterator>
-SegmentationLayer::HeaderType
-SegmentationLayer::decodeHeader(InputIterator headerbuf)
-{
-    HeaderType headerdata;
-
-    // check first byte to be the correct layer identifier
-    if ( headerbuf[0] !=
-        static_cast<byte_traits::byte_t>(SegmentationLayer::LAYER_ID) )
-        throw InvalidHeaderError();
-
-    // get the size of the packet
-    readbytes<byte_traits::uint2b_t>(&headerdata.packetsize, &headerbuf[1]);
-
-    headerdata.packetsize = to_hostbo(headerdata.packetsize);
-
-    if (headerbuf[3] != 0)
-        throw InvalidHeaderError();
-
-    return headerdata;
-}
 
 
 
@@ -515,15 +392,26 @@ SegmentationLayer::decodeHeader(InputIterator headerbuf)
 * This class is a simple wrapper around a wstring message.
 * No header is prepended to the message.
 */
-class StringwrapLayer : public BasicMessageLayer
+struct StringwrapLayer : public BasicMessageLayer<StringwrapLayer>
 {
+
     /** The actual text message */
-    byte_traits::msg_string message_string;
+    byte_traits::msg_string _message_string;
 
-public:
-    /** Typedef for this shared pointer*/
-    typedef boost::shared_ptr<StringwrapLayer> ptr_t;
 
+    /** Default Constructor. */
+    StringwrapLayer() = default;
+
+    /** Copy constructor */
+    StringwrapLayer(const StringwrapLayer& msg) = default;
+
+    /** Move constructor.
+     * Create a StringwrapLayer message from a temporary StringwrapLayer object
+     * @param other The other StringwrapLayer object you want to steal from
+    */
+    StringwrapLayer(StringwrapLayer&& other)
+        : _message_string(std::move(other._message_string))
+    {}
 
     /** Constructor.
     * Create a StringwrapLayer message from an byte_traits::msg_string.
@@ -531,7 +419,7 @@ public:
     * @param msg msg The string the message shall contain.
     */
     StringwrapLayer(const byte_traits::msg_string& msg) throw ()
-        : message_string(msg)
+        : _message_string(msg)
     {}
 
     /** Constructor.
@@ -549,40 +437,92 @@ public:
     StringwrapLayer(const SerializedData& msg);
 
     // overriding base class version
-    virtual std::size_t size() const;
+    std::size_t size() const
+    {
+        return _message_string.length() *
+            sizeof(byte_traits::msg_string::value_type);
+    }
 
     // overriding base class version
-    virtual data_it fillSerialized(data_it buffer) const;
-
-    /** Return the string contained in the layer message.
-    *
-    * This function returns a constant reference to the internal string message.
-    * When using this string object bear in mind that this is only a reference,
-    * not a copy. This reference is valid as long as *this is alive.
-    * If you need to pass this string on, copy construvt a new instance from
-    * this reference.
-    *
-    * @returns A constant reference to the string contained in this message
-    */
-    const byte_traits::msg_string& getString() const
-    { return message_string; }
-
-    /** Return the string contained in the layer message.
-    *
-    * This function returns a constant reference to the internal string message.
-    * When using this string object bear in mind that this is only a reference,
-    * not a copy. This reference is valid as long as *this is alive.
-    * If you need to pass this string on, copy construvt a new instance from
-    * this reference.
-    *
-    * @returns A constant reference to the string contained in this message
-    */
-    operator const byte_traits::msg_string& () const
-    { return message_string; }
+    template <typename ByteOutputIterator>
+    ByteOutputIterator fillSerialized(ByteOutputIterator it) const;
 };
+
+
+template <typename InputIterator>
+SegmentationLayerBase::HeaderType
+SegmentationLayerBase::decodeHeader(InputIterator headerbuf)
+{
+    HeaderType headerdata;
+
+    // check first byte to be the correct layer identifier
+    if ( headerbuf[0] !=
+        static_cast<byte_traits::byte_t>(SegmentationLayerBase::LAYER_ID) )
+        throw InvalidHeaderError();
+
+    // get the size of the packet
+    readbytes<byte_traits::uint2b_t>(&headerdata.packetsize, &headerbuf[1]);
+
+    headerdata.packetsize = to_hostbo(headerdata.packetsize);
+
+    if (headerbuf[3] != 0)
+        throw InvalidHeaderError{};
+
+    return headerdata;
+}
+
+extern template
+SegmentationLayerBase::HeaderType SegmentationLayerBase::decodeHeader(
+    byte_traits::byte_sequence::iterator headerbuf);
+
+
+// overriding base class version
+template <typename InnerLayer>
+template <typename ByteOutputIterator>
+ByteOutputIterator
+SegmentationLayer<InnerLayer>::fillSerialized(ByteOutputIterator it) const
+{
+    // first byte is layer identifier
+    *it++ = static_cast<byte_traits::byte_t>(LAYER_ID);
+
+    // second and third bytes are the size of the whole packet
+    it = writebytes(it, to_netbo(
+        static_cast<byte_traits::uint2b_t>(_inner_layer.size()+header_length)));
+
+    // fourth byte is a zero
+    *it++ = 0;
+
+    // the rest is the message
+    return _inner_layer.fillSerialized(it);
+}
+
+template <typename ByteOutputIterator>
+ByteOutputIterator StringwrapLayer::fillSerialized(ByteOutputIterator it) const
+{
+    // write all bytes of one character into the buffer, advance the output
+    // iterator
+    for (auto in_it  = _message_string.begin(); in_it < _message_string.end(); in_it++)
+        it = writebytes(it, to_netbo(*in_it));
+
+    return it;
+}
+
+extern template
+byte_traits::byte_sequence::iterator
+StringwrapLayer::fillSerialized(byte_traits::byte_sequence::iterator it) const;
+
+
+extern template class BasicMessageLayer<SerializedData>;
+extern template class SegmentationLayer<SerializedData>;
+extern template class BasicMessageLayer<StringwrapLayer>;
+extern template class SegmentationLayer<StringwrapLayer>;
+
+
+
 
 /**@}*/ // addtogroup common
 
 } // namespace nuke_ms
 
 #endif // ifndef MSGLAYERS_HPP_INCLUDED
+

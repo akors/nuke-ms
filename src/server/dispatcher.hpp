@@ -63,9 +63,9 @@ private:
     boost::asio::ip::tcp::acceptor acceptor;
 
     /** A list with connected peers. */
-   peers_list_type peers_list;
+    peers_list_type peers_list;
 
-    static const unsigned short listening_port = 34443;
+    constexpr static unsigned short listening_port = 34443;
 
     RemotePeer::connection_id_t current_conn_id;
 
@@ -84,7 +84,7 @@ private:
 
     void distributeMessage(
         RemotePeer::connection_id_t originating_id,
-        SegmentationLayer::ptr_t data
+        std::shared_ptr<SegmentationLayer<SerializedData>> data
     );
 
     RemotePeer::connection_id_t getNextConnectionId();

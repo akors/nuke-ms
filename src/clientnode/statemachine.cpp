@@ -30,7 +30,7 @@ ClientnodeMachine::ClientnodeMachine(ClientNodeSignals&  _signals,
     : signals(_signals), io_service(new boost::asio::io_service),
         socket(*io_service), resolver(*io_service),
         logstreams(logstreams_), machine_mutex(_machine_mutex),
-        ReferenceCounter(boost::bind(&ClientnodeMachine::on_returned, this))
+        ReferenceCounter(std::bind(&ClientnodeMachine::on_returned, this))
 {}
 
 ClientnodeMachine::~ClientnodeMachine()
@@ -52,10 +52,11 @@ void ClientnodeMachine::startIOOperations()
     // Before starting a new thread, the old thread must be joined.
     catchThread(io_thread, thread_timeout);
 
+    // help std::bind find the right overload
+    std::size_t (boost::asio::io_service::*r)() = &boost::asio::io_service::run;
+
     // start a new thread that processes all asynchronous operations
-    io_thread = boost::thread(
-        boost::bind(&boost::asio::io_service::run, io_service)
-    );
+    io_thread = boost::thread(std::bind(r, io_service.get()));
 }
 
 void ClientnodeMachine::stopIOOperations()
@@ -86,18 +87,16 @@ StateWaiting::StateWaiting(my_context ctx)
 boost::statechart::result StateWaiting::react(const EvtConnectRequest& evt)
 {
     // create a query
-    boost::shared_ptr<tcp::resolver::query> query(
-        new tcp::resolver::query(evt.host, evt.service)
-    );
+    auto query = std::make_shared<tcp::resolver::query>(evt.host, evt.service);
 
 
     // dispatch an asynchronous resolve request
     outermost_context().resolver.async_resolve(
         *query,
-        boost::bind(
+        std::bind(
             &StateNegotiating::resolveHandler,
-            boost::asio::placeholders::error,
-            boost::asio::placeholders::iterator,
+            std::placeholders::_1,
+            std::placeholders::_2,
             ClientnodeMachine::CountedReference(outermost_context()),
             query
         )
@@ -106,9 +105,9 @@ boost::statechart::result StateWaiting::react(const EvtConnectRequest& evt)
     return transit< StateNegotiating >();
 }
 
-boost::statechart::result StateWaiting::react(const EvtSendMsg& evt)
+boost::statechart::result StateWaiting::react(const EvtSendMsg<NearUserMessage>& evt)
 {
-    SendReport::ptr_t rprt(new SendReport);
+    auto rprt = std::make_shared<SendReport>();
     rprt->send_state = false;
     rprt->reason = SendReport::SR_SERVER_NOT_CONNECTED;
     rprt->reason_str = "Not Connected.";
@@ -143,9 +142,9 @@ StateNegotiating::StateNegotiating(my_context ctx)
 
 }
 
-boost::statechart::result StateNegotiating::react(const EvtSendMsg& evt)
+boost::statechart::result StateNegotiating::react(const EvtSendMsg<NearUserMessage>& evt)
 {
-    SendReport::ptr_t rprt(new SendReport);
+    auto rprt = std::make_shared<SendReport>();
     rprt->send_state = false;
     rprt->reason = SendReport::SR_SERVER_NOT_CONNECTED;
     rprt->reason_str = "Not yet Connected.";
@@ -157,8 +156,7 @@ boost::statechart::result StateNegotiating::react(const EvtSendMsg& evt)
 
 boost::statechart::result StateNegotiating::react(const EvtConnectReport& evt)
 {
-    ConnectionStatusReport::ptr_t
-        rprt(new ConnectionStatusReport);
+    auto rprt = std::make_shared<ConnectionStatusReport>();
 
     // change state according to the outcome of a connection attempt
     if ( evt.success )
@@ -183,7 +181,7 @@ boost::statechart::result StateNegotiating::react(const EvtConnectReport& evt)
 
 boost::statechart::result StateNegotiating::react(const EvtDisconnectRequest&)
 {
-    ConnectionStatusReport::ptr_t rprt(new ConnectionStatusReport);
+    auto rprt = std::make_shared<ConnectionStatusReport>();
 
     rprt->newstate = ConnectionStatusReport::CNST_DISCONNECTED;
     rprt->statechange_reason = ConnectionStatusReport::STCHR_USER_REQUESTED;
@@ -194,7 +192,7 @@ boost::statechart::result StateNegotiating::react(const EvtDisconnectRequest&)
 
 boost::statechart::result StateNegotiating::react(const EvtConnectRequest&)
 {
-    ConnectionStatusReport::ptr_t rprt(new ConnectionStatusReport);
+    auto rprt = std::make_shared<ConnectionStatusReport>();
 
     rprt->newstate = ConnectionStatusReport::CNST_CONNECTING;
     rprt->statechange_reason = ConnectionStatusReport::STCHR_BUSY;
@@ -210,7 +208,7 @@ void StateNegotiating::resolveHandler(
     const boost::system::error_code& error,
     tcp::resolver::iterator endpoint_iterator,
     ClientnodeMachine::CountedReference cm,
-    boost::shared_ptr<tcp::resolver::query> /* query */
+    std::shared_ptr<tcp::resolver::query> /* query */
 )
 {
     cm.ref().logstreams.infostream<<"resolveHandler invoked."<<std::endl;
@@ -254,9 +252,9 @@ void StateNegotiating::resolveHandler(
 
     cm.ref().socket.async_connect(
         *endpoint_iterator,
-        boost::bind(
+        std::bind(
             &StateNegotiating::connectHandler,
-            boost::asio::placeholders::error,
+            std::placeholders::_1,
             cm,
 			endpoint_iterator
         )
@@ -280,16 +278,16 @@ void StateNegotiating::connectHandler(
 
         // create a receive buffer
         byte_traits::byte_t* rcvbuf =
-            new byte_traits::byte_t[SegmentationLayer::header_length];
+            new byte_traits::byte_t[SegmentationLayerBase::header_length];
 
         // start an asynchronous read to receive the header of the first packet
         async_read(
             cm.ref().socket,
-            boost::asio::buffer(rcvbuf, SegmentationLayer::header_length),
-            boost::bind(
+            boost::asio::buffer(rcvbuf, SegmentationLayerBase::header_length),
+            std::bind(
                 &StateConnected::receiveSegmentationHeaderHandler,
-                boost::asio::placeholders::error,
-                boost::asio::placeholders::bytes_transferred,
+                std::placeholders::_1,
+                std::placeholders::_2,
                 cm,
                 rcvbuf
             )
@@ -305,9 +303,9 @@ void StateNegotiating::connectHandler(
         cm.ref().socket.close();
         cm.ref().socket.async_connect(
             *endpoint_iterator,
-            boost::bind(
+            std::bind(
                 &StateNegotiating::connectHandler,
-                boost::asio::placeholders::error,
+                std::placeholders::_1,
                 cm,
                 endpoint_iterator
 			)
@@ -343,7 +341,7 @@ StateConnected::StateConnected(my_context ctx)
 
 boost::statechart::result StateConnected::react(const EvtDisconnectRequest&)
 {
-    ConnectionStatusReport::ptr_t rprt(new ConnectionStatusReport);
+    auto rprt = std::make_shared<ConnectionStatusReport>();
 
     rprt->newstate = ConnectionStatusReport::CNST_DISCONNECTED;
     rprt->statechange_reason = ConnectionStatusReport::STCHR_USER_REQUESTED;
@@ -353,14 +351,14 @@ boost::statechart::result StateConnected::react(const EvtDisconnectRequest&)
 }
 
 
-boost::statechart::result StateConnected::react(const EvtSendMsg& evt)
+boost::statechart::result StateConnected::react(const EvtSendMsg<NearUserMessage>& evt)
 {
     // create segmentation layer from the data to be sent
-    SegmentationLayer segm_layer(evt.data);
+    SegmentationLayer<NearUserMessage> segm_layer{std::move(*evt._data)};
 
     // create buffer, fill it with the serialized message
-    SegmentationLayer::dataptr_t data(
-        new byte_traits::byte_sequence(segm_layer.size())
+    auto data = std::make_shared<byte_traits::byte_sequence>(
+        segm_layer.size()
     );
 
     segm_layer.fillSerialized(data->begin());
@@ -368,10 +366,10 @@ boost::statechart::result StateConnected::react(const EvtSendMsg& evt)
     async_write(
         context<ClientnodeMachine>().socket,
         boost::asio::buffer(*data),
-        boost::bind(
+        std::bind(
             &StateConnected::writeHandler,
-            boost::asio::placeholders::error,
-            boost::asio::placeholders::bytes_transferred,
+            std::placeholders::_1,
+            std::placeholders::_2,
             ClientnodeMachine::CountedReference(outermost_context()),
             data
         )
@@ -383,7 +381,7 @@ boost::statechart::result StateConnected::react(const EvtSendMsg& evt)
 
 boost::statechart::result StateConnected::react(const EvtDisconnected& evt)
 {
-    ConnectionStatusReport::ptr_t rprt(new ConnectionStatusReport);
+    auto rprt = std::make_shared<ConnectionStatusReport>();
 
     rprt->newstate = ConnectionStatusReport::CNST_DISCONNECTED;
     rprt->statechange_reason = ConnectionStatusReport::STCHR_SOCKET_CLOSED;
@@ -394,19 +392,20 @@ boost::statechart::result StateConnected::react(const EvtDisconnected& evt)
 }
 
 
-boost::statechart::result StateConnected::react(const EvtRcvdMessage& evt)
+boost::statechart::result
+StateConnected::react(const EvtRcvdMessage<SerializedData>& evt)
 {
     // whatever it is, we need a SerializedData object from it
-    SerializedData data(evt.data.getUpperLayer()->getSerializedData());
+    SerializedData data{std::move(evt._data->_inner_layer)};
 
 
     try {
         // check out the layer identifier if it's a string, dispatch it.
         // If not, discard
-        if (*data.getDataIterator() ==
+        if (*data.begin() ==
             static_cast<byte_traits::byte_t>(NearUserMessage::LAYER_ID))
         {
-            NearUserMessage::ptr_t usermsg(new NearUserMessage(data));
+            auto usermsg = std::make_shared<NearUserMessage>(data);
             context<ClientnodeMachine>().signals.rcvMessage(usermsg);
         }
         else
@@ -429,7 +428,7 @@ boost::statechart::result StateConnected::react(const EvtRcvdMessage& evt)
 
 boost::statechart::result StateConnected::react(const EvtConnectRequest&)
 {
-    ConnectionStatusReport::ptr_t rprt(new ConnectionStatusReport);
+    auto rprt = std::make_shared<ConnectionStatusReport>();
 
     rprt->newstate = ConnectionStatusReport::CNST_CONNECTED;
     rprt->statechange_reason = ConnectionStatusReport::STCHR_BUSY;
@@ -445,7 +444,7 @@ void StateConnected::writeHandler(
     const boost::system::error_code& error,
     std::size_t bytes_transferred,
     ClientnodeMachine::CountedReference cm,
-    SegmentationLayer::dataptr_t data
+    std::shared_ptr<byte_traits::byte_sequence> data
 )
 {
     cm.ref().logstreams.infostream<<"Sending message finished"<<std::endl;
@@ -453,8 +452,7 @@ void StateConnected::writeHandler(
 
     if (!error)
     {
-
-        SendReport::ptr_t rprt(new SendReport);
+        auto rprt = std::make_shared<SendReport>();
         rprt->send_state = true;
         rprt->reason = SendReport::SR_SEND_OK;
 
@@ -462,15 +460,9 @@ void StateConnected::writeHandler(
     }
     else
     {
-		// if the operation was aborted, the state machine might not be alive,
-		// so we STFU and return
-		if (error == boost::asio::error::operation_aborted)
-			return;
-
-
         byte_traits::native_string errmsg(error.message());
 
-        SendReport::ptr_t rprt(new SendReport);
+        auto rprt = std::make_shared<SendReport>();
         rprt->send_state = false;
         rprt->reason = SendReport::SR_CONNECTION_ERROR;
         rprt->reason_str = errmsg;
@@ -483,18 +475,19 @@ void StateConnected::writeHandler(
     }
 }
 
+
 void StateConnected::receiveSegmentationHeaderHandler(
     const boost::system::error_code& error,
     std::size_t bytes_transferred,
     ClientnodeMachine::CountedReference cm,
-    byte_traits::byte_t rcvbuf[SegmentationLayer::header_length]
+    byte_traits::byte_t rcvbuf[SegmentationLayerBase::header_length]
 )
 {
     cm.ref().logstreams.infostream<<"Reveive (header) handler invoked"<<std::endl;
 
     // if there was an error,
     // tear down the connection by posting a disconnection event
-    if (error || bytes_transferred != SegmentationLayer::header_length)
+    if (error || bytes_transferred != SegmentationLayerBase::header_length)
     {
 		// if the operation was aborted, the state machine might not be alive,
 		// so we STFU and return
@@ -510,30 +503,26 @@ void StateConnected::receiveSegmentationHeaderHandler(
     {
         try {
             // decode and verify the header of the message
-            SegmentationLayer::HeaderType header_data
-                = SegmentationLayer::decodeHeader(rcvbuf);
+            SegmentationLayerBase::HeaderType header_data
+                = SegmentationLayerBase::decodeHeader(rcvbuf);
 
 /// @todo Magic number, set to something proper or make configurable
-const byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
+constexpr byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
 
             if (header_data.packetsize > MAX_PACKETSIZE)
                 throw MsgLayerError("Oversized packet.");
 
-
-            SegmentationLayer::dataptr_t body_buf(
-                new byte_traits::byte_sequence(
-                    header_data.packetsize-SegmentationLayer::header_length
-                )
-            );
+            auto body_buf = std::make_shared<byte_traits::byte_sequence>(
+                header_data.packetsize-SegmentationLayerBase::header_length);
 
             // start an asynchronous receive for the body
             async_read(
                 cm.ref().socket,
                 boost::asio::buffer(*body_buf),
-                boost::bind(
+                std::bind(
                     &StateConnected::receiveSegmentationBodyHandler,
-                    boost::asio::placeholders::error,
-                    boost::asio::placeholders::bytes_transferred,
+                    std::placeholders::_1 /* boost::asio::placeholders::error */,
+                    std::placeholders::_2 /* boost::asio::placeholders::bytes_transferred */ ,
                     cm,
                     body_buf
                 )
@@ -559,43 +548,42 @@ void StateConnected::receiveSegmentationBodyHandler(
     const boost::system::error_code& error,
     std::size_t bytes_transferred,
     ClientnodeMachine::CountedReference cm,
-    SegmentationLayer::dataptr_t rcvbuf
+    std::shared_ptr<byte_traits::byte_sequence> rcvbuf
 )
 {
     // if there was an error,
     // tear down the connection by posting a disconnection event
     if (error)
     {
-		// if the operation was aborted, the state machine might not be alive,
-		// so we STFU and return
-		if (error == boost::asio::error::operation_aborted)
-			return;
-
         boost::mutex::scoped_lock lk(cm.ref().machine_mutex);
         cm.ref().process_event(EvtDisconnected(error.message()));
     }
     else // if no error occured, report the received message to the application
     {
-        SegmentationLayer segmlayer(rcvbuf);
+        SegmentationLayer<SerializedData> segmlayer{
+            {rcvbuf, rcvbuf->begin(), rcvbuf->size()}
+        };
 
         {
             boost::mutex::scoped_lock lk(cm.ref().machine_mutex);
-            cm.ref().process_event(EvtRcvdMessage(segmlayer));
+            cm.ref().process_event(
+                EvtRcvdMessage<SerializedData>{std::move(segmlayer)}
+            );
         }
         // start a new receive for the next message
 
         // create a receive buffer
         byte_traits::byte_t* rcvbuf =
-            new byte_traits::byte_t[SegmentationLayer::header_length];
+            new byte_traits::byte_t[SegmentationLayerBase::header_length];
 
         // start an asynchronous read to receive the header of the first packet
         async_read(
             cm.ref().socket,
-            boost::asio::buffer(rcvbuf, SegmentationLayer::header_length),
-            boost::bind(
+            boost::asio::buffer(rcvbuf, SegmentationLayerBase::header_length),
+            std::bind(
                 &StateConnected::receiveSegmentationHeaderHandler,
-                boost::asio::placeholders::error,
-                boost::asio::placeholders::bytes_transferred,
+                std::placeholders::_1,
+                std::placeholders::_2,
                 cm,
                 rcvbuf
             )

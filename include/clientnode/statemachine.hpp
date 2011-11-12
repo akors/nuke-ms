@@ -2,7 +2,7 @@
 
 /*
  *   nuke-ms - Nuclear Messaging System
- *   Copyright (C) 2008, 2009, 2010  Alexander Korsunsky
+ *   Copyright (C) 2008, 2009, 2010, 2011  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -120,32 +120,41 @@ struct EvtDisconnected :
 /** Event representing a sent message
 * @ingroup proto_machine
 */
-struct EvtSendMsg : public boost::statechart::event<EvtSendMsg>
+template <typename MessageType>
+struct EvtSendMsg : public boost::statechart::event<EvtSendMsg<MessageType>>
 {
     /** The data of the message */
-    BasicMessageLayer::ptr_t data;
+    std::shared_ptr<MessageType> _data;
 
     /** Constructor.
     * @param _data The text of the message.
     */
-    EvtSendMsg(BasicMessageLayer::ptr_t _data)
-        : data (_data)
+    EvtSendMsg(MessageType&& data)
+        : _data(std::make_shared<MessageType>(std::move(data)))
     {}
+
+    EvtSendMsg(const EvtSendMsg&) = default;
 };
 
-/** Event representing a received message */
+/** Event representing a received message
+* @ingroup proto_machine
+* @ingroup netdata
+*/
+template <typename UpperLayer>
 struct EvtRcvdMessage :
-    public boost::statechart::event<EvtRcvdMessage>
+    public boost::statechart::event<EvtRcvdMessage<UpperLayer>>
 {
     /** The data of the message. */
-    SegmentationLayer data;
+    std::shared_ptr<SegmentationLayer<UpperLayer>> _data;
 
     /** Constructor.
     * @param _data The data of the message.
     */
-    EvtRcvdMessage(const SegmentationLayer& _data)
-        : data (_data)
+    EvtRcvdMessage(SegmentationLayer<UpperLayer>&& data)
+        :_data(std::make_shared<SegmentationLayer<UpperLayer>>(std::move(data)))
     {}
+
+    EvtRcvdMessage(const EvtRcvdMessage<UpperLayer>&) = default;
 };
 
 
@@ -170,11 +179,8 @@ class ClientnodeMachine :
     >,
     public ReferenceCounter<ClientnodeMachine>
 
-#ifdef NUKE_MS_REFCOUNTER_NOT_MULTITHREADED
-#   error "class ClientnodeMachine does not make sense with a single-threaded class ReferenceCounter"
-#endif
 {
-    boost::shared_ptr<boost::asio::io_service> io_service;
+    std::shared_ptr<boost::asio::io_service> io_service;
 
     /** A thread object for all asynchronouy I/O operations. It will start in
     not-a-thread state. */
@@ -250,15 +256,15 @@ struct StateWaiting :
 
     /** State reactions. */
     typedef boost::mpl::list<
-        boost::statechart::custom_reaction< EvtConnectRequest >,
-        boost::statechart::custom_reaction<EvtSendMsg>
+        boost::statechart::custom_reaction<EvtConnectRequest>,
+        boost::statechart::custom_reaction<EvtSendMsg<NearUserMessage>>
     > reactions;
 
     /** Constructor. To be used only by Boost.Statechart classes. */
     StateWaiting(my_context ctx);
 
-    boost::statechart::result react(const EvtConnectRequest &);
-    boost::statechart::result react(const EvtSendMsg &);
+    boost::statechart::result react(const EvtConnectRequest&);
+    boost::statechart::result react(const EvtSendMsg<NearUserMessage>&);
 
 };
 
@@ -274,10 +280,10 @@ struct StateNegotiating :
 {
      /** State reactions. */
     typedef boost::mpl::list<
-        boost::statechart::custom_reaction< EvtConnectReport >,
-        boost::statechart::custom_reaction< EvtDisconnectRequest >,
-        boost::statechart::custom_reaction< EvtSendMsg >,
-        boost::statechart::custom_reaction< EvtConnectRequest >
+        boost::statechart::custom_reaction<EvtConnectReport>,
+        boost::statechart::custom_reaction<EvtDisconnectRequest>,
+        boost::statechart::custom_reaction<EvtSendMsg<NearUserMessage>>, // FIXME Use a template version of this function!
+        boost::statechart::custom_reaction<EvtConnectRequest>
     > reactions;
 
     /** Constructor. To be used only by Boost.Statechart classes. */
@@ -287,7 +293,7 @@ struct StateNegotiating :
         const boost::system::error_code& error,
         boost::asio::ip::tcp::resolver::iterator endpoint_iterator,
         ClientnodeMachine::CountedReference cm,
-        boost::shared_ptr<boost::asio::ip::tcp::resolver::query> /* query */
+        std::shared_ptr<boost::asio::ip::tcp::resolver::query> /* query */
     );
 
 
@@ -300,7 +306,7 @@ struct StateNegotiating :
 
     boost::statechart::result react(const EvtConnectReport& evt);
     boost::statechart::result react(const EvtDisconnectRequest&);
-    boost::statechart::result react(const EvtSendMsg& evt);
+    boost::statechart::result react(const EvtSendMsg<NearUserMessage>&);
     boost::statechart::result react(const EvtConnectRequest& evt);
 };
 
@@ -311,9 +317,9 @@ struct StateConnected :
     /** State reactions. */
     typedef boost::mpl::list<
         boost::statechart::custom_reaction<EvtDisconnectRequest>,
-        boost::statechart::custom_reaction<EvtSendMsg>,
+        boost::statechart::custom_reaction<EvtSendMsg<NearUserMessage>>,
         boost::statechart::custom_reaction<EvtDisconnected>,
-        boost::statechart::custom_reaction<EvtRcvdMessage>,
+        boost::statechart::custom_reaction<EvtRcvdMessage<SerializedData>>,
         boost::statechart::custom_reaction<EvtConnectRequest>
     > reactions;
 
@@ -321,30 +327,30 @@ struct StateConnected :
     StateConnected(my_context ctx);
 
     boost::statechart::result react(const EvtDisconnectRequest&);
-    boost::statechart::result react(const EvtSendMsg& evt);
+    boost::statechart::result react(const EvtSendMsg<NearUserMessage>&);
     boost::statechart::result react(const EvtDisconnected& evt);
-    boost::statechart::result react(const EvtRcvdMessage& evt);
+    boost::statechart::result react(const EvtRcvdMessage<SerializedData>& evt);
     boost::statechart::result react(const EvtConnectRequest& evt);
 
     static void writeHandler(
         const boost::system::error_code& error,
         std::size_t bytes_transferred,
         ClientnodeMachine::CountedReference cm,
-        SegmentationLayer::dataptr_t data
+        std::shared_ptr<byte_traits::byte_sequence> data
     );
 
     static void receiveSegmentationHeaderHandler(
         const boost::system::error_code& error,
         std::size_t bytes_transferred,
         ClientnodeMachine::CountedReference cm,
-        byte_traits::byte_t rcvbuf[SegmentationLayer::header_length]
+        byte_traits::byte_t rcvbuf[SegmentationLayerBase::header_length]
     );
 
     static void receiveSegmentationBodyHandler(
         const boost::system::error_code& error,
         std::size_t bytes_transferred,
         ClientnodeMachine::CountedReference cm,
-        SegmentationLayer::dataptr_t rcvbuf
+        std::shared_ptr<byte_traits::byte_sequence> rcvbuf
     );
 
 };

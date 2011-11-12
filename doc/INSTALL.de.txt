@@ -39,7 +39,7 @@ Um nuke-ms aus dem Quellcode zu kompilieren müssen Sie einige Bibliotheken und 
 Dies sind die Tools und Bibliotheken die benötigt werden um nuke-ms zu bauen, ihre benötigte Mindestversion und ihre Webseiten.
 
     C++ Compiler
-    Ein halbwegs moderner C++ compiler wird benötigt um nuke-ms zu bauen. Mit GCC ist man immer gut unterwegs, allerdings funktioniert es mit anderen Compilern wahrscheinlich auch. Am besten ist es wenn Sie einfach ausprobieren ob Sie nuke-ms kompilieren können. Folgende Compiler wurden getestet: gcc-3.4.5 (MinGW), gcc-4.3, gcc-4.4, gcc 4.5, MSVC8/9 (Visual Studio 2008/2010). Das Kompilieren mit MSVC8 (Visual Studio 2005) funktioniert ebenfalls, allerdings ist es wegen fehlender Windows-SDK Bibliotheken etwas umständlicher.
+    Ein moderner C++ compiler mit C++11-Unterstützung wird benötigt um nuke-ms zu bauen. Zurzeit ist nur von GCC >= 4.6 bekannt nuke-ms kompilieren zu können.
 
     Boost C++ Libraries,    1.39,       http://www.boost.org/
     Die Boost Bibliotheken sind portable, hochqualitative Bibliotheken von denen die meisten nur aus Headern bestehen. Diejenigen Bibliotheken die zur Linkzeit inkludiert werden müssen sind Boost.System und Boost.Thread.
@@ -62,19 +62,15 @@ Auf vielen GNU/Linux- oder Unixdistributionen sind viele der Tools bereits verpa
 
 
 Debian GNU/Linux:
-    5.0 ("Lenny"):
-        Installieren sie die folgenden Pakete und deren Abhängigkeiten: build-essentials cmake libboost-system1.40-dev libboost-thread1.40-dev
-        Die Boost Bibliotheken sind nicht im offiziellen Archiv enthalten, allerdings stellt Debian Backports diese bereit. Folgen sie den Anweisungen auf dieser Seite um die benötigten Pakete zu installieren: http://www.backports.org/dokuwiki/doku.php?id=instructions.
-
-    6.0 ("Squeeze"), Testing ("Wheezy"), Unstable ("Sid"):
+    Testing ("Wheezy"), Unstable ("Sid"):
         Installieren sie die folgenden Pakete und deren Abhängigkeiten: build-essentials cmake libboost-system-dev libboost-thread-dev libwxgtk2.8-dev
 
 Ubuntu:
-    9.10 ("Karmic Koala"), 10.04 ("Lucid Lynx"), 10.10 ("Maverick Meerkat"):
+    11.10 ("Oineric Ocelot"), 12.04 ("Precise Penguin"):
         Installieren sie die folgenden Pakete und deren Abhängigkeiten: cmake libboost-system-dev libboost-thread-dev libwxgtk2.8-dev
 
 Fedora:
-    12 ("Constantine"), 13 ("Goddard"), 14 ("Laughlin"):
+    15 ("Lovelock"), 16 ("Verne"):
         Installieren sie die folgenden Pakete und deren Abhängigkeiten: cmake boost-devel wxGTK-devel
 
 Arch Linux:
@@ -113,7 +109,7 @@ Schließlich rufen sie ihre Lieblingstoolkette zum kompilieren des Quellcodes au
 Ein einfaches Bauen von nuke-ms könnte so aussehen:
     $ mkdir ~/nuke-ms/build
     $ cd ~/nuke-ms/build
-    $ cmake ~/nuke-ms/
+    $ cmake ..
     $ make -j3
 
 Natürlich müssen sie den Pfad zum Projektverzeichzichnis jenachdem verändern wo sie es abgelegt hab.
@@ -131,8 +127,6 @@ Dies sind ein paar Links die ihnen bei Problemen helfen könnten:
     http://www.vtk.org/Wiki/CMake_Generator_Specific_Information
     http://www.cmake.org/cmake/help/cmake2.6docs.html#module:FindBoost
     http://www.cmake.org/cmake/help/cmake2.6docs.html#section_Variables%20that%20Control%20the%20Build
-    http://msdn.microsoft.com/en-us/library/8kche8ah(VS.71).aspx
-    http://garrys-brain.blogspot.com/2006/10/boost-library-and-visual-studio-2005.html
 
 
 2.2.1) Mit MinGW
@@ -207,32 +201,6 @@ Die Anweisung für das Kompilieren mit dieser Visual Studio-Version sind im Prin
     - Der CMake Generator heißt nun "Visual Studio 2010"
     - Alle Laufzeitbibliotheken heißen nun msvc*100 statt msvc*90. Der Link zu den Redistributable Paket ändert sich zu: http://www.microsoft.com/downloads/en/details.aspx?FamilyID=a7b7a05e-6de6-4d3a-a423-37bf0912db84
     - Wenn Sie die Visual Studio GUI nicht verwenden wollen, können Sie stattdessen das "msbuild.exe"-Tool mit der generierten "nuke-ms.sln" Datei aufrufen. Dieses Tool war bei Visual Studio 2008 für nicht-englische Systeme kaputt.
-
-
-2.2.4) mit Visual Studio 2005
-
-Das Bauen mit Visual Studio 2005 ist nicht empfohlen, aber möglich.
-
-1) Laden sie sich das "Microsoft Platform SDK for Windows Server 2003 R2" von hier: http://www.microsoft.com/downloads/en/details.aspx?FamilyId=0BAF2B35-C656-4969-ACE8-E4C0C0716ADB&displaylang=en herunter.
-
-2) Installieren Sie es an einen Ort, ich habe es ins Visual Studio-Verzeichnis (C:\Program Files (x86)\Microsoft Visual Studio 8\VC\PlatformSDK) installiert. Sie müssen nicht das ganze SDK installieren, benötigt werden folgende Komponenten:
- - Microsoft Core SDK: Build Environment for x86 (und/oder amd64 wenn sie eine 64-Bit-Version bauen wollen), Redistributable Components)
- - Microsoft Data Accession Services: Build Environment for x86 (und/oder amd64) für odbc32.lib, benötigt durch wxWidgets.
-
-3) Das wars leider noch nicht, da Visual Studio auf diese Weise das PlatformSDK noch nicht finden wird. Sie müssen das "Include/"- und "Lib/"-Verzeichnis des PlatformSDK's manuell den Umgebungsvariablen "INCLUDE" und "LIB" hinzufügen. 
-Ich habe das gemacht, indem ich die Verknüpfung im Startmenü verändert habe sodass sie auf eine selbstgeschriebene Datei "my_vcvarsall.bat" statt dem Standardmäßigen "C:\Program Files (x86)\Microsoft Visual Studio 8\VC\vcvarsall.bat" zeigt.
-Diese "my_vcvarsall.bat"  ruft nun selbst die Standardmäßige Datei auf und fügt dann das Bin/- und Include/-Verzeichnis der Umgebung hinzu. Sie sieht so aus:
-
-    @echo off
-	call "C:\Program Files (x86)\Microsoft Visual Studio 8\VC\vcvarsall.bat" %*
-
-	REM set variables to the Platform SDK directories
-	set "PATH=%PATH%C:\Program Files (x86)\Microsoft Visual Studio 8\VC\PlatformSDK\Bin;"
-	set "INCLUDE=%INCLUDE%C:\Program Files (x86)\Microsoft Visual Studio 8\VC\PlatformSDK\Include;"
-	set "LIB=%LIB%C:\Program Files (x86)\Microsoft Visual Studio 8\VC\PlatformSDK\Lib;"
-
-4) Fahren sie mit den Schritten in 2.2.2) (Mit Visal Studio 2008) fort, indem sie entweder den "Visual Studio 8 2005" Generator oder den "NMake Makefiles" Generator benutzen.
-
 
 
 Dies schließt nun die Installationsanweisungen für nuke-ms ab, und gibt ihnen einen kleinen Einblick in das was ich erdulden musste (ganz besonders mit Visual Studio). Nun verwenden sie nuke-ms und haben sie Spaß dabei!

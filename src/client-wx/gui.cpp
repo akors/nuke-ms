@@ -148,10 +148,7 @@ void MainFrame::parseCommand(const wxString& str)
         wherestr +=
             byte_traits::native_string(tok_iter->begin(), tok_iter->end());
 
-
-        ServerLocation::ptr_t where(new ServerLocation);
-        where->where = wherestr;
-        clientnode.connectTo(where);
+        clientnode.connectTo({wherestr});
         return;
     }
 
@@ -162,14 +159,15 @@ invalid_command:
 
 
 
-void MainFrame::slotReceiveMessage(NearUserMessage::const_ptr_t msg)
+void MainFrame::slotReceiveMessage(
+    std::shared_ptr<NearUserMessage> msg)
 {
-    byte_traits::msg_string s(msg->getStringwrap());
+    byte_traits::msg_string s(std::move(msg->_stringwrap._message_string));
     printMessage(wxT(">> ") + wxString::FromUTF8(s.c_str()));
 }
 
 void MainFrame::slotConnectionStatusReport(
-    clientnode::ConnectionStatusReport::const_ptr_t rprt)
+    std::shared_ptr<const clientnode::ConnectionStatusReport> rprt)
 {
     using namespace clientnode;
 
@@ -207,7 +205,8 @@ void MainFrame::slotConnectionStatusReport(
 }
 
 
-void MainFrame::slotSendReport(clientnode::SendReport::const_ptr_t rprt)
+void MainFrame::slotSendReport(
+    std::shared_ptr<const clientnode::SendReport> rprt)
 {
     if (!rprt->send_state)
     {

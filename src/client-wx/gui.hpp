@@ -162,14 +162,14 @@ public:
 
 
 	/** Slot for incoming messages*/
-    void slotReceiveMessage(NearUserMessage::const_ptr_t msg);
+    void slotReceiveMessage(std::shared_ptr<NearUserMessage> msg);
 	
 	/** Slot for connection status reports */
     void slotConnectionStatusReport(
-        clientnode::ConnectionStatusReport::const_ptr_t rprt);
+        std::shared_ptr<const clientnode::ConnectionStatusReport> rprt);
 		
 	/** Slot for send reports */
-    void slotSendReport(clientnode::SendReport::const_ptr_t rprt);
+    void slotSendReport(std::shared_ptr<const clientnode::SendReport> rprt);
 
 
     /** Called if the user wants to quit. */

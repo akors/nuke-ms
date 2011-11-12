@@ -2,6 +2,63 @@ This is the release-notes file of nuke-ms. In here you can find information
 important changes to the project concerning both users and developers.
 
 
+============  nuke-ms 0.3   ------------------------  ?? ??? 201?  =============
+
+---- Application users
+
+---- Library users
+
+  * Starting from this release, the C++11 standard is mandatory,
+    so a compiler supporting the C++11 standard is required. For the reasons,
+    see below.
+
+  * API changes for the "nuke-ms-common" library:
+    - This library has undergone major reconstruction to make use of
+      move semantics, to make the design a little bit more sane and reduce
+      dynamic function binding.
+      Please refer to the API documentation that can be generated with the
+      "apidoc" target.
+
+  * API changes for the "nuke-ms-clientnode" library:
+    - All occurences of boost::shared_ptr are replaced by std::shared_ptr
+    - sendUserMessage() now offers an overload to pass a string by
+      rvalue-reference
+    - The function connectTo() has a changed signature
+    - The classes ClientNode::LoggingStreams and ClientNode::Signals have been
+      moved to include/clientnode/logstreams.hpp and
+      include/clientnode/sigtypes.hpp respectively.
+    - The signal types in include/clientnode/sigtypes.hpp have changed. Please
+      refer to the API documentation.
+
+---- Developers
+
+  * The code has been adapted to use certain features of the new C++11 standard.
+    This will hopefully help in writing cleaner, prettier code and make it
+    easier to express ideas and concepts in code.
+    The currently used C++11 features are:
+      - std::shared_ptr
+      - std::bind
+      - defaulted and deleted constructors
+      - RValue references and move semantics
+      - auto, decltype
+      - Right angle brackets
+      - extern template
+      - constexpr
+      - uniform initialization syntax
+      - long long
+
+  * A testing system was implemented using CTest and some preprocessor logic.
+    Currently, only nuke-ms-common is tested (more or less thoroughly).
+
+  * Clientnode state machine was simplified: we are now using a simple state
+    machine instead of an asynchronous one.
+    This simplifies locking, event dispatching, and obsoletes weird
+    Boost.Statechart syntax.
+
+
+---- Lookout to the next version
+
+
 ============  nuke-ms 0.2   ------------------------  23 Apr 2011  =============
 
 ---- Application users

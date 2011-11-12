@@ -2,7 +2,7 @@
 
 /*
  *   nuke-ms - Nuclear Messaging System
- *   Copyright (C) 2008, 2009, 2010  Alexander Korsunsky
+ *   Copyright (C) 2008, 2009, 2010, 2011  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -43,6 +43,7 @@
 #include "bytes.hpp"
 #include "neartypes.hpp"
 #include "clientnode/sigtypes.hpp"
+#include "clientnode/logstreams.hpp"
 #include "clientnode/statemachine.hpp"
 
 
@@ -101,10 +102,15 @@ public:
     */
     ~ClientNode();
 
-	/** Connect the signal for incoming messages
+	/** Connect the signal for incoming messages.
 	 *
 	 * @param slot The slot you want to connect the signal to
 	 * @return Object to the connection of the signal/slot
+	 *
+	 * @note The signal passes a non-const shared_ptr to a NearUserMessage
+	 * object. If you want to connect to the slot more than once, it is your
+	 * responsibility to ensure the validity of the object between slot
+	 * invocations.
 	*/
     boost::signals2::connection
     connectRcvMessage(const SignalRcvMessage::slot_type& slot)
@@ -132,7 +138,7 @@ public:
     /** Connect to a remote site.
      * @param where The string representation of the address of the remote site
      */
-    void connectTo(ServerLocation::const_ptr_t where);
+    void connectTo(const ServerLocation& where);
 
 
     /** Send message to connected remote site.
@@ -146,9 +152,20 @@ public:
      * @return the message identifier of the sent message
      */
     NearUserMessage::msg_id_t sendUserMessage(
-        const byte_traits::msg_string& msg,
+        byte_traits::msg_string&& msg,
         const UniqueUserID& recipient = UniqueUserID()
     );
+
+    NearUserMessage::msg_id_t sendUserMessage(
+        const byte_traits::msg_string& msg,
+        const UniqueUserID& recipient = UniqueUserID()
+    )
+    {
+        // create copy and move it into the sendUserMessage function
+        /* FIXME use initializer list syntax, seems like a compiler bug? */
+        // return sendUserMessage(std::move(byte_traits::msg_string{msg}), recipient);
+        return sendUserMessage(std::move(byte_traits::msg_string(msg)), recipient);
+    }
 
 
     /** Disconnect from the remote site.

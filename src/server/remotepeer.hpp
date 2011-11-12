@@ -26,7 +26,7 @@
 #include "refcounter.hpp"
 #include "servevent.hpp"
 
-namespace nuke_ms 
+namespace nuke_ms
 {
 namespace server
 {
@@ -52,7 +52,7 @@ public:
     );
 
 
-    void sendMessage(const SegmentationLayer& msg);
+    void sendMessage(const SegmentationLayer<SerializedData>& msg);
 
 
     /** Shutdown the connection to the remote peer.
@@ -75,7 +75,7 @@ private:
     event_callback_t event_callback;
 
     /** A static buffer for the header */
-    byte_traits::byte_t header_buffer[SegmentationLayer::header_length];
+    byte_traits::byte_t header_buffer[SegmentationLayerBase::header_length];
 
     /** A variable that will prevent duplicate error messages.
     * Only the first error will be reported. */
@@ -99,7 +99,7 @@ private:
         const boost::system::error_code& e,
         std::size_t bytes_transferred,
         ReferenceCounter<RemotePeer>::CountedReference peer_reference,
-        SegmentationLayer::dataptr_t sendbuf
+        std::shared_ptr<byte_traits::byte_sequence> sendbuf
     );
 
     static void rcvHeaderHandler(
@@ -112,7 +112,7 @@ private:
         const boost::system::error_code& error,
         std::size_t bytes_transferred,
         ReferenceCounter<RemotePeer>::CountedReference peer_reference,
-        SegmentationLayer::dataptr_t body_data
+        std::shared_ptr<byte_traits::byte_sequence> body_data
     );
 
     // no copy construction allowed.
