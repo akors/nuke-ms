@@ -20,7 +20,9 @@
 #ifndef SERVEVENT_HPP
 #define SERVEVENT_HPP
 
+#include <memory>
 #include <boost/function.hpp>
+
 #include "msglayer.hpp"
 
 namespace nuke_ms
@@ -90,8 +92,9 @@ struct ServerEvent1Parm : public BasicServerEvent
 
 /** Typedef for received message. */
 typedef ServerEvent1Parm<
-    BasicServerEvent::ID_MSG_RECEIVED, SegmentationLayer::ptr_t>
-    ReceivedMessageEvent;
+        BasicServerEvent::ID_MSG_RECEIVED,
+        std::shared_ptr<SegmentationLayer<SerializedData>>
+    > ReceivedMessageEvent;
 
 /** Typedef for Disconnection events. */
 typedef ServerEvent1Parm<

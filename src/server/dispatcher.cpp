@@ -27,7 +27,6 @@ using namespace nuke_ms;
 using namespace server;
 using boost::asio::ip::tcp;
 
-
 DispatchingServer::DispatchingServer()
     : acceptor(io_service, tcp::endpoint(tcp::v4(), listening_port)),
     current_conn_id(0)
@@ -154,7 +153,7 @@ void DispatchingServer::acceptHandler(
 
 void DispatchingServer::distributeMessage(
     RemotePeer::connection_id_t originating_id,
-    SegmentationLayer::ptr_t data
+    std::shared_ptr<SegmentationLayer<SerializedData>> data
 )
 {
     peers_list_type::iterator it = peers_list.begin();

@@ -42,7 +42,7 @@ void RemotePeer::startReceive()
     // start an asynchrous read
     async_read(
         *peer_socket,
-        boost::asio::buffer(header_buffer, SegmentationLayer::header_length),
+        boost::asio::buffer(header_buffer, SegmentationLayerBase::header_length),
         boost::bind(
             &RemotePeer::rcvHeaderHandler,
             boost::asio::placeholders::error,
@@ -78,7 +78,7 @@ void RemotePeer::sendHandler(
     const boost::system::error_code& error,
     std::size_t bytes_transferred,
     ReferenceCounter<RemotePeer>::CountedReference peer_reference,
-    SegmentationLayer::dataptr_t sendbuf
+    std::shared_ptr<byte_traits::byte_sequence> sendbuf
 )
 {
     // import reference for convenience
@@ -110,8 +110,8 @@ void RemotePeer::rcvHeaderHandler(
     {
         try {
             // validate header and get packet size
-            SegmentationLayer::HeaderType header(
-                SegmentationLayer::decodeHeader(remotepeer.header_buffer)
+            SegmentationLayerBase::HeaderType header(
+                SegmentationLayerBase::decodeHeader(remotepeer.header_buffer)
             );
 
 
@@ -122,10 +122,8 @@ const byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
             if (header.packetsize > MAX_PACKETSIZE)
                 throw InvalidHeaderError();
 
-            SegmentationLayer::dataptr_t body_data(
-                new byte_traits::byte_sequence(
-                    header.packetsize-SegmentationLayer::header_length
-                )
+            auto body_data = std::make_shared<byte_traits::byte_sequence>(
+                header.packetsize-SegmentationLayerBase::header_length
             );
 
             // start a receive for the packet body_data
@@ -153,7 +151,7 @@ void RemotePeer::rcvBodyHandler(
     const boost::system::error_code& error,
     std::size_t bytes_transferred,
     ReferenceCounter<RemotePeer>::CountedReference peer_reference,
-    SegmentationLayer::dataptr_t body_data
+    std::shared_ptr<byte_traits::byte_sequence> body_data
 )
 {
     RemotePeer& remotepeer = peer_reference;
@@ -166,8 +164,9 @@ void RemotePeer::rcvBodyHandler(
     }
     else
     {
-        SegmentationLayer::ptr_t segmlayer = SegmentationLayer::ptr_t(
-            new SegmentationLayer(body_data));
+        auto segmlayer = std::make_shared<SegmentationLayer<SerializedData>>(
+            SerializedData{body_data, body_data->begin(), body_data->size()}
+        );
 
         // if the receive was ok, post the passage back to the enclosing entity
         remotepeer.event_callback(
@@ -180,10 +179,9 @@ void RemotePeer::rcvBodyHandler(
 }
 
 
-void RemotePeer::sendMessage(const SegmentationLayer& msg)
+void RemotePeer::sendMessage(const SegmentationLayer<SerializedData>& msg)
 {
-    SegmentationLayer::dataptr_t data = SegmentationLayer::dataptr_t(
-        new byte_traits::byte_sequence(msg.size()));
+    auto data = std::make_shared<byte_traits::byte_sequence>(msg.size());
 
     msg.fillSerialized(data->begin());
 
