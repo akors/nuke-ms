@@ -1,13 +1,21 @@
-This is the install file for the nuke-ms project. In this file you will find information on how to compile and install the application and its prerequisites.
+This is the install file for the nuke-ms project. In this file you will find
+information on how to compile and install the application and its prerequisites.
 
-nuke-ms is a free software project written by Alexander Korsunsky. You can use, modify and redistribute it under the conditions of the GNU General Public License version 3, a copy of which can be found in the file LICENSE.txt in the doc/ folder.
+nuke-ms is a free software project written by Alexander Korsunsky. You can use,
+modify and redistribute it under the conditions of the 
+GNU General Public License version 3, a copy of which can be found in the file
+LICENSE.txt in the doc/ folder.
 
 
-nuke-ms is intended to be as portable as possible and it might compile on many platforms, however few were tested.
-It is mainly distributed as a source code tarball, but a compiled and zipped version for win32 platforms is available for convenience.
+nuke-ms is intended to be as portable as possible and it might compile on many
+platforms, however few were tested.
+It is mainly distributed as a source code tarball, but a compiled and zipped
+version for win32 platforms is available for convenience.
 
-To use the win32 version of nuke-ms, you can simply extract the zip file to a folder. You can find the executables in the bin/ directory.
-To compile nuke-ms, install the required prerequisites and follow the compilation instructions below.
+To use the win32 version of nuke-ms, you can simply extract the zip file to a
+folder. You can find the executables in the bin/ directory.
+To compile nuke-ms, install the required prerequisites and follow the
+compilation instructions below.
 
 
 ================================================================================
@@ -32,67 +40,114 @@ Contents of this file:
 
 1) Prerequisites
 
-To compile nuke-ms from source you need to install some libraries and tools. These dependencies might seem annoying, however they allow effective and portable development.
+To compile nuke-ms from source you need to install some libraries and tools.
+These dependencies might seem annoying, however they allow effective and
+portable development.
 
 1.1) Required tools and libraries
 
-These are the tools and libraries needed to build nuke-ms, their minimum required versions and their homepages:
+These are the tools and libraries needed to build nuke-ms, their minimum
+required versions and their homepages:
 
-    C++ Compiler
-    A recent C++ compiler with C++11 support is required to build nuke-ms. Currently, only GCC >= 4.6 is known to compile nuke-ms successfully.
+    -- C++ Compiler
+    A recent C++ compiler with C++11 support is required to build nuke-ms.
+    Currently, only GCC >= 4.6 is known to compile nuke-ms successfully.
 
-    Boost C++ Libraries,    1.39,       http://www.boost.org/
-    The Boost Libraries are a set of portable high quality libraries of which most are header-only. The libraries that need to be included at link-time are Boost.System and Boost.Thread.
+    -- Boost C++ Libraries,    1.39,       http://www.boost.org/
+    The Boost Libraries are a set of portable high quality libraries of which
+    most are header-only. The libraries that need to be included at link-time are Boost.System and Boost.Thread.
 
-    wxWidgets,              2.8,        http://www.wxwidgets.org/
+    -- wxWidgets,              2.8,        http://www.wxwidgets.org/
     wxWidgets is a library for portable GUI programming and allows a native look-and-feel on various platforms. The components used are "base" and "core".
 
-    CMake,                  2.6,        http://www.cmake.org/
-    CMake is a portable build tool that can create native build files (such as Makefiles or project files) on a variety of platforms.
+    -- CMake,                  2.6,        http://www.cmake.org/
+    CMake is a portable build tool that can create native build files (such as
+    Makefiles or project files) on a variety of platforms.
 
 
 1.2) Platform specific information
 
-Below is a list of some platforms and notes on the prerequisite installation. For Platforms not listed here, please visit the websites of the required tools and libraries and follow the instructions there to install or compile them.
+Below is a list of some platforms and notes on the prerequisite installation.
+For Platforms not listed here, please visit the websites of the required tools
+and libraries and follow the instructions there to install or compile them.
 
 
 1.2.1) Linux distributions
 
-On many GNU/Linux or Unix distributions the tools are packaged and ready to use. To install them you only need to specify the package names to your favourite package manager. Following you see a list of some distributions with instructions on how to install the prerequisites:
+On many GNU/Linux or Unix distributions the tools are packaged and ready to use.
+To install them you only need to specify the package names to your favourite
+package manager. Following you see a list of some distributions with
+instructions on how to install the prerequisites:
 
 
 Debian GNU/Linux:
     Testing ("Wheezy"), Unstable ("Sid"):
-        Install the following packages and their dependencies: build-essentials cmake libboost-system-dev libboost-thread-dev libwxgtk2.8-dev
+        Install the following packages and their dependencies:
+        build-essentials cmake libboost-system-dev libboost-thread-dev
+        libwxgtk2.8-dev
 
 Ubuntu:
     11.10 ("Oineric Ocelot"), 12.04 ("Precise Penguin"):
-        Install the following packages and their dependencies: build-essentials cmake libboost-system-dev libboost-thread-dev libwxgtk2.8-dev
+        Install the following packages and their dependencies:
+        build-essentials cmake libboost-system-dev libboost-thread-dev
+        libwxgtk2.8-dev
 
 Fedora:
     15 ("Lovelock"), 16 ("Verne"):
-        Install the following packages and their dependencies: cmake boost-devel wxGTK-devel
+        Install the following packages and their dependencies:
+        cmake boost-devel wxGTK-devel
 
 Arch Linux:
-    Install the following packages and their dependencies: cmake boost wxgtk
+    Install the following packages and their dependencies:
+    cmake boost wxgtk
 
 
 1.2.2) Windows
 
-Prerequisite installation is pretty complicated on Windows. You might want to use the prepacked version of nuke-ms available here: ftp://ftp.berlios.de/pub/nuke-ms/alpha/nuke-ms-0.2-win32.zip
+Prerequisite installation is pretty complicated on Windows. You might want to
+use the prepacked version of nuke-ms available here:
+ftp://ftp.berlios.de/pub/nuke-ms/alpha/nuke-ms-0.2-win32.zip
 
-First of all you have to install CMake, this is the easiest step. Just download the Win32 installer package, double click on it and follow the usual installation dialogue.
+First of all you have to install CMake, this is the easiest step. Just download
+the Win32 installer package, double click on it and follow the usual
+installation dialogue.
 
 The second step is to download and install wxWidgets and Boost.
-For wxWidgets, you are best off installing via the Win32 installer package, as the installer places the Libraries on a good place (somewhere where CMake can find it easily) by default, only the necessary headers and code are installed and because it offers nice buttons for documentation and uninstallation in the start menu.
-For Boost, you have to download the source package which suits your favourite compression utility best, and uncompress it to a folder.
 
-Now comes the tricky part: you have to compile the libraries. This is possible with several compilers, I tested only few. Of course, you have to compile the libraries with the same compiler you want to compile nuke-ms. The instructions for each can be found in the documentation of the libraries. Below are some points that should be mentioned and are specific to nuke-ms:
-    - nuke-ms relies on strings to be unicode. This means that the wxWidgets libraries also have to be built as unicode. This is an option you have to set when compiling wxWidgets.
-    - If you want to compile nuke-ms in debug mode, use debug libraries and if you want to compile it in release mode, use release libraries. Never mix the build types, this will result in cmake errors, linker errors or even in mismatching dll imports.
-	- If you plan on redistributing the application and built it with shared libraries, check the executables for dll-dependencies, for example with a dependency checker tool such as dependencywalker (http://dependencywalker.com/) and pack all the required files in the release. Be sure to pack the dll files with the correct configuration (dll/unicode/multithreading/...).
-    - When using MinGW, you have to check the "WinAPI" option in the MinGW installer, it is required for the GUI and the Network components. (Of course, g++ and mingw32-make must be installed too.)
-    - When using Visual Studio and compiling the Boost libraries you are best off compiling every library, the Release and Debug version and static and shared libraries. This will take more time but will save you a lot of troubles when building nuke-ms. 
+For wxWidgets, you are best off installing via the Win32 installer package, as
+the installer places the Libraries on a good place (somewhere where CMake can
+find it easily) by default, only the necessary headers and code are installed
+and because it offers nice buttons for documentation and uninstallation in the
+start menu.
+
+For Boost, you have to download the source package which suits your favourite
+compression utility best, and uncompress it to a folder.
+
+Now comes the tricky part: you have to compile the libraries. This is possible
+with several compilers, I tested only few. Of course, you have to compile the
+libraries with the same compiler you want to compile nuke-ms. The instructions
+for each can be found in the documentation of the libraries. Below are some
+points that should be mentioned and are specific to nuke-ms:
+    - nuke-ms relies on strings to be unicode. This means that the wxWidgets
+      libraries also have to be built as unicode. This is an option you have to
+      set when compiling wxWidgets.
+    - If you want to compile nuke-ms in debug mode, use debug libraries and if
+      you want to compile it in release mode, use release libraries. Never mix
+      the build types, this will result in cmake errors, linker errors or even
+      in mismatching dll imports.
+	- If you plan on redistributing the application and built it with shared
+	  libraries, check the executables for dll-dependencies, for example with a
+	  dependency checker tool such as dependencywalker 
+	  (http://dependencywalker.com/) and pack all the required files in the
+	  release. Be sure to pack the dll files with the correct configuration
+	  (dll/unicode/multithreading/...).
+    - When using MinGW, you have to check the "WinAPI" option in the MinGW
+      installer, it is required for the GUI and the Network components. (Of
+      course, g++ and mingw32-make must be installed too.)
+    - When using Visual Studio and compiling the Boost libraries you are best
+      off compiling every library, the Release and Debug version and static and
+      shared libraries. This will take more time but will save you a lot of
+      troubles when building nuke-ms. 
 
 ---------------------------------------------------------------------------------
 
@@ -101,11 +156,25 @@ Now comes the tricky part: you have to compile the libraries. This is possible w
 2.1) Compiling under Linux
 
 After installing the required prerequisites, you can start compiling nuke-ms.
-To do so, change into a directory where you want to build nuke-ms. Common practice is to create a "build" directory located in the project directory for this.
-Then run the "cmake" command with the project root directory as argument. You might want to specify additional options, such as the location of the libraries or the CMake generator to be used:
-    add "-DBOOST_INCLUDEDIR" to specify the Boost include directory or "-DBOOST_LIBRARYDIR" to specify the Boost library directory to the command line in case CMake has troubles finding Boost
-    add "-G" and your favourite toolchain supported by cmake to produce something other than makefiles for GNU Make. See the cmake manpage for the available CMake generators.
-Finally call your favourite toolchain to compile the source. This will simply be "make" if you didn't give the "-G" option to cmake. If you have a multicore processor use the -j<n> option to compile with <n> instances of gcc at a time. The number of processors plus one is a good value.
+
+To do so, change into a directory where you want to build nuke-ms. Common
+practice is to create a "build" directory located in the project directory for
+this.
+
+Then run the "cmake" command with the project root directory as argument.
+You might want to specify additional options, such as the location of the
+libraries or the CMake generator to be used:
+    add "-DBOOST_INCLUDEDIR" to specify the Boost include directory or
+    "-DBOOST_LIBRARYDIR" to specify the Boost library directory to the command
+    line in case CMake has troubles finding Boost.
+    add "-G" and your favourite toolchain supported by cmake to produce
+    something other than makefiles for GNU Make. See the cmake manpage for the
+    available CMake generators.
+    
+Finally call your favourite toolchain to compile the source. This will simply be
+"make" if you didn't give the "-G" option to cmake. If you have a multicore
+processor use the -j<n> option to compile with <n> instances of gcc at a time.
+The number of processors + 1 is a good value.
 
 A simple compilation of nuke-ms might look like this:
     $ mkdir ~/nuke-ms/build
@@ -113,14 +182,19 @@ A simple compilation of nuke-ms might look like this:
     $ cmake ..
     $ make -j3
 
-Of course you have to change the path for the project directory according to where you put it.
+Of course you have to change the path for the project directory according to
+where you put it.
 
-If the compilation succeeds, you will find the executables in the "bin" subdirectory of the directory you built nuke-ms in.
+If the compilation succeeds, you will find the executables in the "bin"
+subdirectory of the directory you built nuke-ms in.
 
 
 2.2) Compiling under Windows
 
-At this point I want to emphasize that compilation on Windows is a tedious and annoying task. Please install a proper operating system or download the compiled win32 version of nuke-ms from this link: ftp://ftp.berlios.de/pub/nuke-ms/alpha/nuke-ms-0.2-win32.zip .
+At this point I want to emphasize that compilation on Windows is a tedious and
+annoying task. Please install a proper operating system or download the compiled
+win32 version of nuke-ms from this link:
+ftp://ftp.berlios.de/pub/nuke-ms/alpha/nuke-ms-0.2-win32.zip .
 
 These are a few links that could help you in case of troubles:
 
@@ -134,82 +208,154 @@ These are a few links that could help you in case of troubles:
 
 To compile nuke-ms using MinGW follow these steps:
 
-First change into the directory where you want to build nuke-ms, such as the "build" subdirectory of the project directory.
+First change into the directory where you want to build nuke-ms, such as the
+"build" subdirectory of the project directory.
     > cd nuke-ms\build
 
-Then run CMake to generate the makefiles. You will have to specify a few argument:
-    -G "MinGW Makefiles": The CMake generator to be used, this is the MinGW Makefile generator in this case.
-    -DBOOST_ROOT="<path\to\boost>": The location of the Boost library in case the Boost finder can't find Boost (which is quite likely). Replace <path\to\boost> with the Path where you installed Boost.
-	-DBoost_ADDITIONAL_VERSIONS="<boostversion>": If you use a newer version of Boost than CMake knows about, pass it in this variable. Otherwise the Boost libraries won't be found.
-    -DwxWidgets_ROOT_DIR="<path\to\wxwidgets>": The location of the wxWidgets library in case the wxWidgets finder can't find wxWidgets. Replace <path\to\boost> with the Path where you installed Boost.
-    -DwxWidgets_CONFIGURATION=<config>: The configuration you compiled wxWidgets with. Add this if CMake still can't find wxWidgets, but normally you don't have to. Replace <config> with msw, mswd, mswu, mswunivud or similar. You can find out which configuration you compiled wxWidgets with by looking into the directory "lib\gcc_lib" relative to your wxWidgets installation. It will contain folders with the same name as the configuration. Remember that we need Unicode to compile nuke-ms, so this should be something with a "u" in the name.
-    -DCMAKE_BUILD_TYPE=<type>: Use Debug, Release, RelWithDebInfo or MinSizeRel. I recommend Release unless you can do something useful with debugging symbols.
-    <sourcepath>: Path to the nuke-ms source, this is the project root folder
+Then run CMake to generate the makefiles. You will have to specify a few
+argument:
+    -G "MinGW Makefiles": The CMake generator to be used, this is the MinGW
+     Makefile generator in this case.
+    -DBOOST_ROOT="<path\to\boost>": The location of the Boost library in case 
+     the Boost finder can't find Boost (which is quite likely). Replace 
+     <path\to\boost> with the Path where you installed Boost.
+	-DBoost_ADDITIONAL_VERSIONS="<boostversion>": If you use a newer version of
+	 Boost than CMake knows about, pass it in this variable. Otherwise the Boost
+	 libraries won't be found.
+    -DwxWidgets_ROOT_DIR="<path\to\wxwidgets>": The location of the wxWidgets
+     library in case the wxWidgets finder can't find wxWidgets. Replace 
+     <path\to\boost> with the Path where you installed Boost.
+    -DwxWidgets_CONFIGURATION=<config>: The configuration you compiled wxWidgets
+     with. Add this if CMake still can't find wxWidgets, but normally you don't
+     have to. Replace <config> with msw, mswd, mswu, mswunivud or similar. You
+     can find out which configuration you compiled wxWidgets with by looking
+     into the directory "lib\gcc_lib" relative to your wxWidgets installation.
+     It will contain folders with the same name as the configuration. Remember
+     that we need Unicode to compile nuke-ms, so this should be something with
+     a "u" in the name.
+    -DCMAKE_BUILD_TYPE=<type>: Use Debug, Release, RelWithDebInfo or MinSizeRel.
+     I recommend Release unless you can do something useful with debugging symbols.
+     <sourcepath>: Path to the nuke-ms source, this is the project root folder
 
 On by box, the configuration line looked like this:
 	> cmake -G "MinGW Makefiles" -DBOOST_ROOT="C:\Libraries\Boost" -DBoost_ADDITIONAL_VERSIONS="1.46.1" -DCMAKE_BUILD_TYPE=Release ..
 
-Finally call mingw32-make. If you have a multicore processor use the -j<n> option to compile with <n> instances of gcc at a time. The number of processors plus one is a good value.
+Finally call mingw32-make. If you have a multicore processor use the -j<n>
+option to compile with <n> instances of gcc at a time. The number of processors
+plus one is a good value.
     > mingw32-make -j3
 
-If the compilation succeeded you will find the executables in the "bin" subdirectory of the directory you built nuke-ms in.
-If you want to redistribute nuke-ms and are using an Older version of MinGW, you have to distribute the file "mingwm10.dll" which you can find in the "bin" directory of your MinGW installation (normally C:\MinGW\bin) along with the nuke-ms executables (with fairly recent MinGW distributions, such as with TDM-GCC, this isn't neccessary anymore). If you linked any wxWidgets or Boost libraries as shared libraries, you have to distribute the according dll files as well.
+If the compilation succeeded you will find the executables in the "bin"
+subdirectory of the directory you built nuke-ms in.
+
+If you want to redistribute nuke-ms and are using an Older version of MinGW, you
+have to distribute the file "mingwm10.dll" which you can find in the "bin"
+directory of your MinGW installation (normally C:\MinGW\bin) along with the
+nuke-ms executables (with fairly recent MinGW distributions, such as with
+TDM-GCC, this isn't neccessary anymore). If you linked any wxWidgets or Boost
+libraries as shared libraries, you have to distribute the according dll files as
+well.
 
 
 2.2.2) Using Visual Studio 2008
 
-It is not advised to use multiple versions of Visual Studio on one system. Especially the wxWidgets library will cause trouble if it was compiled with a different compiler version than nuke-ms.
+It is not advised to use multiple versions of Visual Studio on one system.
+Especially the wxWidgets library will cause trouble if it was compiled with a
+different compiler version than nuke-ms.
 
-1) Start the Visual Studio command prompt from the start menu. This is neccessary to set all required environment variables.
+1) Start the Visual Studio command prompt from the start menu. This is
+neccessary to set all required environment variables.
 
-2) Change into the directory where you want to build nuke-ms, such as the "build" subdirectory of the project folder.
+2) Change into the directory where you want to build nuke-ms, such as the
+"build" subdirectory of the project folder.
     > cd nuke-ms\build
 
-3) Run CMake to generate a Visual Studio Project. You will have to specify some arguments:
-    -G "Visual Studio 9 2008": The CMake generator to be used, this is the Visual Studio project generator in this case.
-    -DwxWidgets_ROOT_DIR="<path\to\wxwidgets>": The location of the wxWidgets library in case the wxWidgets finder can't find wxWidgets. Replace <path\to\boost> with the Path where you installed Boost.
-    -DwxWidgets_CONFIGURATION=<config>: The configuration you compiled wxWidgets with. Normally you don't have to specify this. Replace <config> with msw, mswd, mswu, mswunivud or similar. You can find out which configuration you compiled wxWidgets with by looking into the directory "lib\vc_lib" relative to your wxWidgets installation. It will contain folders with the same name as the configuration. Remember that we need Unicode to compile wxWidgets, so this should be something with a "u" in the name.
-    -DBOOST_ROOT="<path\to\boost>": The location of the Boost library in case the Boost finder can't find Boost (which is quite likely). Replace <path\to\boost> with the Path where you installed Boost.	
-	-DBoost_ADDITIONAL_VERSIONS="<boostversion>": If you use a newer version of Boost than CMake knows about, pass it in this variable. Otherwise the Boost libraries won't be found.
-    -DBoost_USE_STATIC_LIBS=ON: Use this if you want to link the application to static (lib) instead of shared (dll) libraries. Might save dll troubles, but increases executable size.
-    <sourcepath>: Path to the nuke-ms source, this is "src" relative to the project folder
+3) Run CMake to generate a Visual Studio Project. You will have to specify some
+arguments:
+    -G "Visual Studio 9 2008": The CMake generator to be used, this is the
+     Visual Studio project generator in this case.
+    -DwxWidgets_ROOT_DIR="<path\to\wxwidgets>": The location of the wxWidgets
+     library in case the wxWidgets finder can't find wxWidgets. Replace
+     <path\to\boost> with the Path where you installed Boost.
+    -DwxWidgets_CONFIGURATION=<config>: The configuration you compiled wxWidgets
+     with. Normally you don't have to specify this. Replace <config> with msw,
+     mswd, mswu, mswunivud or similar. You can find out which configuration you
+     compiled wxWidgets with by looking into the directory "lib\vc_lib" relative
+     to your wxWidgets installation. It will contain folders with the same name
+     as the configuration. Remember that we need Unicode to compile wxWidgets,
+     so this should be something with a "u" in the name.
+    -DBOOST_ROOT="<path\to\boost>": The location of the Boost library in case
+     the Boost finder can't find Boost (which is quite likely). Replace
+     <path\to\boost> with the Path where you installed Boost.	
+	-DBoost_ADDITIONAL_VERSIONS="<boostversion>": If you use a newer version of
+	 Boost than CMake knows about, pass it in this variable. Otherwise the Boost
+	 libraries won't be found.
+    -DBoost_USE_STATIC_LIBS=ON: Use this if you want to link the application to
+     static (lib) instead of shared (dll) libraries. Might save dll troubles,
+     but increases executable size.
+    <sourcepath>: Path to the nuke-ms source, this is "src" relative to the
+     project folder
 
 So we end up with this line:
 	> cmake -G "Visual Studio 9 2008" -DBOOST_ROOT="C:\Libraries\Boost" -DBoost_ADDITIONAL_VERSIONS="1.46.1" -DCMAKE_BUILD_TYPE=Release -DBoost_USE_STATIC_LIBS=ON ..
 
-4) Now double-click on the .sln-file to start Visual Studio with the created project.
-Make sure you select the appropriate configuration (Release, Debug) for the libraries you have compiled, otherwise Visual Studio will demand libraries that you do not have (assuming you did not build all kinds of Boost libraries).
+4) Now double-click on the .sln-file to start Visual Studio with the created
+project.
+Make sure you select the appropriate configuration (Release, Debug) for the
+libraries you have compiled, otherwise Visual Studio will demand libraries that
+you do not have (assuming you did not build all kinds of Boost libraries).
 
 5) Finally select Build -> Build Solution from the menu to compile nuke-ms.
 
-You will find the executables in the "bin\Release", "bin\Debug", "bin\MinSizeRel" or "bin\RelWithDebInfo" directory of the directory you built nuke-ms in, depending on what configuration you chose.
+You will find the executables in the "bin\Release", "bin\Debug",
+"bin\MinSizeRel" or "bin\RelWithDebInfo" directory of the directory you built
+nuke-ms in, depending on what configuration you chose.
 
 
-Alternatively, you can use the generator for NMake files. For configuration use the same command as above with the exceptino of the generator option, which should now read '-G "NMake Makefiles"'.
-4) Trigger the build with the "nmake" command. The executables will be found in the bin\ directory of the directory you built nuke-ms in.
+Alternatively, you can use the generator for NMake files. For configuration use
+the same command as above with the exceptino of the generator option, which
+should now read '-G "NMake Makefiles"'.
+4) Trigger the build with the "nmake" command. The executables will be found in
+the bin\ directory of the directory you built nuke-ms in.
 Here is an example session of building with NMake:
 	> cmake -G "Visual Studio 9 2008" -DBOOST_ROOT="C:\Libraries\Boost" -DBoost_ADDITIONAL_VERSIONS="1.46.1" ..\src
 	> nmake
 
 
 
-If you want to redistribute nuke-ms you have to make sure the people running nuke-ms will have the files msvcp90.dll and msvcr90.dll installed on their systems.
-Do this by either retrieving them from the folder "VC\redist\x86\Microsoft.VC90.CRT" relative to your Visual Studio installation directory (normally "C:\Program Files\Microsoft Visual Studio 9.0\VC\redist\x86\Microsoft.VC90.CRT") or by giving them a link to the download page for the Visual Studio redistributable package (http://www.microsoft.com/DOWNLOADS/details.aspx?FamilyID=9b2da534-3e03-4391-8a4d-074b9f2bc1bf) in case they have errors about missing msvc*90 DLL's.
-If you linked any wxWidgets or Boost libraries as shared libraries, you have to distribute the according dll files as well.
+If you want to redistribute nuke-ms you have to make sure the people running
+nuke-ms will have the files msvcp90.dll and msvcr90.dll installed on their
+systems.
+Do this by either retrieving them from the folder
+"VC\redist\x86\Microsoft.VC90.CRT" relative to your Visual Studio installation
+directory (normally
+"C:\Program Files\Microsoft Visual Studio 9.0\VC\redist\x86\Microsoft.VC90.CRT")
+or by giving them a link to the download page
+for the Visual Studio redistributable package
+(http://www.microsoft.com/DOWNLOADS/details.aspx?FamilyID=9b2da534-3e03-4391-8a4d-074b9f2bc1bf)
+in case they have errors about missing msvc*90 DLL's. If you linked any
+wxWidgets or Boost libraries as shared libraries, you have to distribute the
+according dll files as well.
 
 
 2.2.3) Using Visual Studio 2010
 
-The instructions for compiling with this version of Visual Studio are basically the same as for Visual Studio 2008
+The instructions for compiling with this version of Visual Studio are basically
+the same as for Visual Studio 2008
 A few things to bear in mind:
 	- The CMake Generator is called "Visual Studio 2010"
-	- All runtime Libraries are now called msvc*100 instead of msvc*90. The link to the redistributable package changes to: http://www.microsoft.com/downloads/en/details.aspx?FamilyID=a7b7a05e-6de6-4d3a-a423-37bf0912db84
-	- If you don't want to open the Visual Studio GUI, you can use the tool "msbuild.exe" (call with the generated "nuke-ms.sln" file) for command line building, which was broken for non-english systems in Visual Studio 2008.
+	- All runtime Libraries are now called msvc*100 instead of msvc*90. The link
+	  to the redistributable package changes to: 
+	  http://www.microsoft.com/downloads/en/details.aspx?FamilyID=a7b7a05e-6de6-4d3a-a423-37bf0912db84
+	- If you don't want to open the Visual Studio GUI, you can use the tool
+	  "msbuild.exe" (call with the generated "nuke-ms.sln" file) for command
+	  line building, which was broken for non-english systems in Visual Studio
+	  2008.
 
 
 
-
-
-This concludes the installation instructions for nuke-ms, and gives you a little impression of what I've been through, especially with Visual Studio. Now use nuke-ms and have fun!
+This concludes the installation instructions for nuke-ms, and gives you a little
+impression of what I've been through, especially with Visual Studio. Now use
+nuke-ms and have fun!
 
 Cheers, Alexander
