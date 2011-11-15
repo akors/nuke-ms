@@ -51,6 +51,16 @@ ClientNode::~ClientNode()
     statemachine.terminate();
 }
 
+boost::signals2::connection
+ClientNode::connectRcvMessage(const SignalRcvMessage::slot_type& slot)
+{
+    // disconnect old connection
+    rcvMessageConnection.disconnect();
+
+    // connect new one
+    rcvMessageConnection = signals.rcvMessage.connect(slot);
+    return rcvMessageConnection;
+}
 
 void ClientNode::connectTo(const ServerLocation& where)
 {

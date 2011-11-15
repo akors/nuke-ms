@@ -109,7 +109,7 @@ struct SendReport
 // Signals issued by the Protocol
 
 /** Signal for incoming messages*/
-typedef boost::signals2::signal<void (std::shared_ptr<NearUserMessage>)> // FIXME Thinko? Pass messages in signals, what type?
+typedef boost::signals2::signal<void (std::shared_ptr<NearUserMessage>)>
     SignalRcvMessage;
 
 /** signal for connection status reports */

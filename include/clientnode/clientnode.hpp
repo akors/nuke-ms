@@ -103,18 +103,15 @@ public:
     ~ClientNode();
 
 	/** Connect the signal for incoming messages.
+     * If a slot was connected before this call, that connection is distroyed
+     * and a new one created with the slot argument.
 	 *
 	 * @param slot The slot you want to connect the signal to
 	 * @return Object to the connection of the signal/slot
 	 *
-	 * @note The signal passes a non-const shared_ptr to a NearUserMessage
-	 * object. If you want to connect to the slot more than once, it is your
-	 * responsibility to ensure the validity of the object between slot
-	 * invocations.
 	*/
     boost::signals2::connection
-    connectRcvMessage(const SignalRcvMessage::slot_type& slot)
-    { return signals.rcvMessage.connect(slot); }
+    connectRcvMessage(const SignalRcvMessage::slot_type& slot);
 
 	/** Connect the signal for connection status reports
 	 *
@@ -203,6 +200,9 @@ private:
 
     /** How long to wait for the thread to join */
     enum { threadwait_ms = 3000 };
+
+    /** Connection between the rcvMessage signal and it's slot */
+    boost::signals2::connection rcvMessageConnection;
 };
 
 
