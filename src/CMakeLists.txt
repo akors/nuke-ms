@@ -84,5 +84,6 @@ endif(BOOSTASIO_OWNLIB)
 add_subdirectory(common)
 add_subdirectory(clientnode)
 add_subdirectory(client-wx)
+add_subdirectory(servnode)
 add_subdirectory(server)
 
