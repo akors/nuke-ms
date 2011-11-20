@@ -36,7 +36,7 @@ namespace servnode
 
 typedef int connection_id_t;
 
-class ConnectedClient : protected std::enable_shared_from_this<ConnectedClient>
+class ConnectedClient : public std::enable_shared_from_this<ConnectedClient>
 {
     connection_id_t _connection_id;
     boost::asio::io_service& _io_service;
@@ -93,13 +93,17 @@ public:
         typedef boost::signals2::signal<void ()>
             Disconnected;
 
-        boost::signals2::connection connectReceivedMessage(
-            const ReceivedMessage::slot_type& slot);
-        void disconnectReceivedMessage();
+        boost::signals2::connection
+        connectReceivedMessage(const ReceivedMessage::slot_type& slot);
 
-        boost::signals2::connection connectDisconnected(
-            const Disconnected::slot_type& slot);
-        void disconnectDisconnected();
+        void disconnectReceivedMessage()
+        { _receivedMessage.disconnect_all_slots(); }
+
+        boost::signals2::connection
+        connectDisconnected(const Disconnected::slot_type& slot)
+        { return _disconnected.connect(slot); }
+
+        void disconnectDisconnected() { _disconnected.disconnect_all_slots(); }
 
     private:
         friend class SendHandler;
@@ -107,7 +111,7 @@ public:
         friend class ReceiveBodyHandler;
 
         ReceivedMessage _receivedMessage;
-        ReceivedMessage _Disconnected;
+        Disconnected _disconnected;
 
         boost::signals2::connection _connectionReceivedMessage;
     } _signals;
