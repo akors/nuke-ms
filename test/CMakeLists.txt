@@ -11,4 +11,5 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_custom_target(testsuite)
 
 add_subdirectory(common)
+add_subdirectory(servnode)
 
