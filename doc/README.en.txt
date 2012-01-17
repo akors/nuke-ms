@@ -12,10 +12,12 @@ modify and redistribute it under the conditions of the
 GNU General Public License version 3 (GPLv3), a copy of which can be found in
 the file LICENSE.txt in the "doc" folder.
 
-The project is hosted on BerliOS Developer, a german organization supporting the
-development of open source projects. Various services for nuke-ms such as a git
-repository, a bugtracker or a wiki page are hosted there. You can browse the
-nuke-ms project page here: http://developer.berlios.de/projects/nuke-ms/
+The project is hosted on GitHub, a "social coding" website that hosts public git
+repositories for free and provides various collaboration services such as 
+collaborator management, issue tracking, wikis, downloads, code review and
+others.
+The GitHub project page is here: https://github.com/fat-lobyte/nuke-ms
+
 
 
 ================================================================================
@@ -23,7 +25,7 @@ Contents of this file:
 
 1. Where to get nuke-ms
     1.1 Git Repository
-    1.2 Download the latest release from the BerliOS project page
+    1.2 Download the latest release from the GitHub project page
 
 2. Installation
 
@@ -39,13 +41,13 @@ Contents of this file:
 
 1.1) Git Repository
 
-You can download nuke-ms from the Git content tracker repository on BerliOS.
+You can download nuke-ms from the Git content tracker repository on GitHub.
 For this purpose install Git (instructions can be found here:
 http://git.or.cz/gitwiki/Installation), and change into the directory you want
 to place the project folder. You can then check out the repository by entering
 the following into the command line:
 
-    git clone git://git.berlios.de/nuke-ms
+    git clone https://fat-lobyte@github.com/fat-lobyte/nuke-ms.git
 
 This will create a folder called "nuke-ms" containing the most recent version
 all project files. To keep up with the development of nuke-ms you can download
@@ -55,15 +57,15 @@ repository:
     $ cd nuke-ms
     $ git pull
 
-1.2) Download the latest release from the BerliOS project page
+1.2) Download the latest release from the GitHub project page
 
 You can download the source code and a compiled win32 version of nuke-ms on the
-BerliOS project page from these addresses:
+GitHub project page from these addresses:
 
-    ftp://ftp.berlios.de/pub/nuke-ms/alpha/nuke-ms-0.2-src.tar.gz
+    https://github.com/downloads/fat-lobyte/nuke-ms/nuke-ms-0.2-src.tar.gz
         This is the source code version of nuke-ms, with unix line endings (LF).
 
-    ftp://ftp.berlios.de/pub/nuke-ms/alpha/nuke-ms-0.2-win32.zip
+    https://github.com/downloads/fat-lobyte/nuke-ms/nuke-ms-0.2-win32.zip
         This is the compiled win32 version, with all text files having windows
         line endings (CR LF).
 
@@ -160,15 +162,8 @@ allways use the same version for every participant.
 
 I am very interested in any feedback you have. Tell me how you find nuke-ms!
 If you need help with nuke-ms, have noticed some bugs, have changed the program
-and wrote a patch or simply want to contact me, send an email to the nuke-ms
-mailing list.
-The address of this list is:
-    nuke-ms-users@lists.berlios.de
-To send emails to this list, you have to subscribe (don't worry, it doesn't cost
-anything and you won't get any spam except the one you send to the list
-yourself ;-) ) on this site:
-    https://lists.berlios.de/mailman/listinfo/nuke-ms-users
-
-If you have something to tell me that you think isn't suited for public, mail me
-to this address: fat.lobyte9@gmail.com
+and wrote a patch or simply want to contact me, it's best if you sign up on
+GitHub and send me a message or a pull request.
+If you don't want to do that, or you have something to tell me that you think
+isn't suited for public, mail me to this address: fat.lobyte9@gmail.com
 

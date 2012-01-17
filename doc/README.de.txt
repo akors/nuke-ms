@@ -13,11 +13,13 @@ können es unter den Bedingungen der GNU General Public License version 3 (GPLv3
 verwenden , verändern und weitergeben. Diese Bedingungen können Sie in der Datei
 LICENSE.txt im "doc"-Verzeichnis nachsehen.
 
-Das Projekt ist auf BerliOS Developer, eine deutsche Organisation zur
-Unterstützung der Entwicklung von Open Source Projekten, gehostet. Verschiedene
-Dienste wie zum Beispiel ein Git Repository, ein Bugtracker oder ein Wiki werden
-zur Verfügung gestellt. Sie können sich die nuke-ms Projektseite hier ansehen:
-http://developer.berlios.de/projects/nuke-ms/
+
+Das Projekt ist auf GitHub gehostet, eine Seite zum "sozialen Programmieren" 
+die gratis Git-Repositories für freie Softwareprojekte bereitstellt. Sie stellt
+diverse Dienste zur verfügung, darunter Mitararbeitermanagement, Bugtracking, 
+Wikis, Downloads, Code Reviews und andere.
+Sie können sich die nuke-ms Projektseite hier ansehen:
+https://github.com/fat-lobyte/nuke-ms
 
 
 ================================================================================
@@ -25,7 +27,7 @@ Inhalt dieser Datei:
 
 1. Woher man nuke-ms bekommen kann
     1.1 Git Repository
-    1.2 Herunterladen des letzten Releases von der BerliOS Projektseite
+    1.2 Herunterladen des letzten Releases von der GitHub Projektseite
 
 2. Installation
 
@@ -41,14 +43,14 @@ Inhalt dieser Datei:
 
 1.1) Git Repository
 
-Sie können nuke-ms aus dem Git Versinskontrollsystem auf BerliOS herunterladen.
+Sie können nuke-ms aus dem Git Versinskontrollsystem auf GitHub herunterladen.
 Dazu installieren Sie Git (anweisungen können Sie hier:
 http://git.or.cz/gitwiki/Installation oder hier:
 http://progit.org/book/de/ch1-7.html finden) und wechseln Sie in das Verzeichnis
 in das Sie den Projektordner ablegen wollen. Sie können das Repository
 auschecken indem Sie folgenden Befehl in die Kommandozeile eingeben:
 
-    git clone git://git.berlios.de/nuke-ms
+    git clone https://fat-lobyte@github.com/fat-lobyte/nuke-ms.git
 
 Dieser Befehl erstellt einen Ordner mit dem Namen "nuke-ms" mit der neuesten
 Version aller Projektdateien. Um mit der Entwicklung von nuke-ms Schritt zu
@@ -58,15 +60,15 @@ Projektverzeichnis wechseln und aus dem Repository "ziehen":
     $ cd nuke-ms
     $ git pull
 
-1.2) Herunterladen des letzten releases von der BerliOS Projektseite
+1.2) Herunterladen des letzten releases von der GitHub Projektseite
 
 Sie können den Quellcode und eine für Windows kompilierte Version von nuke-ms
-von der BerliOS Projektseite unter folgenden Addressen herunterladen:
+von der GitHub Projektseite unter folgenden Addressen herunterladen:
 
-    ftp://ftp.berlios.de/pub/nuke-ms/alpha/nuke-ms-0.2-src.tar.gz
+    https://github.com/downloads/fat-lobyte/nuke-ms/nuke-ms-0.2-src.tar.gz
         Die ist die Quellcodeversion von nuke-ms mit Unix Zeilenenden (LF).
 
-    ftp://ftp.berlios.de/pub/nuke-ms/alpha/nuke-ms-0.2-win32.zip
+    https://github.com/downloads/fat-lobyte/nuke-ms/nuke-ms-0.2-win32.zip
         Dies ist die kompilierte Win32 Version, alle Dateien haben Windows
         Zeilenenden (CR LF).
 
@@ -178,16 +180,10 @@ für jeden Teilnehmer verwenden.
 Ich bin sehr an jedem Feedback interessiert das Sie haben könnten. 
 Sagen Sie mir, wie Sie nuke-ms finden! Wenn Sie mit nuke-ms Hilfe brauchen,
 Fehler gefunden haben, das Programm geändert haben und mir einen Patch schicken
-wollen oder wenn Sie mich einfach kontaktieren wollen, senden Sie ein E-Mail an
-die nuke-ms Mailing Liste.
-Die Adresse dieser Liste ist:
-    nuke-ms-users@lists.berlios.de
-    
-Um E-Mails an diese Liste senden zu können müssen Sie sich einschreiben (keine
-Sorge, es kostet nichts und Sie werden keinen Spam bekommen außer den, den Sie
-selbst schicken ;-) ). Sie können sich auf dieser Seite einschreiben:
-    https://lists.berlios.de/mailman/listinfo/nuke-ms-users
-
-Wenn Sie mir Irgendetwas zu sagen haben von dem Sie glauben dass es  nicht für
-die Öffentlichkeit geeignet ist, 
+wollen oder wenn Sie mich einfach kontaktieren wollen, ist es am besten, wenn
+Sie sich auf GitHub anmelden und mir eine Nachricht oder einen Pull Request
+schicken.
+Wenn Sie das nicht tun wollen oder wenn Sie mir Irgendetwas zu sagen haben von 
+dem Sie glauben dass es  nicht für die Öffentlichkeit geeignet ist, 
 mailen Sie mir an diese Addresse: fat.lobyte9@gmail.com
+

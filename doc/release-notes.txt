@@ -6,6 +6,10 @@ important changes to the project concerning both users and developers.
 
 ---- Application users
 
+  * The Project moved from BerliOS (http://developer.berlios.de) to GitHub
+    (https://github.com). A thank you goes to BerliOS and Fraunhofer FOKUS for
+    hosting the project in the beginning of its existance.
+
 ---- Library users
 
   * Starting from this release, the C++11 standard is mandatory,

@@ -106,7 +106,7 @@ Arch Linux:
 
 Prerequisite installation is pretty complicated on Windows. You might want to
 use the prepacked version of nuke-ms available here:
-ftp://ftp.berlios.de/pub/nuke-ms/alpha/nuke-ms-0.2-win32.zip
+https://github.com/downloads/fat-lobyte/nuke-ms/nuke-ms-0.2-win32.zip
 
 First of all you have to install CMake, this is the easiest step. Just download
 the Win32 installer package, double click on it and follow the usual
@@ -194,7 +194,7 @@ subdirectory of the directory you built nuke-ms in.
 At this point I want to emphasize that compilation on Windows is a tedious and
 annoying task. Please install a proper operating system or download the compiled
 win32 version of nuke-ms from this link:
-ftp://ftp.berlios.de/pub/nuke-ms/alpha/nuke-ms-0.2-win32.zip .
+https://github.com/downloads/fat-lobyte/nuke-ms/nuke-ms-0.2-win32.zip .
 
 These are a few links that could help you in case of troubles:
 
