@@ -2,7 +2,7 @@
 
 /*
  *   nuke-ms - Nuclear Messaging System
- *   Copyright (C) 2011  Alexander Korsunsky
+ *   Copyright (C) 2011, 2012  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -38,9 +38,8 @@ typedef int connection_id_t;
 
 class ConnectedClient : public std::enable_shared_from_this<ConnectedClient>
 {
-    connection_id_t _connection_id;
-    boost::asio::io_service& _io_service;
-    boost::asio::ip::tcp::socket&& _socket;
+    boost::asio::io_service& io_service;
+    boost::asio::ip::tcp::socket socket;
 
     // private constructor
     ConnectedClient(
@@ -49,45 +48,19 @@ class ConnectedClient : public std::enable_shared_from_this<ConnectedClient>
         boost::asio::io_service& io_service
     );
 
-    struct SendHandler
-    {
-        std::shared_ptr<ConnectedClient> _parent;
-        std::shared_ptr<byte_traits::byte_sequence> _buffer;
+    ConnectedClient(ConnectedClient&&) = default;
 
-        void operator() (
-            const boost::system::error_code& error,
-            std::size_t bytes_transferred
-        );
-    };
-
-    struct ReceiveHeaderHandler
-    {
-        std::shared_ptr<ConnectedClient> _parent;
-        std::array<byte_traits::byte_t, SegmentationLayerBase::header_length>
-            _buffer;
-
-        void operator() (
-            const boost::system::error_code& error,
-            std::size_t bytes_transferred
-        );
-    };
-
-    struct ReceiveBodyHandler
-    {
-        std::shared_ptr<ConnectedClient> _parent;
-        std::shared_ptr<const byte_traits::byte_sequence> _buffer;
-
-        void operator() (
-            const boost::system::error_code& error,
-            std::size_t bytes_transferred
-        );
-    };
-
+    // copy construction disallowed
+    ConnectedClient(const ConnectedClient&) = delete;
 
 public:
+    friend class SendHandler;
+    friend class ReceiveHeaderHandler;
+    friend class ReceiveBodyHandler;
+
     struct Signals
     {
-        typedef boost::signals2::signal<void (std::shared_ptr<NearUserMessage>)>
+        typedef boost::signals2::signal<void (std::shared_ptr<SerializedData>)>
             ReceivedMessage;
 
         typedef boost::signals2::signal<void ()>
@@ -97,30 +70,35 @@ public:
         connectReceivedMessage(const ReceivedMessage::slot_type& slot);
 
         void disconnectReceivedMessage()
-        { _receivedMessage.disconnect_all_slots(); }
+        { receivedMessage.disconnect_all_slots(); }
+
+        template<typename S> void disconnectReceivedMessage(const S& slot_func)
+        { receivedMessage.disconnect(slot_func); }
 
         boost::signals2::connection
         connectDisconnected(const Disconnected::slot_type& slot)
-        { return _disconnected.connect(slot); }
+        { return disconnected.connect(slot); }
 
-        void disconnectDisconnected() { _disconnected.disconnect_all_slots(); }
+        void disconnectDisconnected() { disconnected.disconnect_all_slots(); }
 
-    private:
         friend class SendHandler;
         friend class ReceiveHeaderHandler;
         friend class ReceiveBodyHandler;
 
-        ReceivedMessage _receivedMessage;
-        Disconnected _disconnected;
+    private:
+        ReceivedMessage receivedMessage;
+        Disconnected disconnected;
 
-        boost::signals2::connection _connectionReceivedMessage;
-    } _signals;
+        boost::signals2::connection connectionReceivedMessage;
+    } signals;
+
+    connection_id_t connection_id;
 
     static std::shared_ptr<ConnectedClient> makeInstance(
-        connection_id_t connection_id,
-        boost::asio::ip::tcp::socket&& socket,
-        boost::asio::io_service& io_service,
-        boost::function<void (std::shared_ptr<NearUserMessage>)> received_callback,
+        connection_id_t connection_id_,
+        boost::asio::ip::tcp::socket&& socket_,
+        boost::asio::io_service& io_service_,
+        boost::function<void (std::shared_ptr<SerializedData>)> received_callback,
         boost::function<void ()> error_callback
     );
 
@@ -130,7 +108,7 @@ public:
 
     void shutdown();
 
-    void sendMessage(NearUserMessage&& message);
+    void sendMessage(SerializedData&& message);
     void sendMessage(std::shared_ptr<const byte_traits::byte_sequence> buffer);
 };
 
@@ -139,3 +117,4 @@ public:
 
 
 #endif // ifndef CONNECTED_CLIENT_HPP_INCLUDED
+

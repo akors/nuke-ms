@@ -50,6 +50,7 @@ important changes to the project concerning both users and developers.
       - constexpr
       - uniform initialization syntax
       - long long
+      - Lambdas
 
   * A testing system was implemented using CTest and some preprocessor logic.
     Currently, only nuke-ms-common is tested (more or less thoroughly).

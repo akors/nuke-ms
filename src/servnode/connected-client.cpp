@@ -2,7 +2,7 @@
 
 /*
  *   nuke-ms - Nuclear Messaging System
- *   Copyright (C) 2011  Alexander Korsunsky
+ *   Copyright (C) 2011, 2012  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -17,17 +17,67 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <boost/asio/read.hpp>
+
 #include "servnode/connected-client.hpp"
 
-using namespace nuke_ms;
-using namespace servnode;
+using namespace nuke_ms::servnode;
+using namespace boost::asio::ip;
+
+namespace nuke_ms { namespace servnode {
+
+struct SendHandler
+{
+    std::shared_ptr<ConnectedClient> parent;
+    std::shared_ptr<byte_traits::byte_sequence> buffer;
+
+    void operator() (
+        const boost::system::error_code& error,
+        std::size_t bytes_transferred
+    );
+};
+
+struct ReceiveHeaderHandler
+{
+    std::shared_ptr<ConnectedClient> parent;
+    std::shared_ptr<byte_traits::byte_t> buffer;
+
+    ReceiveHeaderHandler(std::shared_ptr<ConnectedClient> parent_)
+        : parent(parent_),
+        buffer(make_shared_array<
+            byte_traits::byte_t, SegmentationLayerBase::header_length
+        >())
+    {}
+
+    ReceiveHeaderHandler(const ReceiveHeaderHandler& other) = default;
+
+    ReceiveHeaderHandler(ReceiveHeaderHandler&& other) = default;
+
+    void operator() (
+        const boost::system::error_code& error,
+        std::size_t bytes_transferred
+    );
+};
+
+struct ReceiveBodyHandler
+{
+    std::shared_ptr<ConnectedClient> parent;
+    std::shared_ptr<const byte_traits::byte_sequence> buffer;
+
+    void operator() (
+        const boost::system::error_code& error,
+        std::size_t bytes_transferred
+    );
+};
+
+}}
 
 ConnectedClient::ConnectedClient(
-    connection_id_t connection_id,
-    boost::asio::ip::tcp::socket&& socket,
-    boost::asio::io_service& io_service
-) : _connection_id(connection_id), _io_service(io_service),
-    _socket(std::move(socket))
+    connection_id_t connection_id_,
+    boost::asio::ip::tcp::socket&& socket_,
+    boost::asio::io_service& io_service_
+) : connection_id(connection_id_), io_service(io_service_),
+    socket(std::move(socket_))
 { }
 
 
@@ -36,31 +86,120 @@ boost::signals2::connection ConnectedClient::Signals::connectReceivedMessage(
 )
 {
     // disconnect old connection
-    _connectionReceivedMessage.disconnect();
+    connectionReceivedMessage.disconnect();
 
     // connect new one
-    _connectionReceivedMessage = _receivedMessage.connect(slot);
-    return _connectionReceivedMessage;
+    connectionReceivedMessage = receivedMessage.connect(slot);
+    return connectionReceivedMessage;
 }
 
 std::shared_ptr<ConnectedClient> ConnectedClient::makeInstance(
     connection_id_t connection_id,
-    boost::asio::ip::tcp::socket&& socket,
+    tcp::socket&& socket,
     boost::asio::io_service& io_service,
-    boost::function<void (std::shared_ptr<NearUserMessage>)> received_callback,
+    boost::function<void (std::shared_ptr<SerializedData>)> received_callback,
     boost::function<void ()> error_callback
 )
 {
-    std::shared_ptr<ConnectedClient> client(new ConnectedClient(
-        connection_id,
-        std::move(socket),
-        io_service
-    ));
+    std::shared_ptr<ConnectedClient> client(
+        new ConnectedClient(connection_id, std::move(socket), io_service)
+    );
 
-    client->_signals.connectReceivedMessage(received_callback);
-    client->_signals.connectDisconnected(error_callback);
+    client->signals.connectReceivedMessage(received_callback);
+    client->signals.connectDisconnected(error_callback);
 
     client->startReceive();
 
     return client;
 }
+
+
+ConnectedClient::~ConnectedClient()
+{
+    // uhm, what exactly should we do here?
+}
+
+void ConnectedClient::startReceive()
+{
+    ReceiveHeaderHandler handler{shared_from_this()};
+
+    async_read(
+        socket,
+        boost::asio::buffer(
+            handler.buffer.get(),
+            SegmentationLayerBase::header_length),
+        std::move(handler)
+    );
+}
+
+void ConnectedClient::shutdown()
+{
+    // initiate socket shutdown
+    boost::system::error_code dontcare;
+    socket.shutdown(tcp::socket::shutdown_both, dontcare);
+}
+
+void ReceiveHeaderHandler::operator() (
+    const boost::system::error_code& error,
+    std::size_t bytes_transferred
+)
+{
+    // if we had an error reading, shutdown and send disconnected event
+    if (error)
+    {
+        parent->shutdown();
+        parent->signals.disconnected();
+    }
+
+    try
+    {
+        // decode and verify the header of the message
+        SegmentationLayerBase::HeaderType header_data
+            = SegmentationLayerBase::decodeHeader(buffer.get());
+
+/// @todo FIXME Magic number, set to something proper or make configurable
+constexpr byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
+
+        if (header_data.packetsize > MAX_PACKETSIZE)
+            throw MsgLayerError("Oversized packet.");
+
+        auto body_buf = std::make_shared<byte_traits::byte_sequence>(
+            header_data.packetsize - SegmentationLayerBase::header_length
+        );
+
+        // start an asynchronous receive for the body
+        async_read(
+            parent->socket,
+            boost::asio::buffer(*body_buf),
+            ReceiveBodyHandler{parent, body_buf}
+        );
+    }
+    // on failure, shutdown and send disconnected event
+    catch (const MsgLayerError& e)
+    {
+        parent->shutdown();
+        parent->signals.disconnected();
+    }
+}
+
+void ReceiveBodyHandler::operator() (
+    const boost::system::error_code& error,
+    std::size_t bytes_transferred
+)
+{
+    // if we had an error reading, shutdown and send disconnected event
+    if (error)
+    {
+        parent->shutdown();
+        parent->signals.disconnected();
+    }
+
+    // otherwise, construct message and send signal
+    parent->signals.receivedMessage(
+        std::make_shared<SerializedData>(buffer, buffer->begin(),buffer->size())
+    );
+
+    // restart receive operation
+    parent->startReceive();
+}
+

@@ -2,7 +2,7 @@
 
 /*
  *   nuke-ms - Nuclear Messaging System
- *   Copyright (C) 2008  Alexander Korsunsky
+ *   Copyright (C) 2008 - 2012  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -44,6 +44,7 @@
 #ifndef BYTES_HPP_INCLUDED
 #define BYTES_HPP_INCLUDED
 
+#include <memory>
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -189,6 +190,21 @@ ByteSequenceIterator readbytes(
 /// @endcond
 
 
+/** Create an std::shared_ptr for an array.
+* @tparam T Type of the array element
+* @tparam N Size of the array
+*
+* This creates a shared pointer to an array. It behaves like a normal
+* shared_ptr, with the exception that the array is correctly deleted with 
+* delete[].
+*
+* @return The shared array
+*/
+template <typename T, std::size_t N> inline
+std::shared_ptr<T> make_shared_array()
+{
+    return std::shared_ptr<T>(new T[N], [](T* p){ delete[] p;} );
+}
 
 
 #ifdef NUKE_MS_BIG_ENDIAN
