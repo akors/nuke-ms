@@ -15,3 +15,7 @@ include_directories(${nuke-ms_SOURCE_DIR}/include)
 add_executable(test_connected-client test_connected-client.cpp)
 target_link_libraries(test_connected-client nuke-ms-servnode)
 add_test(${COMPONENT}/connected-client test_connected-client)
+
+# set timeout for tests using networking
+set_tests_properties(${COMPONENT}/connected-client PROPERTIES TIMEOUT 3)
+
