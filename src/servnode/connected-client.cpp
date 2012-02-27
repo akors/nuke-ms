@@ -97,8 +97,10 @@ std::shared_ptr<ConnectedClient> ConnectedClient::makeInstance(
     connection_id_t connection_id,
     tcp::socket&& socket,
     boost::asio::io_service& io_service,
-    boost::function<void (std::shared_ptr<SerializedData>)> received_callback,
-    boost::function<void ()> error_callback
+        boost::function<void (std::shared_ptr<ConnectedClient>,
+                              std::shared_ptr<SerializedData>)
+            > received_callback,
+        boost::function<void (std::shared_ptr<ConnectedClient>)> error_callback
 )
 {
     std::shared_ptr<ConnectedClient> client(
@@ -148,7 +150,7 @@ void ReceiveHeaderHandler::operator() (
     if (error)
     {
         parent->shutdown();
-        parent->signals.disconnected();
+        parent->signals.disconnected(parent);
     }
 
     try
@@ -178,7 +180,7 @@ constexpr byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
     catch (const MsgLayerError& e)
     {
         parent->shutdown();
-        parent->signals.disconnected();
+        parent->signals.disconnected(parent);
     }
 }
 
@@ -191,11 +193,12 @@ void ReceiveBodyHandler::operator() (
     if (error)
     {
         parent->shutdown();
-        parent->signals.disconnected();
+        parent->signals.disconnected(parent);
     }
 
     // otherwise, construct message and send signal
     parent->signals.receivedMessage(
+        parent,
         std::make_shared<SerializedData>(buffer, buffer->begin(),buffer->size())
     );
 

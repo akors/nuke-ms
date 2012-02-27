@@ -60,10 +60,13 @@ public:
 
     struct Signals
     {
-        typedef boost::signals2::signal<void (std::shared_ptr<SerializedData>)>
-            ReceivedMessage;
+        typedef boost::signals2::signal<
+            void (
+                std::shared_ptr<ConnectedClient>,
+                std::shared_ptr<SerializedData>
+            )> ReceivedMessage;
 
-        typedef boost::signals2::signal<void ()>
+        typedef boost::signals2::signal<void (std::shared_ptr<ConnectedClient>)>
             Disconnected;
 
         boost::signals2::connection
@@ -98,8 +101,9 @@ public:
         connection_id_t connection_id_,
         boost::asio::ip::tcp::socket&& socket_,
         boost::asio::io_service& io_service_,
-        boost::function<void (std::shared_ptr<SerializedData>)> received_callback,
-        boost::function<void ()> error_callback
+        boost::function<void (std::shared_ptr<ConnectedClient>,
+                        std::shared_ptr<SerializedData>)> received_callback,
+        boost::function<void (std::shared_ptr<ConnectedClient>)> error_callback
     );
 
     ~ConnectedClient();
