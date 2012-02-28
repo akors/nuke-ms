@@ -36,7 +36,9 @@ namespace servnode
 
 typedef int connection_id_t;
 
-class ConnectedClient : public std::enable_shared_from_this<ConnectedClient>
+
+class ConnectedClient
+    : public std::enable_shared_from_this<ConnectedClient>
 {
     boost::asio::io_service& io_service;
     boost::asio::ip::tcp::socket socket;
@@ -53,11 +55,12 @@ class ConnectedClient : public std::enable_shared_from_this<ConnectedClient>
     // copy construction disallowed
     ConnectedClient(const ConnectedClient&) = delete;
 
-public:
+    void async_write(std::shared_ptr<byte_traits::byte_sequence> data);
+
     friend class SendHandler;
     friend class ReceiveHeaderHandler;
     friend class ReceiveBodyHandler;
-
+public:
     struct Signals
     {
         typedef boost::signals2::signal<
@@ -97,28 +100,47 @@ public:
 
     connection_id_t connection_id;
 
+    ~ConnectedClient();
+
     static std::shared_ptr<ConnectedClient> makeInstance(
         connection_id_t connection_id_,
         boost::asio::ip::tcp::socket&& socket_,
         boost::asio::io_service& io_service_,
-        boost::function<void (std::shared_ptr<ConnectedClient>,
-                        std::shared_ptr<SerializedData>)> received_callback,
+        boost::function<void (
+                std::shared_ptr<ConnectedClient>, std::shared_ptr<SerializedData>)
+            > received_callback,
         boost::function<void (std::shared_ptr<ConnectedClient>)> error_callback
     );
-
-    ~ConnectedClient();
 
     void startReceive();
 
     void shutdown();
 
-    void sendMessage(SerializedData&& message);
-    void sendMessage(std::shared_ptr<const byte_traits::byte_sequence> buffer);
+    template <typename InnerLayer>
+    void sendPacket(const SegmentationLayer<InnerLayer>& packet);
+
+    template <typename InnerLayer>
+    void sendPacket(SegmentationLayer<InnerLayer>&& packet)
+    {
+        // create own copy and redirect
+        SegmentationLayer<InnerLayer> data{std::move(packet)};
+        sendPacket(data);
+    }
 };
+
+template <typename InnerLayer>
+void ConnectedClient::sendPacket(const SegmentationLayer<InnerLayer>& packet)
+{
+    // create buffer, fill it with the serialized packet
+    auto data = std::make_shared<byte_traits::byte_sequence>(packet.size());
+    packet.fillSerialized(data->begin());
+
+    this->async_write(data);
+}
+
 
 } // namespace servnode
 } // namespace nuke_ms
 
 
 #endif // ifndef CONNECTED_CLIENT_HPP_INCLUDED
-

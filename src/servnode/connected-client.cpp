@@ -17,14 +17,18 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <boost/asio/read.hpp>
-
 #include "servnode/connected-client.hpp"
 
+#include <boost/asio/read.hpp>
+#include <boost/asio/write.hpp>
+
+
+using namespace nuke_ms;
 using namespace nuke_ms::servnode;
 using namespace boost::asio::ip;
 
 namespace nuke_ms { namespace servnode {
+
 
 struct SendHandler
 {
@@ -72,6 +76,7 @@ struct ReceiveBodyHandler
 
 }}
 
+
 ConnectedClient::ConnectedClient(
     connection_id_t connection_id_,
     boost::asio::ip::tcp::socket&& socket_,
@@ -79,6 +84,17 @@ ConnectedClient::ConnectedClient(
 ) : connection_id(connection_id_), io_service(io_service_),
     socket(std::move(socket_))
 { }
+
+void
+ConnectedClient::async_write(std::shared_ptr<byte_traits::byte_sequence> data)
+{
+    boost::asio::async_write(
+        socket,
+        boost::asio::buffer(*data),
+        SendHandler{shared_from_this(), data}
+    );
+}
+
 
 
 boost::signals2::connection ConnectedClient::Signals::connectReceivedMessage(
@@ -97,10 +113,10 @@ std::shared_ptr<ConnectedClient> ConnectedClient::makeInstance(
     connection_id_t connection_id,
     tcp::socket&& socket,
     boost::asio::io_service& io_service,
-        boost::function<void (std::shared_ptr<ConnectedClient>,
-                              std::shared_ptr<SerializedData>)
-            > received_callback,
-        boost::function<void (std::shared_ptr<ConnectedClient>)> error_callback
+    boost::function<
+        void (std::shared_ptr<ConnectedClient>, std::shared_ptr<SerializedData>)
+    > received_callback,
+    boost::function<void (std::shared_ptr<ConnectedClient>)> error_callback
 )
 {
     std::shared_ptr<ConnectedClient> client(
@@ -139,6 +155,19 @@ void ConnectedClient::shutdown()
     // initiate socket shutdown
     boost::system::error_code dontcare;
     socket.shutdown(tcp::socket::shutdown_both, dontcare);
+}
+
+void SendHandler::operator() (
+    const boost::system::error_code& error,
+    std::size_t bytes_transferred
+)
+{
+    // on error, disconnect parent
+    if (error || bytes_transferred != buffer->size())
+    {
+        parent->shutdown();
+        parent->signals.disconnected(parent);
+    }
 }
 
 void ReceiveHeaderHandler::operator() (
@@ -205,4 +234,3 @@ void ReceiveBodyHandler::operator() (
     // restart receive operation
     parent->startReceive();
 }
-
