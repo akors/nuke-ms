@@ -42,6 +42,23 @@ template SegmentationLayerBase::HeaderType SegmentationLayerBase::decodeHeader(
 
 ////////////////////////////// StringwrapLayer /////////////////////////////////
 
+
+SerializedData& SerializedData::operator= (const SerializedData& other)
+{
+    if (&other == this) return *this;
+
+    // create and copy memory block
+    auto data = std::make_shared<byte_traits::byte_sequence>(_datasize);
+    std::copy(other._begin_it, other._begin_it+other._datasize, data->begin());
+
+    // assign ownership and iterator
+    _memblock = data;
+    _begin_it = data->begin();
+    _datasize = other._datasize;
+
+    return *this;
+}
+
 StringwrapLayer::StringwrapLayer(const SerializedData& msg)
 {
     std::size_t datasize = msg.size();

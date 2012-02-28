@@ -108,25 +108,12 @@ struct NearUserMessage : BasicMessageLayer<NearUserMessage>
     static constexpr std::size_t header_length =
         1+ sizeof(msg_id_t) + UniqueUserID::id_length + UniqueUserID::id_length;
 
-    /** ID of the message.
-     * This object can be used to identify the message uniquely. This is
-     * necessary for example when processing send reports
-    */
-    msg_id_t _msg_id;
 
-    /** Who this message is intended to.
-     * Set this field to specify a recipient of the message
-    */
-    UniqueUserID _recipient;
+    explicit NearUserMessage(const NearUserMessage&) = default;
+    NearUserMessage& operator= (const NearUserMessage&) = default;
 
-    /** Who sent this message
-     * This field will be set to the client that sent the message.
-     * It is not neccessary to specify this field when sending a message,
-     * because it will be set by the clientnode implicitly.
-    */
-    UniqueUserID _sender;
-
-    StringwrapLayer _stringwrap;
+    NearUserMessage(NearUserMessage&&) = default;
+    NearUserMessage& operator= (NearUserMessage&&) = default;
 
     /** Construct from a stringwraplayer message
      * @param stringwrap The message to be sent
@@ -160,6 +147,7 @@ struct NearUserMessage : BasicMessageLayer<NearUserMessage>
             _msg_id(msg_id)
     { }
 
+
     /** Construct from serialized Data
      *
      * @param data Serialized Data layer
@@ -178,6 +166,27 @@ struct NearUserMessage : BasicMessageLayer<NearUserMessage>
     // implementing base class version
     template <typename ByteOutputIterator>
     ByteOutputIterator fillSerialized(ByteOutputIterator it) const;
+
+
+    /** ID of the message.
+     * This object can be used to identify the message uniquely. This is
+     * necessary for example when processing send reports
+    */
+    msg_id_t _msg_id;
+
+    /** Who this message is intended to.
+     * Set this field to specify a recipient of the message
+    */
+    UniqueUserID _recipient;
+
+    /** Who sent this message
+     * This field will be set to the client that sent the message.
+     * It is not neccessary to specify this field when sending a message,
+     * because it will be set by the clientnode implicitly.
+    */
+    UniqueUserID _sender;
+
+    StringwrapLayer _stringwrap;
 };
 
 

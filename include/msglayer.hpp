@@ -235,8 +235,23 @@ class SerializedData : public BasicMessageLayer<SerializedData>
     std::size_t _datasize; /**< Size of the data */
 
 public:
-
     typedef byte_traits::byte_sequence::const_iterator const_data_it;
+
+    // explicit copy constructor, data will actually be copied!
+    // beware: if there is any data before the _begin_it, it will be dropped!
+    explicit SerializedData(const SerializedData& other)
+    {
+        *this = other; // use assignment operator
+    }
+
+    // copy assignment operator, data will actually be copied!
+    // beware: if there is any data before the _begin_it, it will be dropped!
+    SerializedData& operator= (const SerializedData& other);
+
+
+    SerializedData(SerializedData&& other) = default;
+
+    SerializedData& operator= (SerializedData&&) = default;
 
     /** Constructor.
     * Constructs a new object and passes memory ownership, data iterator and
@@ -258,17 +273,6 @@ public:
         : _memblock(memblock), _begin_it(begin_it), _datasize(datasize)
     {}
 
-    SerializedData(const SerializedData&) = default;
-
-    SerializedData(SerializedData&& other)
-        : _memblock(std::move(other._memblock)),
-        _begin_it(other._begin_it), _datasize(other._datasize)
-    {
-        // invalidate iterator of rvalue object by assigning a default
-        // constructed one
-        other._begin_it = const_data_it{};
-        other._datasize = 0;
-    }
 
     // overriding base class version
     std::size_t size() const
@@ -354,22 +358,19 @@ struct SegmentationLayer
 {
     InnerLayer _inner_layer;
 
-    /** Constructor.
-    * Construct a SegmentationLayer message from an upper layer, say a message
-    * coming from the application.
-    *
-    * @note To pass an upper layer, you have to static_cast the pointer to the
-    * message to the base class Pointer, BasicMessageLayer::ptr_t. Otherwise
-    * the overload with SegmentationLayer(BasicMessageLayer::dataptr_t)
-    * will not resolve. This is because overloads of functions with different
-    * instantiations of std::shared_ptr<> do not resolve with base class
-    * pointers.
-    *
-    * @param _upper_layer The message of the upper layer you want to send.
-    */
-    SegmentationLayer(const InnerLayer& upper_layer)
-        : _inner_layer(upper_layer)
-    { }
+    explicit SegmentationLayer(const SegmentationLayer&) = default;
+    SegmentationLayer& operator= (const SegmentationLayer&) = default;
+
+    SegmentationLayer(SegmentationLayer&& other)
+        : _inner_layer(std::move(other._inner_layer))
+    {
+        // workaround for gcc bug
+        // http://gcc.gnu.org/bugzilla/show_bug.cgi?id=51629
+        // This should be "= default"
+    }
+
+    SegmentationLayer& operator= (SegmentationLayer&&) = default;
+
 
     SegmentationLayer(InnerLayer&& upper_layer)
         : _inner_layer(std::move(upper_layer))
@@ -382,7 +383,6 @@ struct SegmentationLayer
     // overriding base class version
     template <typename ByteOutputIterator>
     ByteOutputIterator fillSerialized(ByteOutputIterator it) const;
-
 };
 
 
@@ -394,24 +394,24 @@ struct SegmentationLayer
 */
 struct StringwrapLayer : public BasicMessageLayer<StringwrapLayer>
 {
-
     /** The actual text message */
     byte_traits::msg_string _message_string;
 
-
-    /** Default Constructor. */
+    /** Default constructor. */
     StringwrapLayer() = default;
 
     /** Copy constructor */
-    StringwrapLayer(const StringwrapLayer& msg) = default;
+    explicit StringwrapLayer(const StringwrapLayer& msg) = default;
+
+    StringwrapLayer& operator= (const StringwrapLayer& msg) = default;
 
     /** Move constructor.
      * Create a StringwrapLayer message from a temporary StringwrapLayer object
      * @param other The other StringwrapLayer object you want to steal from
     */
-    StringwrapLayer(StringwrapLayer&& other)
-        : _message_string(std::move(other._message_string))
-    {}
+    StringwrapLayer(StringwrapLayer&& other) = default;
+
+    StringwrapLayer& operator= (StringwrapLayer&& msg) = default;
 
     /** Constructor.
     * Create a StringwrapLayer message from an byte_traits::msg_string.
