@@ -2,24 +2,6 @@
 
 /*
  *   nuke-ms - Nuclear Messaging System
- *   Copyright (C) 2012  Alexander Korsunsky
- *
- *   This program is free software: you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation, either version 3 of the License.
- *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-// test_connected-client.cpp
-
-/*
- *   nuke-ms - Nuclear Messaging System
  *   Copyright (C) 2011  Alexander Korsunsky
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -50,7 +32,11 @@ using boost::asio::ip::tcp;
 
 DECLARE_TEST("class ConnectedClient")
 
-// Test against the identity of this data
+
+static const char* OUTSTRING = "Wazzzuuppp???";
+static const char* INSTRING = "Wazzzuuppp!!!";
+
+static std::string data_out_received;
 static std::string data_in_received;
 
 void receiveCallback(
@@ -58,10 +44,15 @@ void receiveCallback(
     std::shared_ptr<SerializedData> data
 )
 {
-    data_in_received.assign(NearUserMessage(*data)._stringwrap._message_string);
+    data_out_received.assign(NearUserMessage(*data)._stringwrap._message_string);
 
-    std::cout<<"server: Data received: \""<<data_in_received<<
-        "\". Shutting down client.\n";
+    std::cout<<"server: Data received: \""<<data_out_received
+        <<"\". Sending reply.\n";
+
+    client->sendPacket(
+        SegmentationLayer<StringwrapLayer>{StringwrapLayer{INSTRING}}
+    );
+
     client->shutdown();
 }
 
@@ -106,7 +97,17 @@ struct MockServer {
         io_service.run();
     }
 
-// private:
+    void shutdown()
+    {
+        if (client_container)
+            client_container->shutdown();
+    }
+
+    ~MockServer()
+    {
+        shutdown();
+    }
+private:
     std::shared_ptr<servnode::ConnectedClient> client_container;
     tcp::acceptor acceptor_v4;
 };
@@ -155,18 +156,49 @@ int main()
     );
 
     TEST_ASSERT(!connect_error);
-    if (!connect_error)
-        std::cout<<"client: Connection succeeded.\n";
-    else
+    if (connect_error)
         return 1;
 
+    std::cout<<"client: Connection succeeded.\n";
     con_socket.set_option(boost::asio::socket_base::linger(true, 2000));
-    sendMessage(con_socket, "Wazzzuuppp???");
 
+    // send message to the "server"
+    sendMessage(con_socket, OUTSTRING);
 
+    // read reply header
+    byte_traits::byte_t headerbuf[SegmentationLayerBase::header_length];
+    boost::asio::read(
+        con_socket,
+        boost::asio::buffer(headerbuf, SegmentationLayerBase::header_length)
+    );
+
+	byte_traits::uint2b_t packetsize;
+	readbytes(&packetsize, headerbuf+1);
+    packetsize = to_hostbo(packetsize);
+
+    TEST_ASSERT(
+        packetsize == SegmentationLayerBase::header_length + strlen(INSTRING)
+    );
+
+    // read reply body
+    auto bodybuf = std::make_shared<byte_traits::byte_sequence>(
+        packetsize-SegmentationLayerBase::header_length
+    );
+    boost::asio::read(con_socket, boost::asio::buffer(*bodybuf));
+
+    StringwrapLayer in_data(
+        SerializedData{bodybuf, bodybuf->begin(), bodybuf->size()}
+    );
+
+    std::cout<<"Reply received: \""<<in_data._message_string<<"\".\n";
+
+    // shut down servers
+    server.shutdown();
     server_thread.join();
 
-    TEST_ASSERT(data_in_received == "Wazzzuuppp???");
+    // verify data integrity
+    TEST_ASSERT(in_data._message_string == INSTRING);
+    TEST_ASSERT(data_out_received == OUTSTRING);
 
     return CONCLUDE_TEST();
 }
