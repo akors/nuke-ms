@@ -195,7 +195,7 @@ ByteSequenceIterator readbytes(
 * @tparam N Size of the array
 *
 * This creates a shared pointer to an array. It behaves like a normal
-* shared_ptr, with the exception that the array is correctly deleted with 
+* shared_ptr, with the exception that the array is correctly deleted with
 * delete[].
 *
 * @return The shared array
@@ -278,6 +278,155 @@ inline T to_hostbo(T x) { return x; }
 
 #endif
 
+namespace packedstruct_detail {
+
+template <
+    typename VarType, typename NameTag,
+    typename... Rest
+>
+struct PackedStructMember
+{
+    typedef VarType vartype;
+    typedef NameTag nametag;
+
+    typedef PackedStructMember<Rest...> next;
+    static constexpr std::size_t list_size = sizeof(vartype) + next::list_size;
+
+    static vartype& access(void *member_ptr)
+    {
+        return *static_cast<vartype*>(member_ptr);
+    }
+#ifdef PACKEDSTRUCT_NONTRIVIAL
+    static void construct(void* member_ptr)
+    {
+        // use placement new to initialize
+        new (member_ptr) vartype{};
+
+        // defer to next element initialization
+        next::construct(static_cast<vartype*>(member_ptr) + 1);
+    }
+
+    /*
+    template <typename ArgumentType, typename... ArgtypeRest>
+    static void initialize_into(bytetype* base, ArgumentType arg, ArgtypeRest... rest)
+    {
+        // use placement new to initialize
+        new (reinterpret_cast<vartype*>(base+offset)) vartype{arg};
+
+        // defer to next element initialization
+        next::initialize_into(base, rest...);
+    }
+    */
+
+    static void destruct(void* member_ptr)
+    {
+        // call destructor explicitly
+        static_cast<vartype*>(member_ptr)->~vartype();
+
+        // call next node with pointer after the current element
+        next::destruct(static_cast<vartype*>(member_ptr) + 1);
+    }
+#endif
+};
+
+template <typename VarType, typename NameTag>
+struct PackedStructMember<VarType, NameTag>
+{
+    typedef VarType vartype;
+    typedef NameTag nametag;
+
+    // we are at the last member, the size of the list is just the size of our
+    // variable type
+    static constexpr std::size_t list_size = sizeof(vartype);
+
+    static vartype& access(void *member_ptr)
+    {
+        return *static_cast<vartype*>(member_ptr);
+    }
+#ifdef PACKEDSTRUCT_NONTRIVIAL
+    static void construct(void* member_ptr)
+    {
+        // use placement new to initialize
+        new (member_ptr) vartype{};
+    }
+/*
+    template <typename ArgumentType>
+    static void initialize_into(bytetype* base, ArgumentType arg)
+    {
+        // use placement new to initialize
+        new (reinterpret_cast<vartype*>(base+offset)) vartype{arg};
+    }
+*/
+    static void destruct(void* member_ptr)
+    {
+        // call destructor explicitly
+        static_cast<vartype*>(member_ptr)->~vartype();
+    }
+#endif
+};
+
+// Search for a member by name tag.
+template <typename MemberList, typename NameTag>
+struct FindMemberByNameTag
+{
+    // this means we don't have it, ask the next one
+    typedef typename FindMemberByNameTag<typename MemberList::next, NameTag>::member
+        member;
+};
+
+// specialization, if the searched name tag is our name tag
+template <typename MemberList>
+struct FindMemberByNameTag<MemberList, typename MemberList::nametag>
+{
+    typedef MemberList member;
+};
+
+
+
+template <typename... Members>
+class PackedStruct {
+    static_assert(sizeof...(Members) % 2 == 0,
+        "Members must be added in pairs of Variable-Type / Name-Tag"
+    );
+
+    typedef PackedStructMember<Members...> MemberList;
+
+    char data[MemberList::list_size];
+
+public:
+#ifdef PACKEDSTRUCT_NONTRIVIAL
+    PackedStruct()
+    {
+        MemberList::construct(data);
+    }
+
+    template <typename... ArgTypes>
+    PackedStruct(ArgTypes... args)
+    {
+        static_assert(
+            sizeof...(ArgTypes) == sizeof...(Members) / 2,
+            "Number of constructor arguments does not match number of struct members."
+        );
+        //MemberList::initialize_into(data, args...);
+    }
+
+
+    ~PackedStruct()
+    {
+        MemberList::destruct(data);
+    }
+#endif
+
+    template <typename NameTag>
+    typename FindMemberByNameTag<MemberList, NameTag>::member::vartype& get()
+    {
+        return FindMemberByNameTag<MemberList, NameTag>::member::access(data);
+    }
+};
+
+} // namespace packedstruct_detail
+
+using packedstruct_detail::PackedStruct;
 
 /**@}*/ // addtogroup common
 
