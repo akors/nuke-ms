@@ -1,15 +1,13 @@
-
-
-Casts:
+A) Casts
 Only C++ style casts shall be used.
 The appropriate cast shall be chosen, for example if you try to cast a value to
 something it actually isn't, use the reinterpret_cast<>. If you are dealing with
 virtual classes and you are in danger of casting the base class to the wrong
 type, use the dynamic_cast<>.
-const_cast<>'s shall not be used at all, see below.
+const_cast<>'s must not be used at all, see below.
 
 
-const- ness:
+B) const- ness:
 Restrict the users of your classes or functions and yourself as far as possible:
 if the current scope does not actually alter a data element, this element shall
 be declared const.
@@ -18,7 +16,7 @@ non- mutable member variables shall be declared const.
 const_cast<>'s are not allowed, except for extraordinary circumstances.
 
 
-static- vs dynamic polymorphism
+C) static- vs dynamic polymorphism
 Limit the use of virtual functions and classes to a minimum. If you need
 polymorphism, most of the time static polymorphism (curiously recurring template
 pattern: http://en.wikipedia.org/wiki/Curiously_Recurring_Template_Pattern) is
@@ -28,7 +26,7 @@ Think twice, before you declare a function as virtual, remember the overhead it
 costs (virtual table, looking up the right function on each call...).
 
 
-Destructors:
+D) Destructors
 Destructors are your life insurance. Destructors are called when the object goes
 out of scope or when an exception is raised. That means that destructors are
 actually really critical parts of code.
@@ -46,34 +44,36 @@ Also, NEVER EVER throw an exception from the destructor (watch out for function
 calls that might throw them).
 
 
-Error handling:
-Errors are propagated through the program by means of exceptions, return values
-or status parameters. Errors (actions that failed) are reported by the entity
+E) Error handling
+
+i) Errors are propagated through the program by means of exceptions, return values
+or status parameters.
+Errors (actions that failed) are reported by the entity
 that was supposed to do that action (function) to the entity that requested this
 action (caller).
 
-No function should declare a throw specifier. They are mostly useless (no
-compile-time checking), include some overhead, make debugging harder (call
-terminate instead of dumping a stacktrace) and a better place to document what
-an exception throws is the source code documentation.
-
+ii) All exceptions shall derive (directly or indirectly) from std::exception.
 Errors that can be anticipated, for example a failing connect() shall be or be
 derived from std::runtime_error.
 The caller shall catch this exception appropriately, unless the only
 reaction to this error would be to throw another exception.
 
-Errors that can only be caused by programming erros shall be or be derived from
+Errors that can only be caused by programming erros shall be derived from
 std::logic_error.
-These error shall not be declared in the function header and
-must not be caught by callers, but must only be caught by top- level functions
-(such as main(), or thread entry points).
+These error must not be caught by callers, but must only be caught by top- level
+functions (such as main(), or thread entry points).
+
+iii) No function should declare a throw specifier. They are mostly useless (no
+compile-time checking), include some overhead, make debugging harder (call
+terminate instead of dumping a stacktrace) and a better place to document what
+an exception throws is the source code documentation.
 
 
-Compiler warnings:
+F) Compiler warnings
 Don't ignore compiler warnings. Compiler warnings may be a hint to a real issue,
 and a warning on one compiler might become an error on another.
 Don't just disable the warning or don't just apply a "pseudo-fix" which you
-found by googling for 3 minutes. Try to understand the issue; if you don't, 
-ask on the mailing list.
-Some warnings should really be silenced, they should however be discussed on
-the mailing list. Use your brain!
+found by googling for 3 minutes. Try to understand the issue; if you don't,
+ask the authors.
+Some warnings should really be silenced, they should however be discussed with
+the authors. Use your brain!
