@@ -1,8 +1,7 @@
 #include "byteprinter.hpp"
 
-std::string escapechar(char _ch)
+std::string escapechar(char ch)
 {
-    unsigned char ch = _ch;
     std::stringstream retstring;
 
     switch(ch)

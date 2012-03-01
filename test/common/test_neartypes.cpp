@@ -35,10 +35,10 @@ int main()
     {
 
     // check constructors for "move-ness", assert all messages have equal string value
-    StringwrapLayer sw(message_string);
-    NearUserMessage num1(message_string);
-    NearUserMessage num2((StringwrapLayer(message_string)));
-    NearUserMessage num3(sw);
+    StringwrapLayer sw{message_string};
+    NearUserMessage num1{message_string};
+    NearUserMessage num2{StringwrapLayer{message_string}};
+    NearUserMessage num3{sw};
 
     TEST_ASSERT(
         num1._stringwrap._message_string == num2._stringwrap._message_string
@@ -52,28 +52,28 @@ int main()
     UniqueUserID recipient(reinterpret_cast<byte_traits::byte_t*>(&t));
     UniqueUserID sender(reinterpret_cast<byte_traits::byte_t*>(&f));
 
-    NearUserMessage down(
+    NearUserMessage down{
         message_string,
         recipient,
         sender,
-        NearUserMessage::msg_id_t(0xF0)
-    );
+        NearUserMessage::msg_id_t{0xF0}
+    };
 
     std::vector<byte_traits::byte_t> bytes(down.size());
     down.fillSerialized(bytes.begin());
 
 
-    SerializedData serdat({}, bytes.begin(), bytes.size());
+    SerializedData serdat{{}, bytes.begin(), bytes.size()};
 
     bool no_exception_thrown = false;
     try
     {
-        NearUserMessage up(serdat);
+        NearUserMessage up{serdat};
 
         TEST_ASSERT(up._stringwrap._message_string == message_string);
         TEST_ASSERT(up._recipient == recipient);
         TEST_ASSERT(up._sender == sender);
-        TEST_ASSERT(up._msg_id == NearUserMessage::msg_id_t(0xF0));
+        TEST_ASSERT(up._msg_id == NearUserMessage::msg_id_t{0xF0});
 
         std::cout<<"Message string:\n"<<
             up._stringwrap._message_string<<", "<<

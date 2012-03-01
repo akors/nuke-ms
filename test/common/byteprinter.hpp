@@ -13,7 +13,7 @@ struct BytePrinter
     ByteSequenceIterator begin, end;
 
     BytePrinter(ByteSequenceIterator _begin, ByteSequenceIterator _end)
-        : begin(_begin), end(_end)
+        : begin{_begin}, end{_end}
     {}
 };
 
@@ -28,9 +28,7 @@ template <typename ByteSequenceIterator>
 std::ostream& operator << (std::ostream& os,
     const BytePrinter<ByteSequenceIterator>& p)
 {
-    ByteSequenceIterator begin = p.begin;
-
-    for (; begin < p.end; ++begin)
+    for (auto begin = p.begin; begin < p.end; ++begin)
     {
         if (isprint(*begin))
             os<<static_cast<char>(*begin);
@@ -48,7 +46,7 @@ struct HexPrinter
     ByteSequenceIterator begin, end;
 
     HexPrinter(ByteSequenceIterator _begin, ByteSequenceIterator _end)
-        : begin(_begin), end(_end)
+        : begin{_begin}, end{_end}
     {}
 };
 
@@ -56,7 +54,7 @@ template <typename ByteSequenceIterator>
 HexPrinter<ByteSequenceIterator>
 hexprint(ByteSequenceIterator begin, ByteSequenceIterator end)
 {
-    return HexPrinter<ByteSequenceIterator>(begin, end);
+    return HexPrinter<ByteSequenceIterator>{begin, end};
 }
 
 template <typename ByteSequenceIterator>

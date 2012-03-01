@@ -18,11 +18,11 @@ int main()
 	const int src_arraysize = sizeof(src_array)/sizeof(*src_array);
 
     byte_traits::byte_sequence somedata(src_array, src_array + src_arraysize);
-    SerializedData serdat_down({}, somedata.begin(), src_arraysize);
+    SerializedData serdat_down{{}, somedata.begin(), src_arraysize};
 	TEST_ASSERT(serdat_down.size() == src_arraysize);
 
 	// create SegmentationLayer from Serialized data
-	SegmentationLayer<SerializedData> segmlayer(std::move(serdat_down));
+	SegmentationLayer<SerializedData> segmlayer{std::move(serdat_down)};
 	TEST_ASSERT(segmlayer.size() == src_arraysize + 4);
 
 	// serialize to buffer
@@ -30,9 +30,9 @@ int main()
 	byte_traits::byte_sequence::iterator it = raw_ser.begin();
 	segmlayer.fillSerialized(it);
 
-	std::cout<<"Source array: "<<hexprint(src_array, src_array+src_arraysize)<<
-	'\n'<<
-	"Serialized Packet: "<<hexprint(raw_ser.begin(), raw_ser.end())<<'\n';
+	std::cout<<"Source array: "<<hexprint(src_array, src_array+src_arraysize)
+        <<'\n'<<"Serialized Packet: "
+        <<hexprint(raw_ser.begin(), raw_ser.end())<<'\n';
 
 	// check correctness of message data
 	TEST_ASSERT(*it++ == 0x80);
@@ -49,17 +49,19 @@ int main()
 
         // create buffer for message data
         auto body =
-        std::make_shared<byte_traits::byte_sequence>(header.packetsize-4);
+            std::make_shared<byte_traits::byte_sequence>(header.packetsize-4);
 
         // "read" body from network
         std::copy(it, raw_ser.end(), body->begin());
 
         // pretty C++0x "uniform initialization" syntax
-        SegmentationLayer<SerializedData> rcvd({body, body->begin(), body->size()});
+        SegmentationLayer<SerializedData> rcvd{
+            {body, body->begin(), body->size()}}
+        ;
         TEST_ASSERT(rcvd.size() == src_arraysize + 4);
 
         // retrieve data, steal from from rcvd object
-        SerializedData serdat_up(std::move(rcvd._inner_layer));
+        SerializedData serdat_up{std::move(rcvd._inner_layer)};
         TEST_ASSERT( // data must of course be still the same
             std::equal(serdat_up.begin(), serdat_up.begin() + serdat_up.size(),
                 &src_array[0])
@@ -69,9 +71,9 @@ int main()
                 serdat_up.begin() + serdat_up.size())<<std::endl;
     }
     catch(const InvalidHeaderError&)
-    { TEST_ASSERT(false && "Exception occured"); }
-
-
+    {
+        TEST_ASSERT(false && "Exception occured");
+    }
 
     return CONCLUDE_TEST();
 }

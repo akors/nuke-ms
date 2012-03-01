@@ -37,7 +37,7 @@ DECLARE_TEST("class StringWrapLayer");
 struct ConvertibleToInt {
     int value;
     ConvertibleToInt() {}
-    ConvertibleToInt(int _value) : value(_value) {}
+    ConvertibleToInt(int _value) : value{_value} {}
     operator int () { return value; }
 };
 
@@ -51,7 +51,7 @@ int main()
         printbytes(orig_string.begin(), orig_string.end())<<"\"\n";
 
     // create stringwrap from string
-    StringwrapLayer stringwrap_down(orig_string);
+    StringwrapLayer stringwrap_down{orig_string};
 
     TEST_ASSERT(stringwrap_down._message_string == orig_string);
 
@@ -107,11 +107,11 @@ int main()
     TEST_ASSERT(std::equal(bytewise.begin(), bytewise.end(), convint_list.begin()));
 
 
-    SerializedData ser_data({}, bytewise.begin(), bytewise.size());
+    SerializedData ser_data{{}, bytewise.begin(), bytewise.size()};
 
     try
     {
-        StringwrapLayer stringwrap_up(ser_data);
+        StringwrapLayer stringwrap_up{ser_data};
 
         std::cout<<"\nResulting String: \""<<stringwrap_up._message_string<<"\"\n";
         TEST_ASSERT(stringwrap_up._message_string == orig_string);
