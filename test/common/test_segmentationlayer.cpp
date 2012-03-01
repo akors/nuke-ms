@@ -60,7 +60,6 @@ int main()
 
         // retrieve data, steal from from rcvd object
         SerializedData serdat_up(std::move(rcvd._inner_layer));
-        TEST_ASSERT(rcvd.size() == 4); // rcvd now has to be empty
         TEST_ASSERT( // data must of course be still the same
             std::equal(serdat_up.begin(), serdat_up.begin() + serdat_up.size(),
                 &src_array[0])
