@@ -135,14 +135,14 @@ class MsgLayerError : public std::runtime_error
 public:
     /** Default Constructor */
     MsgLayerError() throw()
-        : std::runtime_error("Unknown message layer error")
+        : std::runtime_error{"Unknown message layer error"}
     { }
 
     /** Constructor.
     * @param str The error message
     */
     MsgLayerError(const char* str) throw()
-        : std::runtime_error(str)
+        : std::runtime_error{str}
     {}
 
     /** Return error message as char array.
@@ -159,7 +159,7 @@ public:
 struct InvalidHeaderError : public MsgLayerError
 {
     InvalidHeaderError()
-        : MsgLayerError("Invalid packet header")
+        : MsgLayerError{"Invalid packet header"}
     {}
 };
 
@@ -167,7 +167,7 @@ struct InvalidHeaderError : public MsgLayerError
 struct UndersizedPacketError : public MsgLayerError
 {
     UndersizedPacketError()
-        : MsgLayerError("Packet too small")
+        : MsgLayerError{"Packet too small"}
     {}
 };
 
@@ -270,7 +270,7 @@ public:
         const_data_it begin_it,
         std::size_t datasize
     )
-        : _memblock(memblock), _begin_it(begin_it), _datasize(datasize)
+        : _memblock{memblock}, _begin_it{begin_it}, _datasize{datasize}
     {}
 
 
@@ -362,7 +362,7 @@ struct SegmentationLayer
     SegmentationLayer& operator= (const SegmentationLayer&) = default;
 
     SegmentationLayer(SegmentationLayer&& other)
-        : _inner_layer(std::move(other._inner_layer))
+        : _inner_layer{std::move(other._inner_layer)}
     {
         // workaround for gcc bug
         // http://gcc.gnu.org/bugzilla/show_bug.cgi?id=51629
@@ -373,7 +373,7 @@ struct SegmentationLayer
 
 
     SegmentationLayer(InnerLayer&& upper_layer)
-        : _inner_layer(std::move(upper_layer))
+        : _inner_layer{std::move(upper_layer)}
     { }
 
     // overriding base class version
@@ -419,7 +419,7 @@ struct StringwrapLayer : public BasicMessageLayer<StringwrapLayer>
     * @param msg msg The string the message shall contain.
     */
     StringwrapLayer(const byte_traits::msg_string& msg) throw ()
-        : _message_string(msg)
+        : _message_string{msg}
     {}
 
     /** Constructor.

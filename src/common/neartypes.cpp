@@ -61,8 +61,8 @@ NearUserMessage::NearUserMessage(const SerializedData& data)
     in_it += UniqueUserID::id_length;
 
     // the rest is the message string
-    _stringwrap = StringwrapLayer(
-        SerializedData(data.getOwnership(), in_it, data.size() - header_length)
-    );
+    _stringwrap = StringwrapLayer{
+        SerializedData{data.getOwnership(), in_it, data.size() - header_length}
+    };
 }
 

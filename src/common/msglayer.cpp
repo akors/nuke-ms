@@ -68,7 +68,7 @@ StringwrapLayer::StringwrapLayer(const SerializedData& msg)
 
     // bail out if the string is not aligned
     if (datasize % sizeof(byte_traits::msg_string::value_type) !=0)
-        throw MsgLayerError("Unaligned packet");
+        throw MsgLayerError{"Unaligned packet"};
 
     // set message_string to the proper size
     _message_string.resize((datasize)/
@@ -80,7 +80,7 @@ StringwrapLayer::StringwrapLayer(const SerializedData& msg)
     std::remove_reference<decltype(*out_iter)>::type tmpval;
 
     // iterate through all bytes in the sequence
-    for ( auto it = data_it; it < data_it + datasize; )
+    for (auto it = data_it; it < data_it + datasize; )
     {
         // read bytes into a character, convert byte endianness
         it = readbytes(&tmpval, it);

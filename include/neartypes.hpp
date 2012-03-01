@@ -62,7 +62,7 @@ struct UniqueUserID
     /** Construct from long long uint.
     * _id Identifier as integer variable
     */
-    UniqueUserID(unsigned long long _id = 0ull) : id(_id) {}
+    UniqueUserID(unsigned long long _id = 0ull) : id{_id} {}
 
     /** Copy constructor */
     UniqueUserID(const UniqueUserID& other) = default;
@@ -123,12 +123,12 @@ struct NearUserMessage : BasicMessageLayer<NearUserMessage>
     */
 	NearUserMessage(
         const StringwrapLayer& stringwrap,
-        const UniqueUserID& to = UniqueUserID(),
-        const UniqueUserID& from = UniqueUserID(),
-        msg_id_t msg_id = msg_id_t()
+        const UniqueUserID& to = UniqueUserID{},
+        const UniqueUserID& from = UniqueUserID{},
+        msg_id_t msg_id = msg_id_t{}
     )
-        : _stringwrap(stringwrap), _recipient(to), _sender(from),
-            _msg_id(msg_id)
+        : _stringwrap{stringwrap}, _recipient{to}, _sender{from},
+            _msg_id{msg_id}
     { }
 
     /** Move-construct from a stringwraplayer message
@@ -139,12 +139,12 @@ struct NearUserMessage : BasicMessageLayer<NearUserMessage>
     */
 	NearUserMessage(
         StringwrapLayer&& stringwrap,
-        const UniqueUserID& to = UniqueUserID(),
-        const UniqueUserID& from = UniqueUserID(),
-        msg_id_t msg_id = msg_id_t()
+        const UniqueUserID& to = UniqueUserID{},
+        const UniqueUserID& from = UniqueUserID{},
+        msg_id_t msg_id = msg_id_t{}
     )
-        : _stringwrap(std::move(stringwrap)), _recipient(to), _sender(from),
-            _msg_id(msg_id)
+        : _stringwrap{std::move(stringwrap)}, _recipient{to}, _sender{from},
+            _msg_id{msg_id}
     { }
 
 
