@@ -2,6 +2,6 @@
 CMakeFiles/*
 CMakeCache.txt
 Makefile
-build/*
+build*/*
 bin/*
 cmake_install.cmake
