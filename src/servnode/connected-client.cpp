@@ -47,10 +47,10 @@ struct ReceiveHeaderHandler
     std::shared_ptr<byte_traits::byte_t> buffer;
 
     ReceiveHeaderHandler(std::shared_ptr<ConnectedClient> parent_)
-        : parent(parent_),
-        buffer(make_shared_array<
+        : parent{parent_},
+        buffer{make_shared_array<
             byte_traits::byte_t, SegmentationLayerBase::header_length
-        >())
+        >()}
     {}
 
     ReceiveHeaderHandler(const ReceiveHeaderHandler& other) = default;
@@ -81,8 +81,8 @@ ConnectedClient::ConnectedClient(
     connection_id_t connection_id_,
     boost::asio::ip::tcp::socket&& socket_,
     boost::asio::io_service& io_service_
-) : connection_id(connection_id_), io_service(io_service_),
-    socket(std::move(socket_))
+) : connection_id{connection_id_}, io_service(io_service_),
+    socket{std::move(socket_)}
 { }
 
 void
@@ -119,9 +119,9 @@ std::shared_ptr<ConnectedClient> ConnectedClient::makeInstance(
     boost::function<void (std::shared_ptr<ConnectedClient>)> error_callback
 )
 {
-    std::shared_ptr<ConnectedClient> client(
-        new ConnectedClient(connection_id, std::move(socket), io_service)
-    );
+    std::shared_ptr<ConnectedClient> client{
+        new ConnectedClient{connection_id, std::move(socket), io_service}
+    };
 
     client->signals.connectReceivedMessage(received_callback);
     client->signals.connectDisconnected(error_callback);

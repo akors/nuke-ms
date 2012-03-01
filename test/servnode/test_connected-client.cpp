@@ -44,7 +44,7 @@ void receiveCallback(
     std::shared_ptr<SerializedData> data
 )
 {
-    data_out_received.assign(NearUserMessage(*data)._stringwrap._message_string);
+    data_out_received.assign(NearUserMessage{*data}._stringwrap._message_string);
 
     std::cout<<"server: Data received: \""<<data_out_received
         <<"\". Sending reply.\n";
@@ -72,7 +72,7 @@ struct MockServer {
 
     void run()
     {
-        tcp::socket socket(io_service);
+        tcp::socket socket{io_service};
 
         // start accept, bind socket to the handler
         boost::system::error_code accept_error;
@@ -139,7 +139,7 @@ int main()
     MockServer server;
 
     // Start server with ConnectedClient code
-    boost::thread server_thread(boost::bind(&MockServer::run, &server));
+    boost::thread server_thread{boost::bind(&MockServer::run, &server)};
 
 
     // -------- CLIENT CODE ---------
