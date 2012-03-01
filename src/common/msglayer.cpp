@@ -24,6 +24,7 @@
 
 using namespace nuke_ms;
 
+namespace nuke_ms {
 
 // explicit class template instantions
 template class BasicMessageLayer<SerializedData>;
@@ -38,6 +39,7 @@ byte_traits::byte_sequence::iterator StringwrapLayer::fillSerialized(
 template SegmentationLayerBase::HeaderType SegmentationLayerBase::decodeHeader(
     byte_traits::byte_sequence::iterator headerbuf);
 
+} // namespace nuke_ms
 
 
 ////////////////////////////// StringwrapLayer /////////////////////////////////
