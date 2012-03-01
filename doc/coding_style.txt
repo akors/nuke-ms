@@ -1,4 +1,4 @@
-Naming Scheme:
+A) Naming Scheme
 
 All characters are allowed in Variable names.
 
@@ -29,7 +29,8 @@ letters. If the names consist of several words, the words are separated by an
 underscore.
 
 
-Whitespaces:
+B) Whitespaces
+
 1) Line endings consist of only the line- feed character ('\n').
 2) All indentations where a tab character would be used consist of 4 space
 characters. To avoid confusion, no tab character should be used at all. (An
@@ -78,8 +79,7 @@ separate expressions. They can be omitted however, to squeeze an expression into
 one line.
 
 
-7) Line Length:
-
+7) Line Length
 The maximum line length is 80 characters, including any leading and trailing
 whitespace.
 This maximum length should be followed as far as possible. However, in some
@@ -87,7 +87,7 @@ cases it is advisable to ignore this limitation and write lines that are longer
 than 80 characters.
 
 
-8) Source file layout:
+8) Source file layout
 Every source file begins with a C++ line comment ("//"), a space, the name of
 the source file, a newline, another newline and the license block.
 
