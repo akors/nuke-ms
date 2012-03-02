@@ -70,7 +70,7 @@ struct EvtConnectRequest : public boost::statechart::event<EvtConnectRequest>
 	*/
     EvtConnectRequest(const byte_traits::native_string& _host,
         const byte_traits::native_string& _service)
-        : host (_host), service(_service)
+        : host {_host}, service{_service}
     {}
 };
 
@@ -88,7 +88,7 @@ struct EvtConnectReport : public boost::statechart::event<EvtConnectReport>
     * @param _message Message commenting the outcome.
     */
     EvtConnectReport(bool _success, const byte_traits::native_string& _message)
-        : success(_success), message (_message)
+        : success{_success}, message {_message}
     {}
 };
 
@@ -113,7 +113,7 @@ struct EvtDisconnected :
     * @param _msg The text of the message.
     */
     EvtDisconnected(const byte_traits::native_string& _msg)
-        : msg (_msg)
+        : msg {_msg}
     {}
 };
 
@@ -130,7 +130,7 @@ struct EvtSendMsg : public boost::statechart::event<EvtSendMsg<MessageType>>
     * @param _data The text of the message.
     */
     EvtSendMsg(MessageType&& data)
-        : _data(std::make_shared<MessageType>(std::move(data)))
+        : _data{std::make_shared<MessageType>(std::move(data))}
     {}
 
     EvtSendMsg(const EvtSendMsg&) = default;
@@ -151,7 +151,7 @@ struct EvtRcvdMessage :
     * @param _data The data of the message.
     */
     EvtRcvdMessage(SegmentationLayer<UpperLayer>&& data)
-        :_data(std::make_shared<SegmentationLayer<UpperLayer>>(std::move(data)))
+        :_data{std::make_shared<SegmentationLayer<UpperLayer>>(std::move(data))}
     {}
 
     EvtRcvdMessage(const EvtRcvdMessage<UpperLayer>&) = default;

@@ -38,8 +38,8 @@ static bool parseDestinationString(
 
 
 ClientNode::ClientNode(LoggingStreams logstreams_)
-    : statemachine(signals, logstreams, machine_mutex),
-    last_msg_id(0),  logstreams(logstreams_)
+    : statemachine{signals, logstreams, machine_mutex},
+    last_msg_id{0},  logstreams{logstreams_}
 {
     // initiate the event processor
     statemachine.initiate();
@@ -70,8 +70,8 @@ void ClientNode::connectTo(const ServerLocation& where)
     {  // on success, pass on event
 
         // lock the mutex to the machine, process event
-        boost::mutex::scoped_lock(machine_mutex);
-        statemachine.process_event(EvtConnectRequest(host, service));
+        boost::mutex::scoped_lock{machine_mutex};
+        statemachine.process_event(EvtConnectRequest{host, service});
     }
     else // on failure, report back to application
     {
@@ -96,7 +96,7 @@ NearUserMessage::msg_id_t ClientNode::sendUserMessage(
     usermsg._msg_id = getNextMessageId();
 
     // lock the mutex to the machine
-    boost::mutex::scoped_lock(machine_mutex);
+    boost::mutex::scoped_lock{machine_mutex};
     statemachine.process_event(EvtSendMsg<NearUserMessage>{std::move(usermsg)});
 
     return usermsg._msg_id;
@@ -107,7 +107,7 @@ NearUserMessage::msg_id_t ClientNode::sendUserMessage(
 void ClientNode::disconnect()
 {
     // lock the mutex to the machine, dispatch disconnect request
-    boost::mutex::scoped_lock(machine_mutex);
+    boost::mutex::scoped_lock{machine_mutex};
     statemachine.process_event(EvtDisconnectRequest{});
 }
 
@@ -142,7 +142,7 @@ static bool parseDestinationString(
         tokenizer;
 
     // get the part before the colon and the part after the colon
-    boost::char_separator<byte_traits::native_string::value_type> colons(" ");
+    boost::char_separator<byte_traits::native_string::value_type> colons{" "};
     tokenizer tokens(where, colons);
 
     tokenizer::iterator tok_iter = tokens.begin();

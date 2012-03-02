@@ -27,10 +27,10 @@ using namespace boost::asio::ip;
 ClientnodeMachine::ClientnodeMachine(ClientNodeSignals&  _signals,
 	LoggingStreams logstreams_, boost::mutex& _machine_mutex
 )
-    : signals(_signals), io_service(new boost::asio::io_service),
-        socket(*io_service), resolver(*io_service),
+    : signals(_signals), io_service{new boost::asio::io_service},
+        socket{*io_service}, resolver{*io_service},
         logstreams(logstreams_), machine_mutex(_machine_mutex),
-        ReferenceCounter(std::bind(&ClientnodeMachine::on_returned, this))
+        ReferenceCounter{std::bind(&ClientnodeMachine::on_returned, this)}
 {}
 
 ClientnodeMachine::~ClientnodeMachine()
@@ -42,7 +42,7 @@ ClientnodeMachine::~ClientnodeMachine()
     // wait for all handlers to retuirn
     if (getRefCount() > 0)
     {
-        boost::mutex::scoped_lock lk(reference_mutex);
+        boost::mutex::scoped_lock lk{reference_mutex};
         returned_condition.wait(lk);
     }
 }
@@ -130,14 +130,14 @@ StateNegotiating::StateNegotiating(my_context ctx)
     }
     catch(const std::exception& e)
     {
-        byte_traits::native_string errmsg(e.what());
+        byte_traits::native_string errmsg{e.what()};
         errmsg = "Internal error:" + errmsg;
 
-        post_event(EvtConnectReport(false, errmsg));
+        post_event(EvtConnectReport{false, errmsg});
     }
     catch(...)
     {
-        post_event(EvtConnectReport(false,"Unknown internal Error"));
+        post_event(EvtConnectReport{false, "Unknown internal Error"});
     }
 
 }
@@ -242,7 +242,7 @@ void StateNegotiating::resolveHandler(
 
 	// display all records for debugging purposes
     tcp::resolver::iterator disp_it = endpoint_iterator;
-    while (disp_it != tcp::resolver::iterator())
+    while (disp_it != tcp::resolver::iterator{})
     {
         cm.ref().logstreams.infostream<<"\tHost: "<<
             disp_it->endpoint().address().to_string()<<", Port: "<<
@@ -293,12 +293,12 @@ void StateNegotiating::connectHandler(
             )
         );
 
-        boost::mutex::scoped_lock lk(cm.ref().machine_mutex);
-        cm.ref().process_event(EvtConnectReport(true,"Connection succeeded."));
+        boost::mutex::scoped_lock lk{cm.ref().machine_mutex};
+        cm.ref().process_event(EvtConnectReport{true, "Connection succeeded."});
     }
 	// if there was an error, but we still have records,
 	// just try the next record
-	else if(error && ++endpoint_iterator != tcp::resolver::iterator())
+	else if(error && ++endpoint_iterator != tcp::resolver::iterator{})
     {
         cm.ref().socket.close();
         cm.ref().socket.async_connect(
@@ -319,9 +319,9 @@ void StateNegotiating::connectHandler(
 		if (error == boost::asio::error::operation_aborted)
 			return;
 
-        byte_traits::native_string errmsg(error.message());
+        byte_traits::native_string errmsg{error.message()};
 
-        boost::mutex::scoped_lock lk(cm.ref().machine_mutex);
+        boost::mutex::scoped_lock lk{cm.ref().machine_mutex};
         cm.ref().process_event(EvtConnectReport(false, errmsg));
     }
 
@@ -370,7 +370,7 @@ boost::statechart::result StateConnected::react(const EvtSendMsg<NearUserMessage
             &StateConnected::writeHandler,
             std::placeholders::_1,
             std::placeholders::_2,
-            ClientnodeMachine::CountedReference(outermost_context()),
+            ClientnodeMachine::CountedReference{outermost_context()},
             data
         )
     );
@@ -469,7 +469,7 @@ void StateConnected::writeHandler(
 
         cm.ref().signals.sendReport(rprt);
 
-        boost::mutex::scoped_lock lk(cm.ref().machine_mutex);
+        boost::mutex::scoped_lock lk{cm.ref().machine_mutex};
         cm.ref().process_event(EvtDisconnected(errmsg));
 
     }
@@ -494,10 +494,10 @@ void StateConnected::receiveSegmentationHeaderHandler(
 		if (error == boost::asio::error::operation_aborted)
 			return;
 
-        byte_traits::native_string errmsg(error.message());
+        byte_traits::native_string errmsg{error.message()};
 
-        boost::mutex::scoped_lock lk(cm.ref().machine_mutex);
-        cm.ref().process_event(EvtDisconnected(errmsg));
+        boost::mutex::scoped_lock lk{cm.ref().machine_mutex};
+        cm.ref().process_event(EvtDisconnected{errmsg});
     }
     else // if no error occured, try to decode the header
     {
@@ -531,13 +531,13 @@ constexpr byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
         // on failure, report back to application
         catch (const std::exception& e)
         {
-            boost::mutex::scoped_lock lk(cm.ref().machine_mutex);
-            cm.ref().process_event(EvtDisconnected(e.what()));
+            boost::mutex::scoped_lock lk{cm.ref().machine_mutex};
+            cm.ref().process_event(EvtDisconnected{e.what()});
         }
         catch(...)
         {
-            boost::mutex::scoped_lock lk(cm.ref().machine_mutex);
-            cm.ref().process_event(EvtDisconnected("Unknown Error"));
+            boost::mutex::scoped_lock lk{cm.ref().machine_mutex};
+            cm.ref().process_event(EvtDisconnected{"Unknown Error"});
         }
     }
 
@@ -555,8 +555,8 @@ void StateConnected::receiveSegmentationBodyHandler(
     // tear down the connection by posting a disconnection event
     if (error)
     {
-        boost::mutex::scoped_lock lk(cm.ref().machine_mutex);
-        cm.ref().process_event(EvtDisconnected(error.message()));
+        boost::mutex::scoped_lock lk{cm.ref().machine_mutex};
+        cm.ref().process_event(EvtDisconnected{error.message()});
     }
     else // if no error occured, report the received message to the application
     {
