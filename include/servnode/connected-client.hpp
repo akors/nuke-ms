@@ -55,7 +55,7 @@ class ConnectedClient
     // copy construction disallowed
     ConnectedClient(const ConnectedClient&) = delete;
 
-    void async_write(std::shared_ptr<byte_traits::byte_sequence> data);
+    void async_write(const std::shared_ptr<byte_traits::byte_sequence>& data);
 
     friend class SendHandler;
     friend class ReceiveHeaderHandler;
@@ -67,10 +67,12 @@ public:
             void (
                 std::shared_ptr<ConnectedClient>,
                 std::shared_ptr<SerializedData>
-            )> ReceivedMessage;
+            )
+        > ReceivedMessage;
 
-        typedef boost::signals2::signal<void (std::shared_ptr<ConnectedClient>)>
-            Disconnected;
+        typedef boost::signals2::signal<
+            void (const std::shared_ptr<ConnectedClient>&)
+        > Disconnected;
 
         boost::signals2::connection
         connectReceivedMessage(const ReceivedMessage::slot_type& slot);
@@ -106,10 +108,15 @@ public:
         connection_id_t connection_id_,
         boost::asio::ip::tcp::socket&& socket_,
         boost::asio::io_service& io_service_,
-        boost::function<void (
-                std::shared_ptr<ConnectedClient>, std::shared_ptr<SerializedData>)
-            > received_callback,
-        boost::function<void (std::shared_ptr<ConnectedClient>)> error_callback
+        boost::function<
+            void (
+                const std::shared_ptr<ConnectedClient>&,
+                const std::shared_ptr<SerializedData>&
+            )
+        > received_callback,
+        boost::function<
+            void (const std::shared_ptr<ConnectedClient>&)
+        > error_callback
     );
 
     void startReceive();

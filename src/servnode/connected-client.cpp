@@ -46,7 +46,7 @@ struct ReceiveHeaderHandler
     std::shared_ptr<ConnectedClient> parent;
     std::shared_ptr<byte_traits::byte_t> buffer;
 
-    ReceiveHeaderHandler(std::shared_ptr<ConnectedClient> parent_)
+    ReceiveHeaderHandler(const std::shared_ptr<ConnectedClient>& parent_)
         : parent{parent_},
         buffer{make_shared_array<
             byte_traits::byte_t, SegmentationLayerBase::header_length
@@ -85,8 +85,8 @@ ConnectedClient::ConnectedClient(
     socket{std::move(socket_)}
 { }
 
-void
-ConnectedClient::async_write(std::shared_ptr<byte_traits::byte_sequence> data)
+void ConnectedClient::async_write(
+    const std::shared_ptr<byte_traits::byte_sequence>& data)
 {
     boost::asio::async_write(
         socket,
@@ -114,9 +114,14 @@ std::shared_ptr<ConnectedClient> ConnectedClient::makeInstance(
     tcp::socket&& socket,
     boost::asio::io_service& io_service,
     boost::function<
-        void (std::shared_ptr<ConnectedClient>, std::shared_ptr<SerializedData>)
+        void (
+            const std::shared_ptr<ConnectedClient>&,
+            const std::shared_ptr<SerializedData>&
+        )
     > received_callback,
-    boost::function<void (std::shared_ptr<ConnectedClient>)> error_callback
+    boost::function<
+        void (const std::shared_ptr<ConnectedClient>&)
+    > error_callback
 )
 {
     std::shared_ptr<ConnectedClient> client{
