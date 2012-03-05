@@ -281,21 +281,24 @@ inline T to_hostbo(T x) { return x; }
 namespace packedstruct_detail {
 
 template <
+    std::size_t Offset,
     typename VarType, typename NameTag,
     typename... Rest
 >
 struct PackedStructMember
 {
+    static constexpr std::size_t offset = Offset;
     typedef VarType vartype;
     typedef NameTag nametag;
 
-    typedef PackedStructMember<Rest...> next;
+    typedef PackedStructMember<offset + sizeof(vartype), Rest...> next;
     static constexpr std::size_t list_size = sizeof(vartype) + next::list_size;
 
-    static vartype& access(void *member_ptr)
+    static vartype& access(char *base)
     {
-        return *static_cast<vartype*>(member_ptr);
+        return *reinterpret_cast<vartype*>(base+offset);
     }
+
 #ifdef PACKEDSTRUCT_NONTRIVIAL
     static void construct(void* member_ptr)
     {
@@ -306,17 +309,21 @@ struct PackedStructMember
         next::construct(static_cast<vartype*>(member_ptr) + 1);
     }
 
-    /*
-    template <typename ArgumentType, typename... ArgtypeRest>
-    static void initialize_into(bytetype* base, ArgumentType arg, ArgtypeRest... rest)
+    template <typename ArgumentType, typename... ArgTypeRest>
+    static void construct(
+        void* member_ptr,
+        ArgumentType&& arg,
+        ArgTypeRest... args_rest
+    )
     {
-        // use placement new to initialize
-        new (reinterpret_cast<vartype*>(base+offset)) vartype{arg};
+        // use placement new to initialize, forward arguments
+        new (member_ptr) vartype(std::forward<ArgumentType>(arg));
 
-        // defer to next element initialization
-        next::initialize_into(base, rest...);
+        next::construct(
+            static_cast<vartype*>(member_ptr) + 1,
+            std::forward<ArgTypeRest>(args_rest)...
+        );
     }
-    */
 
     static void destruct(void* member_ptr)
     {
@@ -329,9 +336,10 @@ struct PackedStructMember
 #endif
 };
 
-template <typename VarType, typename NameTag>
-struct PackedStructMember<VarType, NameTag>
+template <std::size_t Offset, typename VarType, typename NameTag>
+struct PackedStructMember<Offset, VarType, NameTag>
 {
+    static constexpr std::size_t offset = Offset;
     typedef VarType vartype;
     typedef NameTag nametag;
 
@@ -339,9 +347,9 @@ struct PackedStructMember<VarType, NameTag>
     // variable type
     static constexpr std::size_t list_size = sizeof(vartype);
 
-    static vartype& access(void *member_ptr)
+    static vartype& access(char *base)
     {
-        return *static_cast<vartype*>(member_ptr);
+        return *reinterpret_cast<vartype*>(base+offset);
     }
 #ifdef PACKEDSTRUCT_NONTRIVIAL
     static void construct(void* member_ptr)
@@ -349,14 +357,14 @@ struct PackedStructMember<VarType, NameTag>
         // use placement new to initialize
         new (member_ptr) vartype{};
     }
-/*
+
     template <typename ArgumentType>
-    static void initialize_into(bytetype* base, ArgumentType arg)
+    static void construct(void* member_ptr, ArgumentType&& arg)
     {
-        // use placement new to initialize
-        new (reinterpret_cast<vartype*>(base+offset)) vartype{arg};
+        // use placement new to initialize, forward arguments
+        new (member_ptr) vartype(std::forward<ArgumentType>(arg));
     }
-*/
+
     static void destruct(void* member_ptr)
     {
         // call destructor explicitly
@@ -389,7 +397,7 @@ class PackedStruct {
         "Members must be added in pairs of Variable-Type / Name-Tag"
     );
 
-    typedef PackedStructMember<Members...> MemberList;
+    typedef PackedStructMember<0, Members...> MemberList;
 
     char data[MemberList::list_size];
 
@@ -401,13 +409,14 @@ public:
     }
 
     template <typename... ArgTypes>
-    PackedStruct(ArgTypes... args)
+    explicit PackedStruct(ArgTypes&&... args)
     {
         static_assert(
             sizeof...(ArgTypes) == sizeof...(Members) / 2,
             "Number of constructor arguments does not match number of struct members."
         );
-        //MemberList::initialize_into(data, args...);
+
+        MemberList::construct(data, std::forward<ArgTypes>(args)...);
     }
 
 
