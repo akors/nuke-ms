@@ -38,7 +38,7 @@ struct ConvertibleToInt {
     int value;
     ConvertibleToInt() {}
     ConvertibleToInt(int _value) : value{_value} {}
-    operator int () { return value; }
+    operator int () const { return value; }
 };
 
 using namespace nuke_ms;
