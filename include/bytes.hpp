@@ -294,9 +294,22 @@ struct PackedStructMember
     typedef PackedStructMember<offset + sizeof(vartype), Rest...> next;
     static constexpr std::size_t list_size = sizeof(vartype) + next::list_size;
 
-    static vartype& access(char *base)
+    static const vartype& access(const void *base) // const
     {
-        return *reinterpret_cast<vartype*>(base+offset);
+        return *reinterpret_cast<const vartype*>(
+            reinterpret_cast<const char*>(base)+offset
+        );
+    }
+
+    static vartype& access(void *base)
+    {
+        return *reinterpret_cast<vartype*>(reinterpret_cast<char*>(base)+offset);
+    }
+
+    static bool all_equal(const void *base, const void *other_base)
+    {
+        return (access(base) == access(other_base))
+            && next::all_equal(base, other_base);
     }
 
 #ifdef PACKEDSTRUCT_NONTRIVIAL
@@ -347,10 +360,21 @@ struct PackedStructMember<Offset, VarType, NameTag>
     // variable type
     static constexpr std::size_t list_size = sizeof(vartype);
 
-    static vartype& access(char *base)
+    static const vartype& access(const void *base) // const
     {
-        return *reinterpret_cast<vartype*>(base+offset);
+        return *reinterpret_cast<const vartype*>(
+            reinterpret_cast<const char*>(base)+offset
+        );
     }
+
+    static vartype& access(void *base)
+    {
+        return *reinterpret_cast<vartype*>(reinterpret_cast<char*>(base)+offset);
+    }
+
+    static bool all_equal(const void *base, const void *other_base)
+    { return (access(base) == access(other_base)); }
+
 #ifdef PACKEDSTRUCT_NONTRIVIAL
     static void construct(void* member_ptr)
     {
@@ -430,6 +454,11 @@ public:
     typename FindMemberByNameTag<MemberList, NameTag>::member::vartype& get()
     {
         return FindMemberByNameTag<MemberList, NameTag>::member::access(data);
+    }
+
+    bool operator == (const PackedStruct& other)
+    {
+        return MemberList::all_equal(data, other.data);
     }
 };
 

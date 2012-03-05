@@ -74,6 +74,12 @@ int main()
         ) == 'C'
     );
 
+    // copy objects with memcopy, assert that they are still the same
+    PackedTrivial other_trivial_uninit;
+    memcpy(&other_trivial_uninit, &trivial_uninit, sizeof(PackedTrivial));
+    TEST_ASSERT(trivial_uninit == other_trivial_uninit);
+
+
     // check struct initialization
     PackedTrivial trivial_init{21, 57.4, 'B'};
 
