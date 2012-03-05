@@ -6,6 +6,7 @@ set(COMPONENT "common")
 
 add_dependencies(testsuite
     byteorder
+    packedstruct
     stringwraplayer
     segmentationlayer
     neartypes
@@ -21,6 +22,9 @@ add_test(${COMPONENT}/byteorder byteorder)
 add_executable(stringwraplayer test_stringwraplayer.cpp byteprinter.cpp)
 target_link_libraries(stringwraplayer nuke-ms-common)
 add_test(${COMPONENT}/stringwraplayer stringwraplayer)
+
+add_executable(packedstruct test_packedstruct.cpp)
+add_test(${COMPONENT}/packedstruct packedstruct)
 
 add_executable(segmentationlayer test_segmentationlayer.cpp byteprinter.cpp)
 target_link_libraries(segmentationlayer nuke-ms-common)
