@@ -145,6 +145,11 @@ void ConnectedClient::sendPacket(const SegmentationLayer<InnerLayer>& packet)
     this->async_write(data);
 }
 
+extern template
+void ConnectedClient::sendPacket(const SegmentationLayer<SerializedData>&);
+
+extern template
+void ConnectedClient::sendPacket(const SegmentationLayer<NearUserMessage>&);
 
 } // namespace servnode
 } // namespace nuke_ms

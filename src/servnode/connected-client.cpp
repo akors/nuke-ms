@@ -30,6 +30,12 @@ using namespace boost::asio::ip;
 namespace nuke_ms { namespace servnode {
 
 
+template
+void ConnectedClient::sendPacket(const SegmentationLayer<SerializedData>&);
+
+template
+void ConnectedClient::sendPacket(const SegmentationLayer<NearUserMessage>&);
+
 struct SendHandler
 {
     std::shared_ptr<ConnectedClient> parent;
