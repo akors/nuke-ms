@@ -50,13 +50,13 @@ struct SendHandler
 struct ReceiveHeaderHandler
 {
     std::shared_ptr<ConnectedClient> parent;
-    std::shared_ptr<byte_traits::byte_t> buffer;
+    std::shared_ptr<
+        std::array<byte_traits::byte_t, SegmentationLayerBase::header_length>
+    > buffer;
 
     ReceiveHeaderHandler(const std::shared_ptr<ConnectedClient>& parent_)
         : parent{parent_},
-        buffer{make_shared_array<
-            byte_traits::byte_t, SegmentationLayerBase::header_length
-        >()}
+        buffer{parent_->header_buffer}
     {}
 
     ReceiveHeaderHandler(const ReceiveHeaderHandler& other) = default;
@@ -88,7 +88,10 @@ ConnectedClient::ConnectedClient(
     boost::asio::ip::tcp::socket&& socket_,
     boost::asio::io_service& io_service_
 ) : connection_id{connection_id_}, io_service(io_service_),
-    socket{std::move(socket_)}
+    socket{std::move(socket_)},
+    header_buffer{std::make_shared<
+        std::array<byte_traits::byte_t, SegmentationLayerBase::header_length>
+    >()}
 { }
 
 void ConnectedClient::async_write(
@@ -154,9 +157,7 @@ void ConnectedClient::startReceive()
 
     async_read(
         socket,
-        boost::asio::buffer(
-            handler.buffer.get(),
-            SegmentationLayerBase::header_length),
+        boost::asio::buffer(*handler.buffer),
         std::move(handler)
     );
 }
@@ -199,7 +200,7 @@ void ReceiveHeaderHandler::operator() (
     {
         // decode and verify the header of the message
         SegmentationLayerBase::HeaderType header_data
-            = SegmentationLayerBase::decodeHeader(buffer.get());
+            = SegmentationLayerBase::decodeHeader(buffer->begin());
 
 /// @todo FIXME Magic number, set to something proper or make configurable
 constexpr byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;

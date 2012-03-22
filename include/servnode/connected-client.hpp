@@ -21,6 +21,7 @@
 #define CONNECTED_CLIENT_HPP_INCLUDED
 
 #include <memory>
+#include <array>
 
 #include <boost/function.hpp>
 #include <boost/signals2/signal.hpp>
@@ -42,6 +43,10 @@ class ConnectedClient
 {
     boost::asio::io_service& io_service;
     boost::asio::ip::tcp::socket socket;
+
+    std::shared_ptr<
+        std::array<byte_traits::byte_t, SegmentationLayerBase::header_length>
+    > header_buffer;
 
     // private constructor
     ConnectedClient(
