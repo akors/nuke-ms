@@ -178,6 +178,7 @@ void SendHandler::operator() (
     {
         parent->shutdown();
         parent->signals.disconnected(parent);
+        return;
     }
 }
 
@@ -191,6 +192,7 @@ void ReceiveHeaderHandler::operator() (
     {
         parent->shutdown();
         parent->signals.disconnected(parent);
+        return;
     }
 
     try
@@ -234,6 +236,7 @@ void ReceiveBodyHandler::operator() (
     {
         parent->shutdown();
         parent->signals.disconnected(parent);
+        return;
     }
 
     // otherwise, construct message and send signal
