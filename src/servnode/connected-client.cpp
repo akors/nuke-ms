@@ -38,7 +38,7 @@ void ConnectedClient::sendPacket(const SegmentationLayer<NearUserMessage>&);
 
 struct SendHandler
 {
-    std::shared_ptr<ConnectedClient> parent;
+    std::weak_ptr<ConnectedClient> parent;
     std::shared_ptr<byte_traits::byte_sequence> buffer;
 
     void operator() (
@@ -49,19 +49,20 @@ struct SendHandler
 
 struct ReceiveHeaderHandler
 {
-    std::shared_ptr<ConnectedClient> parent;
+    std::weak_ptr<ConnectedClient> parent;
     std::shared_ptr<
         std::array<byte_traits::byte_t, SegmentationLayerBase::header_length>
     > buffer;
 
     ReceiveHeaderHandler(const std::shared_ptr<ConnectedClient>& parent_)
-        : parent{parent_},
-        buffer{parent_->header_buffer}
+        : parent{parent_}, buffer{parent_->header_buffer}
     {}
 
     ReceiveHeaderHandler(const ReceiveHeaderHandler& other) = default;
 
-    ReceiveHeaderHandler(ReceiveHeaderHandler&& other) = default;
+    ReceiveHeaderHandler(ReceiveHeaderHandler&& other)
+        : parent{other.parent}, buffer{std::move(other.buffer) }
+    {}
 
     void operator() (
         const boost::system::error_code& error,
@@ -71,7 +72,7 @@ struct ReceiveHeaderHandler
 
 struct ReceiveBodyHandler
 {
-    std::shared_ptr<ConnectedClient> parent;
+    std::weak_ptr<ConnectedClient> parent;
     std::shared_ptr<const byte_traits::byte_sequence> buffer;
 
     void operator() (
@@ -174,6 +175,9 @@ void SendHandler::operator() (
     std::size_t bytes_transferred
 )
 {
+    auto parent = this->parent.lock();
+    if (!parent) return; // Mommy is dead? Ok, then nevermind :-(
+
     // on error, disconnect parent
     if (error || bytes_transferred != buffer->size())
     {
@@ -188,6 +192,9 @@ void ReceiveHeaderHandler::operator() (
     std::size_t bytes_transferred
 )
 {
+    auto parent = this->parent.lock();
+    if (!parent) return; // Mommy is dead? Ok, then nevermind :-(
+
     // if we had an error reading, shutdown and send disconnected event
     if (error)
     {
@@ -232,6 +239,9 @@ void ReceiveBodyHandler::operator() (
     std::size_t bytes_transferred
 )
 {
+    auto parent = this->parent.lock();
+    if (!parent) return; // Mommy is dead? Ok, then nevermind :-(
+
     // if we had an error reading, shutdown and send disconnected event
     if (error)
     {
