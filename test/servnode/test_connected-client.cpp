@@ -26,9 +26,9 @@
 
 #include "testutils.hpp"
 
+
 using namespace nuke_ms;
 using namespace boost::asio::ip;
-using boost::asio::ip::tcp;
 
 DECLARE_TEST("class ConnectedClient")
 
@@ -39,28 +39,18 @@ static const char* INSTRING = "Wazzzuuppp!!!";
 static std::string data_out_received;
 static std::string data_in_received;
 
+class MockServer;
+
+
 void receiveCallback(
-    std::shared_ptr<servnode::ConnectedClient> client,
-    std::shared_ptr<SerializedData> data
-)
-{
-    data_out_received.assign(NearUserMessage{*data}._stringwrap._message_string);
-
-    std::cout<<"server: Data received: \""<<data_out_received
-        <<"\". Sending reply.\n";
-
-    client->sendPacket(
-        SegmentationLayer<StringwrapLayer>{StringwrapLayer{INSTRING}}
-    );
-
-    client->shutdown();
-}
+    servnode::connection_id_t client_id,
+    const std::shared_ptr<SerializedData>& data,
+    MockServer& server
+);
 
 void disconnectCallback(
-    std::shared_ptr<servnode::ConnectedClient> client
-)
-{ std::cout<<"server: Client "<<client->connection_id<<" disconnected.\n"; }
-
+    servnode::connection_id_t client_id
+);
 
 
 struct MockServer {
@@ -84,8 +74,10 @@ struct MockServer {
             this->client_container = servnode::ConnectedClient::makeInstance(
                 0,
                 std::move(socket),
-                this->io_service,
-                receiveCallback,
+                std::bind(receiveCallback,
+                    std::placeholders::_1, std::placeholders::_2,
+                    std::ref(*this)
+                ),
                 disconnectCallback
             );
         }
@@ -107,10 +99,35 @@ struct MockServer {
     {
         shutdown();
     }
-private:
+
     std::shared_ptr<servnode::ConnectedClient> client_container;
     tcp::acceptor acceptor_v4;
 };
+
+
+void receiveCallback(
+    servnode::connection_id_t client_id,
+    const std::shared_ptr<SerializedData>& data,
+    MockServer& server
+)
+{
+    data_out_received.assign(NearUserMessage{*data}._stringwrap._message_string);
+
+    std::cout<<"server: Data received: \""<<data_out_received
+        <<"\". Sending reply.\n";
+
+    server.client_container->sendPacket(
+        SegmentationLayer<StringwrapLayer>{StringwrapLayer{INSTRING}}
+    );
+
+    server.client_container->shutdown();
+}
+
+void disconnectCallback(
+    servnode::connection_id_t client_id
+)
+{ std::cout<<"server: Client "<<client_id<<" disconnected.\n"; }
+
 
 
 void sendMessage(tcp::socket& sock, const std::string& data)
