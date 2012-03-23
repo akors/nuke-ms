@@ -85,14 +85,15 @@ struct ReceiveBodyHandler
 
 
 ConnectedClient::ConnectedClient(
-    connection_id_t connection_id_,
-    boost::asio::ip::tcp::socket&& socket_,
-    boost::asio::io_service& io_service_
-) : connection_id{connection_id_}, io_service(io_service_),
-    socket{std::move(socket_)},
+        connection_id_t connection_id_,
+        boost::asio::ip::tcp::socket&& socket_,
+        const Signals::ReceivedMessage& rcvd_callback,
+        const Signals::Disconnected& disconnected_callback
+) : connection_id{connection_id_}, socket{std::move(socket_)},
     header_buffer{std::make_shared<
-        std::array<byte_traits::byte_t, SegmentationLayerBase::header_length>
-    >()}
+        std::array<byte_traits::byte_t,SegmentationLayerBase::header_length>
+    >()},
+    signals{rcvd_callback, disconnected_callback}
 { }
 
 void ConnectedClient::async_write(
@@ -107,40 +108,16 @@ void ConnectedClient::async_write(
 
 
 
-boost::signals2::connection ConnectedClient::Signals::connectReceivedMessage(
-    const ReceivedMessage::slot_type& slot
-)
-{
-    // disconnect old connection
-    connectionReceivedMessage.disconnect();
-
-    // connect new one
-    connectionReceivedMessage = receivedMessage.connect(slot);
-    return connectionReceivedMessage;
-}
-
 std::shared_ptr<ConnectedClient> ConnectedClient::makeInstance(
     connection_id_t connection_id,
-    tcp::socket&& socket,
-    boost::asio::io_service& io_service,
-    boost::function<
-        void (
-            const std::shared_ptr<ConnectedClient>&,
-            const std::shared_ptr<SerializedData>&
-        )
-    > received_callback,
-    boost::function<
-        void (const std::shared_ptr<ConnectedClient>&)
-    > error_callback
+    boost::asio::ip::tcp::socket&& socket,
+    const Signals::ReceivedMessage& rcvd_callback,
+    const Signals::Disconnected& disconnected_callback
 )
 {
-    std::shared_ptr<ConnectedClient> client{
-        new ConnectedClient{connection_id, std::move(socket), io_service}
-    };
-
-    client->signals.connectReceivedMessage(received_callback);
-    client->signals.connectDisconnected(error_callback);
-
+    std::shared_ptr<ConnectedClient> client{new ConnectedClient{
+        connection_id, std::move(socket), rcvd_callback, disconnected_callback
+    }};
     client->startReceive();
 
     return client;
@@ -182,7 +159,7 @@ void SendHandler::operator() (
     if (error || bytes_transferred != buffer->size())
     {
         parent->shutdown();
-        parent->signals.disconnected(parent);
+        parent->signals.disconnected(parent->connection_id);
         return;
     }
 }
@@ -199,7 +176,7 @@ void ReceiveHeaderHandler::operator() (
     if (error)
     {
         parent->shutdown();
-        parent->signals.disconnected(parent);
+        parent->signals.disconnected(parent->connection_id);
         return;
     }
 
@@ -230,7 +207,7 @@ constexpr byte_traits::uint2b_t MAX_PACKETSIZE = 0x8FFF;
     catch (const MsgLayerError& e)
     {
         parent->shutdown();
-        parent->signals.disconnected(parent);
+        parent->signals.disconnected(parent->connection_id);
     }
 }
 
@@ -246,13 +223,13 @@ void ReceiveBodyHandler::operator() (
     if (error)
     {
         parent->shutdown();
-        parent->signals.disconnected(parent);
+        parent->signals.disconnected(parent->connection_id);
         return;
     }
 
     // otherwise, construct message and send signal
     parent->signals.receivedMessage(
-        parent,
+        parent->connection_id,
         std::make_shared<SerializedData>(buffer, buffer->begin(),buffer->size())
     );
 

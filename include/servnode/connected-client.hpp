@@ -22,10 +22,8 @@
 
 #include <memory>
 #include <array>
+#include <functional>
 
-#include <boost/function.hpp>
-#include <boost/signals2/signal.hpp>
-#include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/tcp.hpp>
 
 #include "neartypes.hpp"
@@ -41,87 +39,36 @@ typedef int connection_id_t;
 class ConnectedClient
     : public std::enable_shared_from_this<ConnectedClient>
 {
-    boost::asio::io_service& io_service;
-    boost::asio::ip::tcp::socket socket;
-
-    std::shared_ptr<
-        std::array<byte_traits::byte_t, SegmentationLayerBase::header_length>
-    > header_buffer;
-
-    // private constructor
-    ConnectedClient(
-        connection_id_t connection_id,
-        boost::asio::ip::tcp::socket&& socket,
-        boost::asio::io_service& io_service
-    );
-
-    ConnectedClient(ConnectedClient&&) = default;
-
-    // copy construction disallowed
-    ConnectedClient(const ConnectedClient&) = delete;
-
-    void async_write(const std::shared_ptr<byte_traits::byte_sequence>& data);
-
-    friend class SendHandler;
-    friend class ReceiveHeaderHandler;
-    friend class ReceiveBodyHandler;
-public:
     struct Signals
     {
-        typedef boost::signals2::signal<
-            void (
-                std::shared_ptr<ConnectedClient>,
-                std::shared_ptr<SerializedData>
-            )
+        typedef std::function<
+            void (connection_id_t, const std::shared_ptr<SerializedData>&)
         > ReceivedMessage;
 
-        typedef boost::signals2::signal<
-            void (const std::shared_ptr<ConnectedClient>&)
+        typedef std::function<
+            void (connection_id_t)
         > Disconnected;
 
-        boost::signals2::connection
-        connectReceivedMessage(const ReceivedMessage::slot_type& slot);
+        Signals(const ReceivedMessage& r, const Disconnected& d)
+            : receivedMessage{r}, disconnected{d}
+        {}
 
-        void disconnectReceivedMessage()
-        { receivedMessage.disconnect_all_slots(); }
-
-        template<typename S> void disconnectReceivedMessage(const S& slot_func)
-        { receivedMessage.disconnect(slot_func); }
-
-        boost::signals2::connection
-        connectDisconnected(const Disconnected::slot_type& slot)
-        { return disconnected.connect(slot); }
-
-        void disconnectDisconnected() { disconnected.disconnect_all_slots(); }
-
-        friend class SendHandler;
-        friend class ReceiveHeaderHandler;
-        friend class ReceiveBodyHandler;
-
-    private:
         ReceivedMessage receivedMessage;
         Disconnected disconnected;
-
-        boost::signals2::connection connectionReceivedMessage;
     } signals;
 
+public:
     connection_id_t connection_id;
+
+    ConnectedClient(ConnectedClient&&) = default;
 
     ~ConnectedClient();
 
     static std::shared_ptr<ConnectedClient> makeInstance(
-        connection_id_t connection_id_,
-        boost::asio::ip::tcp::socket&& socket_,
-        boost::asio::io_service& io_service_,
-        boost::function<
-            void (
-                const std::shared_ptr<ConnectedClient>&,
-                const std::shared_ptr<SerializedData>&
-            )
-        > received_callback,
-        boost::function<
-            void (const std::shared_ptr<ConnectedClient>&)
-        > error_callback
+        connection_id_t connection_id,
+        boost::asio::ip::tcp::socket&& socket,
+        const Signals::ReceivedMessage& rcvd_callback,
+        const Signals::Disconnected& disconnected_callback
     );
 
     void startReceive();
@@ -138,6 +85,30 @@ public:
         SegmentationLayer<InnerLayer> data{std::move(packet)};
         sendPacket(data);
     }
+
+private:
+    friend class SendHandler;
+    friend class ReceiveHeaderHandler;
+    friend class ReceiveBodyHandler;
+
+    boost::asio::ip::tcp::socket socket;
+
+    std::shared_ptr<
+        std::array<byte_traits::byte_t, SegmentationLayerBase::header_length>
+    > header_buffer;
+
+    // private constructor
+    ConnectedClient(
+        connection_id_t connection_id,
+        boost::asio::ip::tcp::socket&& socket,
+        const Signals::ReceivedMessage& rcvd_callback,
+        const Signals::Disconnected& disconnected_callback
+    );
+
+    // copy construction disallowed
+    ConnectedClient(const ConnectedClient&) = delete;
+
+    void async_write(const std::shared_ptr<byte_traits::byte_sequence>& data);
 };
 
 template <typename InnerLayer>
