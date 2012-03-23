@@ -5,29 +5,29 @@
 set(COMPONENT "common")
 
 add_dependencies(testsuite
-    test_byteorder
-    test_stringwraplayer
-    test_segmentationlayer
-    test_neartypes
+    byteorder
+    stringwraplayer
+    segmentationlayer
+    neartypes
 )
 
 # Add top level include directory
 include_directories(${nuke-ms_SOURCE_DIR}/include)
 
 
-add_executable(test_byteorder test_byteorder.cpp byteprinter.cpp)
-add_test(${COMPONENT}/byteorder test_byteorder)
+add_executable(byteorder test_byteorder.cpp byteprinter.cpp)
+add_test(${COMPONENT}/byteorder byteorder)
 
-add_executable(test_stringwraplayer test_stringwraplayer.cpp byteprinter.cpp)
-target_link_libraries(test_stringwraplayer nuke-ms-common)
-add_test(${COMPONENT}/stringwraplayer test_stringwraplayer)
+add_executable(stringwraplayer test_stringwraplayer.cpp byteprinter.cpp)
+target_link_libraries(stringwraplayer nuke-ms-common)
+add_test(${COMPONENT}/stringwraplayer stringwraplayer)
 
-add_executable(test_segmentationlayer test_segmentationlayer.cpp byteprinter.cpp)
-target_link_libraries(test_segmentationlayer nuke-ms-common)
-add_test(${COMPONENT}/segmentationlayer test_segmentationlayer)
+add_executable(segmentationlayer test_segmentationlayer.cpp byteprinter.cpp)
+target_link_libraries(segmentationlayer nuke-ms-common)
+add_test(${COMPONENT}/segmentationlayer segmentationlayer)
 
-add_executable(test_neartypes test_neartypes.cpp)
-target_link_libraries(test_neartypes nuke-ms-common)
-add_test(${COMPONENT}/neartypes test_neartypes)
+add_executable(neartypes test_neartypes.cpp)
+target_link_libraries(neartypes nuke-ms-common)
+add_test(${COMPONENT}/neartypes neartypes)
 
 
