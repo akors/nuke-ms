@@ -456,7 +456,14 @@ public:
         return FindMemberByNameTag<MemberList, NameTag>::member::access(data);
     }
 
-    bool operator == (const PackedStruct& other)
+    template <typename NameTag>
+    const typename FindMemberByNameTag<MemberList, NameTag>::member::vartype&
+    get() const
+    {
+        return FindMemberByNameTag<MemberList, NameTag>::member::access(data);
+    }
+
+    bool operator == (const PackedStruct& other) const
     {
         return MemberList::all_equal(data, other.data);
     }

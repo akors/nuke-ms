@@ -134,6 +134,19 @@ int main()
     TEST_ASSERT(nontrivial.get<myval>()._x  == 12);
     TEST_ASSERT(nontrivial.get<myval>()._z == 99.999);
 
+    const PackedNonTrivial c_nontrivial{31, MyType{9, 879.999}};
+    TEST_ASSERT(c_nontrivial.get<size>() == 31);
+    TEST_ASSERT(c_nontrivial.get<myval>()._x  == 9);
+    TEST_ASSERT(c_nontrivial.get<myval>()._z == 879.999);
+
+#   ifdef NUKE_MS_TEST_SHOULDBREAK
+    // error: read-only variable is not assignable
+    c_nontrivial.get<size>() = 12;
+    c_nontrivial.get<myval>()._x = 44;
+    c_nontrivial.get<myval>()._z = 93.122;
+#   endif
+
+
     struct d{};
 
     typedef nuke_ms::PackedStruct
@@ -156,7 +169,6 @@ int main()
     const_members.get<d>() = 6.28;
     const_members.get<cupsize>() = 'C';
 #   endif
-
 
 
     return CONCLUDE_TEST();
