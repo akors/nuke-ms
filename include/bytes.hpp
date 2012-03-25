@@ -294,37 +294,35 @@ struct PackedStructMember
     typedef PackedStructMember<offset + sizeof(vartype), Rest...> next;
     static constexpr std::size_t list_size = sizeof(vartype) + next::list_size;
 
-    static const vartype& access(const void *base) // const
+    static const vartype& access(const char* base) // const
     {
-        return *reinterpret_cast<const vartype*>(
-            reinterpret_cast<const char*>(base)+offset
-        );
+        return *reinterpret_cast<const vartype*>(base + offset);
     }
 
-    static vartype& access(void *base)
+    static vartype& access(char* base)
     {
-        return *reinterpret_cast<vartype*>(reinterpret_cast<char*>(base)+offset);
+        return *reinterpret_cast<vartype*>(base + offset);
     }
 
-    static bool all_equal(const void *base, const void *other_base)
+    static bool all_equal(const char* base, const char* other_base)
     {
         return (access(base) == access(other_base))
             && next::all_equal(base, other_base);
     }
 
 #ifdef PACKEDSTRUCT_NONTRIVIAL
-    static void construct(void* member_ptr)
+    static void construct(char* member_ptr)
     {
         // use placement new to initialize
         new (member_ptr) vartype{};
 
         // defer to next element initialization
-        next::construct(static_cast<vartype*>(member_ptr) + 1);
+        next::construct(member_ptr + sizeof(vartype));
     }
 
     template <typename ArgumentType, typename... ArgTypeRest>
     static void construct(
-        void* member_ptr,
+        char* member_ptr,
         ArgumentType&& arg,
         ArgTypeRest... args_rest
     )
@@ -333,18 +331,18 @@ struct PackedStructMember
         new (member_ptr) vartype(std::forward<ArgumentType>(arg));
 
         next::construct(
-            static_cast<char*>(member_ptr) + sizeof(vartype),
+            member_ptr + sizeof(vartype),
             std::forward<ArgTypeRest>(args_rest)...
         );
     }
 
-    static void destruct(void* member_ptr)
+    static void destruct(char* member_ptr)
     {
         // call destructor explicitly
-        static_cast<vartype*>(member_ptr)->~vartype();
+        reinterpret_cast<vartype*>(member_ptr)->~vartype();
 
         // call next node with pointer after the current element
-        next::destruct(static_cast<char*>(member_ptr) + sizeof(vartype));
+        next::destruct(member_ptr + sizeof(vartype));
     }
 #endif
 };
@@ -360,39 +358,37 @@ struct PackedStructMember<Offset, VarType, NameTag>
     // variable type
     static constexpr std::size_t list_size = sizeof(vartype);
 
-    static const vartype& access(const void *base) // const
+    static const vartype& access(const char* base) // const
     {
-        return *reinterpret_cast<const vartype*>(
-            reinterpret_cast<const char*>(base)+offset
-        );
+        return *reinterpret_cast<const vartype*>(base + offset);
     }
 
-    static vartype& access(void *base)
+    static vartype& access(char* base)
     {
-        return *reinterpret_cast<vartype*>(reinterpret_cast<char*>(base)+offset);
+        return *reinterpret_cast<vartype*>(base + offset);
     }
 
-    static bool all_equal(const void *base, const void *other_base)
+    static bool all_equal(const char* base, const char* other_base)
     { return (access(base) == access(other_base)); }
 
 #ifdef PACKEDSTRUCT_NONTRIVIAL
-    static void construct(void* member_ptr)
+    static void construct(char* member_ptr)
     {
         // use placement new to initialize
         new (member_ptr) vartype{};
     }
 
     template <typename ArgumentType>
-    static void construct(void* member_ptr, ArgumentType&& arg)
+    static void construct(char* member_ptr, ArgumentType&& arg)
     {
         // use placement new to initialize, forward arguments
         new (member_ptr) vartype(std::forward<ArgumentType>(arg));
     }
 
-    static void destruct(void* member_ptr)
+    static void destruct(char* member_ptr)
     {
         // call destructor explicitly
-        static_cast<vartype*>(member_ptr)->~vartype();
+        reinterpret_cast<vartype*>(member_ptr)->~vartype();
     }
 #endif
 };
