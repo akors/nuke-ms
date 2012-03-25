@@ -134,6 +134,30 @@ int main()
     TEST_ASSERT(nontrivial.get<myval>()._x  == 12);
     TEST_ASSERT(nontrivial.get<myval>()._z == 99.999);
 
+    struct d{};
+
+    typedef nuke_ms::PackedStruct
+    <
+        const std::size_t, size,
+        const double, d,
+        const char, cupsize
+    > PackedConstMembers;
+
+    PackedConstMembers const_members{22, 3.14, 'D'};
+
+    TEST_ASSERT(const_members.get<size>() == 22);
+    TEST_ASSERT(const_members.get<d>() == 3.14);
+    TEST_ASSERT(const_members.get<cupsize>() == 'D');
+
+#   ifdef NUKE_MS_TEST_SHOULDBREAK
+    // this should not compile, since the members are const
+    // error: read-only variable is not assignable
+    const_members.get<size>() = 4;
+    const_members.get<d>() = 6.28;
+    const_members.get<cupsize>() = 'C';
+#   endif
+
+
 
     return CONCLUDE_TEST();
 }

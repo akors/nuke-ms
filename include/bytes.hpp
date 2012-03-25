@@ -333,7 +333,7 @@ struct PackedStructMember
         new (member_ptr) vartype(std::forward<ArgumentType>(arg));
 
         next::construct(
-            static_cast<vartype*>(member_ptr) + 1,
+            static_cast<char*>(member_ptr) + sizeof(vartype),
             std::forward<ArgTypeRest>(args_rest)...
         );
     }
@@ -344,7 +344,7 @@ struct PackedStructMember
         static_cast<vartype*>(member_ptr)->~vartype();
 
         // call next node with pointer after the current element
-        next::destruct(static_cast<vartype*>(member_ptr) + 1);
+        next::destruct(static_cast<char*>(member_ptr) + sizeof(vartype));
     }
 #endif
 };
