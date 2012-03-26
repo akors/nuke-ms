@@ -78,6 +78,12 @@ struct byte_traits
     /** The type of a signed integer with the width of four bytes*/
     typedef std::int_least32_t int4b_t;
 
+    /** The type of an unsigned integer with the width of four bytes*/
+    typedef std::uint_least64_t uint8b_t;
+
+    /** The type of a signed integer with the width of four bytes*/
+    typedef std::int_least64_t int8b_t;
+
     /** The type for a sequence of bytes */
     typedef std::vector<byte_t> byte_sequence;
 
@@ -152,8 +158,8 @@ ByteSequenceIterator
 writebytes(ByteSequenceIterator it, T value)
 {
     return std::copy(
-        reinterpret_cast<byte_traits::byte_t*>(&value),
-        reinterpret_cast<byte_traits::byte_t*>(&value) + sizeof(value),
+        reinterpret_cast<const byte_traits::byte_t*>(&value),
+        reinterpret_cast<const byte_traits::byte_t*>(&value) + sizeof(value),
         it
     );
 }
@@ -188,23 +194,6 @@ ByteSequenceIterator readbytes(
 { *val_ptr = *it; return ++it; }
 
 /// @endcond
-
-
-/** Create an std::shared_ptr for an array.
-* @tparam T Type of the array element
-* @tparam N Size of the array
-*
-* This creates a shared pointer to an array. It behaves like a normal
-* shared_ptr, with the exception that the array is correctly deleted with 
-* delete[].
-*
-* @return The shared array
-*/
-template <typename T, std::size_t N> inline
-std::shared_ptr<T> make_shared_array()
-{
-    return std::shared_ptr<T>(new T[N], [](T* p){ delete[] p;} );
-}
 
 
 #ifdef NUKE_MS_BIG_ENDIAN
