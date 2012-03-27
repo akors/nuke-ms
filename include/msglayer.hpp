@@ -28,7 +28,7 @@
 * encapsuled in many layers, several "headers" are attached to it.
 *
 * The idea behind this class hierarchy is to ease and unify the handling of
-* encoding and decoding messages into messages of a lower or upper layer.
+* encoding and decoding messages into messages of a lower or upper layers.
 * To clarify the use of this class hierarchy, one hypothetical procedure of
 * sending a message is explained.
 *
@@ -38,12 +38,12 @@
 * encapsuled in a wrapper tagging the message with metadata (like username,
 * font...). Let's call this layer "layer A".
 * Then message of layer A is encrypted becomes a message of layer b.
-* Finally the message is serialized. To ensure wholeness of the message, it is
-* encapsuled in a segmentation layer, layer C.
+* Finally the message is serialized. To ensure completeness of the message, it
+* is encapsuled in a segmentation layer, layer C.
 *
 * At this moment the message looks like this:
-* layer C object holds a copy of the layer B object, which holds a copy of layer
-* A object, which holds a copy of the text the user entered.
+* A layer C object holds a copy of the layer B object, which holds a copy of the
+* layer A object, which holds a copy of the text the user entered.
 * Now, the message can be sent over the network.
 *
 *
@@ -53,7 +53,7 @@
 * rest of the message.
 * Then, the message is passed "up the pipeline" to a responsible function
 * which determines the correct layer of the message (layer B in our case) and
-* passes the message on to the next layer handling function. His layer B
+* passes the message on to the next layer handling function. This layer B
 * function unpacks the encapsuled layer A message which is then finally
 * displayed back to the user.
 *
@@ -61,19 +61,16 @@
 * Implementation
 *
 * The message pipeline is implemented by a class for each layer. An object of
-* this class is therefor considered as a message of this layer.
-* Although the above explanation would suggest that each layer holds a copy of
-* it's upper layer, it is up to the implementation of a layer to decide wether
-* the data is held as a reference or a copy.
+* this class is therefore considered as a message of this layer.
+* Each layer holds a copy of its upper layer.
+*
 * Normally a layer only adds a small header (compared to the size of the
 * original message) to the message and passes it down to the next layer. It
 * would be waste of memory and computation time to copy the data of each upper
 * layer into the current layer.
-* To avoid this, layers should hold their data as a reference counted shared
-* pointer. Only when necessary - usually when the data is actually sent over the
-* network - the data is serialized and written into a single buffer. This buffer
-* is sent over the network, and the original data chunks (headers + user data)
-* are discarded (and deleted!).
+* To avoid this, layers should make use of the RValue/move semantics provided
+* by ISO C++11 and move (instead of copy) an upper layer object into place.
+*
 *
 *   Sending messages
 *
@@ -222,35 +219,75 @@ struct BasicMessageLayer
 
 
 /** Message of an unknown message layer.
-* This class should be used to hold a serialized message of an unknown type.
-* It holds only the reference to the memory block and an iterator to the data.
-* It provides a possibility to access the contained data to determine the real
-* message layer class.
+ *
+ * This class should be used to hold a serialized message of an unknown type.
+ * It holds only the reference to the memory block and an iterator to the data.
+ * It provides a possibility to access the contained data to determine the real
+ * message layer class.
+ *
+ * To obtain ownership, use the getOwnership() member function,
+ * to obtain an iterator to the data, use the begin() member function.
 */
 class SerializedData : public BasicMessageLayer<SerializedData>
 {
     /** Ownership of the memory block */
     std::shared_ptr<const byte_traits::byte_sequence> _memblock;
-    decltype(_memblock->begin()) _begin_it; /**< Iterater to the beginning data */
-    std::size_t _datasize; /**< Size of the data */
+
+    /**< Iterater to the beginning data */
+    decltype(_memblock->begin()) _begin_it;
+
+    /**< Size of the data */
+    std::size_t _datasize;
 
 public:
     typedef byte_traits::byte_sequence::const_iterator const_data_it;
 
-    // explicit copy constructor, data will actually be copied!
-    // beware: if there is any data before the _begin_it, it will be dropped!
+    /** Copy Constructor.
+    * Constructs a new object from another object, by creating a new buffer and
+    * copying the content.
+    * The ownership of the data will be distinct and independent from the other
+    * object.
+    *
+    * @param other Object to copy data from
+    * @note Any data in the buffer before other.begin() will be discarded.
+    */
     explicit SerializedData(const SerializedData& other)
     {
         *this = other; // use assignment operator
     }
 
-    // copy assignment operator, data will actually be copied!
-    // beware: if there is any data before the _begin_it, it will be dropped!
+    /** Copy assignment operator.
+    * Constructs a new object from another object, by creating a new buffer and
+    * copying the content.
+    * The ownership of the data will be distinct and independent from the other
+    * object.
+    *
+    * @param other Object to copy data from
+    *
+    * @note Any data in the buffer before other.begin() will be discarded.
+    */
     SerializedData& operator= (const SerializedData& other);
 
-
+    /** Move constructor
+    * Constructs a new object from another object, taking over the buffer
+    * ownership of the other object.
+    *
+    * @param other Object to obtain data from
+    *
+    * @note After invocation of this constructor, other will be invalidated and
+    * should not be used.
+    */
     SerializedData(SerializedData&& other) = default;
 
+    /** Move assignment operator.
+    * Constructs a new object from another object, taking over the buffer
+    * ownership of the other object.
+    *
+    * @param other Object to obtain data from
+    *
+    * @note After invocation of this operator, other will be invalidated and
+    * should not be used.
+    */
     SerializedData& operator= (SerializedData&&) = default;
 
     /** Constructor.
@@ -293,7 +330,7 @@ public:
     *
     * @returns An iterator to the message data. This iterator is valid as long
     * as the underlying memory block that was passed to the constructor
-    * is referenced somewhere.
+    * is in scope somewhere.
     */
     const_data_it begin() const
     { return _begin_it; }
@@ -309,9 +346,16 @@ public:
     { return _memblock; }
 };
 
+/** Base class for SegmentationLayer.
+ * Template parameter independent typedefs and functions for the
+ * SegmentationLayer<> template class.
+ */
 struct SegmentationLayerBase
 {
+    /** Layer identifier */
     static constexpr byte_traits::byte_t LAYER_ID = 0x80;
+
+    /** Header length */
     static constexpr std::size_t header_length = 4;
 
     /** Type representing the header of a packet. */
@@ -323,7 +367,7 @@ struct SegmentationLayerBase
     /** Header decoding function.
     *
     * Creates a HeaderType structure from a series of bytes. The header is
-    * checked for validity, if invalid an InvalidHeaderError is thrown.
+    * checked for validity, if it is invalid an InvalidHeaderError is thrown.
     *
     * @tparam InputIterator An Iterator type whos dereferenced type  is
     * convertible to byte_traits::byte_t. Must meet the
@@ -352,15 +396,31 @@ struct SegmentationLayerBase
 *
 */
 template <typename InnerLayer>
-struct SegmentationLayer
-    : public SegmentationLayerBase,
-    public BasicMessageLayer<SegmentationLayer<InnerLayer>>
+struct SegmentationLayer : public SegmentationLayerBase
 {
+    /** Message of an inner layer */
     InnerLayer _inner_layer;
 
+    /** Copy constructor.
+    * Constructs a new object from another objectby  copying the content.
+    *
+    * @param other Object to copy data from
+    */
     explicit SegmentationLayer(const SegmentationLayer&) = default;
+
+    /** Copy assignment operator.
+    * Constructs a new object from another objectby  copying the content.
+    *
+    * @param other Object to copy data from
+    */
     SegmentationLayer& operator= (const SegmentationLayer&) = default;
 
+    /** Move constructor.
+    * Transfers ownership of the data contained in other.
+    *
+    * @note After invocation of this constructor, other will be invalidated and
+    * should not be used.
+    */
     SegmentationLayer(SegmentationLayer&& other)
         : _inner_layer{std::move(other._inner_layer)}
     {
@@ -369,9 +429,21 @@ struct SegmentationLayer
         // This should be "= default"
     }
 
+    /** Move assignment operator.
+    * Transfers ownership of the data contained in other.
+    *
+    * @note After invocation of this operator, other will be invalidated and
+    * should not be used.
+    */
     SegmentationLayer& operator= (SegmentationLayer&&) = default;
 
-
+    /** Construct from InnerLayer object.
+    * Transfers ownership of the data contained in the upper layer object and
+    * wraps its data into *this.
+    *
+    * @note After invocation of this constructor, upper_layer will be
+    * invalidated and should not be used.
+    */
     SegmentationLayer(InnerLayer&& upper_layer)
         : _inner_layer{std::move(upper_layer)}
     { }
@@ -384,7 +456,6 @@ struct SegmentationLayer
     template <typename ByteOutputIterator>
     ByteOutputIterator fillSerialized(ByteOutputIterator it) const;
 };
-
 
 
 
@@ -403,14 +474,25 @@ struct StringwrapLayer : public BasicMessageLayer<StringwrapLayer>
     /** Copy constructor */
     explicit StringwrapLayer(const StringwrapLayer& msg) = default;
 
+    /** Default assignment operator */
     StringwrapLayer& operator= (const StringwrapLayer& msg) = default;
 
     /** Move constructor.
      * Create a StringwrapLayer message from a temporary StringwrapLayer object
+     *
      * @param other The other StringwrapLayer object you want to steal from
+     *
+     * @note After invocation of this constructor, other will be invalidated and
+     * should not be used.
     */
     StringwrapLayer(StringwrapLayer&& other) = default;
 
+    /** Move assignment operator.
+    * Transfers ownership of the message contained in other.
+    *
+    * @note After invocation of this constructor, other will be invalidated and
+    * should not be used.
+    */
     StringwrapLayer& operator= (StringwrapLayer&& msg) = default;
 
     /** Constructor.
@@ -421,6 +503,16 @@ struct StringwrapLayer : public BasicMessageLayer<StringwrapLayer>
     StringwrapLayer(const byte_traits::msg_string& msg) throw ()
         : _message_string{msg}
     {}
+
+    /** Constructor.
+    * Create a StringwrapLayer message from an byte_traits::msg_string.
+    *
+    * @param msg msg The string the message shall contain.
+    */
+    StringwrapLayer(byte_traits::msg_string&& msg) throw ()
+        : _message_string{std::move(msg)}
+    {}
+
 
     /** Constructor.
     * Create a StringwrapLayer from a message of unknown message layer, for
